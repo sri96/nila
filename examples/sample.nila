@@ -1,0 +1,29 @@
+#This is a very basic Nila file. 
+
+hello = "world"
+
+message = "Welcome to our webpage"
+
+goal_reached = 72
+
+def printsquare(input_number) #This is a very simple Nila function
+
+	add_number = input_number + 10
+
+	def square(number)
+
+		return number*number
+
+	end
+
+	console.log(square(add_number))
+
+end
+
+printsquare(5)
+
+def printer
+
+	console.log(hello +  world)
+
+end
