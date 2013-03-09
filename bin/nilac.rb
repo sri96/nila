@@ -183,6 +183,8 @@ def compile(input_file_path)
 
     named_code_blocks = []
 
+    function_locations = []
+
     for x in 0...nila_file_contents.length
 
       current_row = nila_file_contents[x]
@@ -251,6 +253,10 @@ def compile(input_file_path)
 
       named_code_blocks << extract_array(final_modified_file_contents,top_most_level,matching_level)
 
+      current_function_location = [top_most_level,matching_level]
+
+      function_locations << current_function_location
+
       start_blocks.delete_at(top_most_level_index)
 
       end_blocks.delete(matching_level)
@@ -291,7 +297,7 @@ def compile(input_file_path)
 
     line_by_line_contents = read_file_line_by_line(temporary_nila_file)
 
-    return line_by_line_contents,named_functions,nested_functions
+    return line_by_line_contents,named_functions,nested_functions,function_locations.sort
 
 
   end
@@ -655,6 +661,19 @@ def compile(input_file_path)
 
   end
 
+  def pretty_print(input_file_contents,temporary_nila_file,code_block_locations)
+
+    modified_file_contents = input_file_contents.dup
+
+    code_block_locations.each do |location|
+
+
+
+    end
+
+
+  end
+
   def output_javascript(file_contents,output_file,temporary_nila_file)
 
     file_id = open(output_file, 'w')
@@ -677,7 +696,7 @@ def compile(input_file_path)
 
   file_contents,singleline_comments = replace_singleline_comments(file_contents)
 
-  file_contents,named_functions,nested_functions = replace_named_functions(file_contents,temp_file)
+  file_contents,named_functions,nested_functions,function_locations = replace_named_functions(file_contents,temp_file)
 
   comments = [singleline_comments,multiline_comments]
 
@@ -742,6 +761,20 @@ def create_mac_executable(input_file)
 
 end
 
+def find_file_name(input_path,file_extension)
+
+  extension_remover = input_path.split(file_extension)
+
+  remaining_string = extension_remover[0].reverse
+
+  path_finder = remaining_string.index("\\")
+
+  remaining_string = remaining_string.reverse
+
+  return remaining_string[remaining_string.length-path_finder..-1]
+
+end
+
 options = {}
 
 OptionParser.new do |opts|
@@ -752,6 +785,21 @@ OptionParser.new do |opts|
     file_path = current_directory + "/" + file
     compile(file_path)
     puts "Compilation Successful!"
+
+  end
+
+  opts.on("-r", "--run FILE", "Compile to Javascript and Run") do |file|
+    current_directory = Dir.pwd
+
+    file_path = current_directory + "/" + file
+
+    compile(file_path)
+
+    js_file_name = find_file_name(file_path,".nila") + ".js"
+
+    node_output = `node #{js_file_name}`
+
+    puts node_output
 
   end
 
