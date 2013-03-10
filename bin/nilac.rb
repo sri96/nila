@@ -322,15 +322,7 @@ def compile(input_file_path)
 
         current_row = current_row.rstrip + "\n"
 
-        #In this block, the each row will be split using = sign and variables will be added to the
-        #declared variables array
-
         current_row_split = current_row.split("=")
-
-        #Extra spaces are stripped off from each of the elements that is produced after the splitting
-        #operation
-
-        #Each operator didn't work on the arrays. So I have to resort to for loop
 
         for y in 0...current_row_split.length
 
@@ -360,6 +352,51 @@ def compile(input_file_path)
 
     return variables.uniq,line_by_line_contents
 
+
+  end
+
+  def remove_question_marks(input_file_contents,variable_list,temporary_nila_file)
+
+    #A method to remove question marks from global variable names. Local variables are dealt
+    #with in their appropriate scope.
+
+    #Params:
+    #input_file_contents => An array containing the contents of the input nila file
+    #variable_list => An array containing all the global variables declared in the file
+    #temporary_nila_file => A file object used to write temporary contents
+
+    #Example:
+
+    #Nila
+    #isprime? = false
+
+    #Javascript Output
+    #var isprime;
+    #isprime = false;
+
+    #Returns a modified input_file_contents with all the question marks removed
+
+    joined_file_contents = input_file_contents.join
+
+    variable_list.each do |var|
+
+      if var.include? "?"
+
+        joined_file_contents = joined_file_contents.gsub(var,var[0...-1])
+
+      end
+
+    end
+
+    file_id = open(temporary_nila_file, 'w')
+
+    file_id.write(joined_file_contents)
+
+    file_id.close()
+
+    line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+    return line_by_line_contents
 
   end
 
@@ -419,7 +456,33 @@ def compile(input_file_path)
 
     end
 
-    def compile_function(input_array)
+    def remove_question_marks(input_file_contents,input_list,temporary_nila_file)
+
+      joined_file_contents = input_file_contents.join
+
+      input_list.each do |element|
+
+        if element.include? "?"
+
+          joined_file_contents = joined_file_contents.gsub(element,element[0...-1])
+
+        end
+
+      end
+
+      file_id = open(temporary_nila_file, 'w')
+
+      file_id.write(joined_file_contents)
+
+      file_id.close()
+
+      line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+      return line_by_line_contents
+
+    end
+
+    def compile_function(input_array,temporary_nila_file)
 
       modified_input_array = input_array.dup
 
@@ -491,6 +554,8 @@ def compile(input_file_path)
 
       end
 
+      modified_input_array = remove_question_marks(modified_input_array,variables,temporary_nila_file)
+
       return modified_input_array
 
     end
@@ -501,7 +566,7 @@ def compile(input_file_path)
 
     named_code_blocks.each do |codeblock|
 
-      joined_file_contents = joined_file_contents.sub("--named_function[#{codeblock_counter}]\n",compile_function(codeblock).join)
+      joined_file_contents = joined_file_contents.sub("--named_function[#{codeblock_counter}]\n",compile_function(codeblock,temporary_nila_file).join)
 
       codeblock_counter += 1
 
@@ -509,7 +574,7 @@ def compile(input_file_path)
 
       current_nested_functions.each do |nested_function|
 
-        joined_file_contents = joined_file_contents.sub(nested_function.join,compile_function(nested_function).join)
+        joined_file_contents = joined_file_contents.sub(nested_function.join,compile_function(nested_function,temporary_nila_file).join)
 
       end
 
@@ -661,16 +726,183 @@ def compile(input_file_path)
 
   end
 
-  def pretty_print(input_file_contents,temporary_nila_file,code_block_locations)
+  def pretty_print_javascript(javascript_file_contents,temporary_nila_file)
 
-    modified_file_contents = input_file_contents.dup
+    def reset_tabs(input_file_contents)
 
-    code_block_locations.each do |location|
+      #This method removes all the predefined tabs to avoid problems in
+      #later parts of the beautifying process.
 
+      for x in 0...input_file_contents.length
+
+        current_row = input_file_contents[x]
+
+        if !current_row.eql?("\n")
+
+          current_row = current_row.lstrip
+
+        end
+
+        input_file_contents[x] = current_row
+
+
+      end
+
+      return input_file_contents
+
+    end
+
+    def find_all_matching_indices(input_string,pattern)
+
+      locations = []
+
+      index = input_string.index(pattern)
+
+      while index != nil
+
+        locations << index
+
+        index = input_string.index(pattern,index+1)
+
+
+      end
+
+      return locations
 
 
     end
 
+    def convert_string_to_array(input_string,temporary_nila_file)
+
+      file_id = open(temporary_nila_file, 'w')
+
+      file_id.write(input_string)
+
+      file_id.close()
+
+      line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+      return line_by_line_contents
+
+    end
+
+    def previous_formatting(input_string,tab_counter,temporary_nila_file)
+
+      string_as_array = convert_string_to_array(input_string,temporary_nila_file)
+
+      modified_array = []
+
+      string_as_array.each do |line|
+
+        modified_array << "  "*tab_counter + line
+
+      end
+
+      return modified_array.join
+
+    end
+
+    javascript_regexp = /(function )/
+
+    locations = []
+
+    javascript_file_contents = reset_tabs(javascript_file_contents)
+
+    joined_file_contents = javascript_file_contents.join
+
+    code_block_starting_locations = find_all_matching_indices(joined_file_contents,javascript_regexp)
+
+    code_block_ending_locations = find_all_matching_indices(joined_file_contents,"}")
+
+    combined_location = [code_block_starting_locations,code_block_ending_locations.dup].flatten.sort
+
+    last_matching_location = 0
+
+    while code_block_ending_locations.length > 0
+
+      matching_location = combined_location[combined_location.index(code_block_ending_locations[0])-1]
+
+      location_among_start_locations = code_block_starting_locations.index(matching_location)
+
+      locations << [[matching_location,combined_location[combined_location.index(code_block_ending_locations[0])]]]
+
+      code_block_ending_locations.delete_at(0)
+
+      if code_block_ending_locations.length > 0
+
+        for x in location_among_start_locations-1..last_matching_location
+
+          locations[-1] << [code_block_starting_locations[x],code_block_ending_locations[0]]
+
+          code_block_ending_locations.delete_at(0)
+
+        end
+
+      end
+
+      last_matching_location = location_among_start_locations + 1
+
+    end
+
+    modified_locations = []
+
+    locations.each do |loc|
+
+      modified_locations << loc.sort
+
+    end
+
+    modified_joined_file_contents = joined_file_contents.dup
+
+    modified_locations.each do |location|
+
+      soft_tabs_counter = 1
+
+      location.each do |sublocation|
+
+        string_extract = joined_file_contents[sublocation[0]..sublocation[1]]
+
+        string_extract_array = convert_string_to_array(string_extract,temporary_nila_file)
+
+        if soft_tabs_counter > 1
+
+          string_extract_array[0] = "  "*(soft_tabs_counter-1) + string_extract_array[0]
+
+          string_extract_array[-1] = "  "*(soft_tabs_counter-1) + string_extract_array[-1]
+
+        end
+
+        for x in 1...string_extract_array.length-1
+
+          string_extract_array[x] = "  "*soft_tabs_counter + string_extract_array[x]
+
+        end
+
+        if soft_tabs_counter > 1
+
+          modified_joined_file_contents = modified_joined_file_contents.sub(previous_formatting(string_extract,soft_tabs_counter-1,temporary_nila_file),string_extract_array.join)
+
+        else
+
+          modified_joined_file_contents = modified_joined_file_contents.sub(string_extract,string_extract_array.join)
+
+        end
+
+        soft_tabs_counter += 1
+
+      end
+
+    end
+
+    file_id = open(temporary_nila_file, 'w')
+
+    file_id.write(modified_joined_file_contents)
+
+    file_id.close()
+
+    line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+    return line_by_line_contents
 
   end
 
@@ -681,6 +913,8 @@ def compile(input_file_path)
     File.delete(temporary_nila_file)
 
     file_id.write("//Written in Nila and compiled into Javascript.Have fun!\n\n")
+
+    file_id.write("//Nila is written and maintained by Adhithya Rajasekaran and Sri Madhavi Rajasekaran!\n\n")
 
     file_id.write("//Visit http://adhithyan15.github.com/nila to know more!\n\n")
 
@@ -708,9 +942,13 @@ def compile(input_file_path)
 
   file_contents = compile_named_functions(file_contents,named_functions,nested_functions,temp_file)
 
+  file_contents = remove_question_marks(file_contents,list_of_variables,temp_file)
+
   file_contents = add_semicolons(file_contents)
 
   file_contents = compile_comments(file_contents,comments,temp_file)
+
+  file_contents = pretty_print_javascript(file_contents,temp_file)
 
   output_javascript(file_contents,output_js_file,temp_file)
 
