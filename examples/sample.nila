@@ -2,13 +2,19 @@
 
 hello = "world"
 
-message = "Welcome to our webpage"
+msg = "Nila"
+
+message = "Welcome to #{msg}"
 
 goal_reached = 72
+
+isprime? = false
 
 def printsquare(input_number) #This is a very simple Nila function
 
 	add_number = input_number + 10
+
+	isvalid? = true
 
 	def square(number)
 
@@ -16,14 +22,11 @@ def printsquare(input_number) #This is a very simple Nila function
 
 	end
 
-	console.log(square(add_number))
+	puts("Square of #{add_number} is #{square(add_number)}")
 
 end
 
 printsquare(5)
 
-def printer
 
-	console.log(hello +  world)
 
-end

@@ -127,6 +127,50 @@ def compile(input_file_path)
 
   end
 
+  def compile_interpolated_strings(input_file_contents)
+
+    modified_file_contents = input_file_contents.dup
+
+    input_file_contents.each_with_index do |line,index|
+
+      if line.include?("\#{")
+
+        interpolated_strings = line.scan(/\#{\S{1,}}/)
+
+        interpolated_strings.each do |interpol|
+
+          string_split = line.split(interpol)
+
+          if string_split[1].eql?("\"\n")
+
+            replacement_string = "\" + " + interpol[2...-1]
+
+            modified_file_contents[index] = modified_file_contents[index].sub(interpol+"\"",replacement_string)
+
+          elsif string_split[1].eql?("\")\n")
+
+            replacement_string = "\" + " + interpol[2...-1]
+
+            modified_file_contents[index] = modified_file_contents[index].sub(interpol+"\"",replacement_string)
+
+          else
+
+            replacement_string = "\" + " + interpol[2...-1] + " + \""
+
+            modified_file_contents[index] = modified_file_contents[index].sub(interpol,replacement_string)
+
+          end
+
+        end
+
+      end
+
+    end
+
+    return modified_file_contents
+
+  end
+
   def replace_singleline_comments(input_file_contents)
 
     single_line_comments = []
@@ -182,8 +226,6 @@ def compile(input_file_path)
     nila_regexp = /(def )/
 
     named_code_blocks = []
-
-    function_locations = []
 
     for x in 0...nila_file_contents.length
 
@@ -253,10 +295,6 @@ def compile(input_file_path)
 
       named_code_blocks << extract_array(final_modified_file_contents,top_most_level,matching_level)
 
-      current_function_location = [top_most_level,matching_level]
-
-      function_locations << current_function_location
-
       start_blocks.delete_at(top_most_level_index)
 
       end_blocks.delete(matching_level)
@@ -297,7 +335,7 @@ def compile(input_file_path)
 
     line_by_line_contents = read_file_line_by_line(temporary_nila_file)
 
-    return line_by_line_contents,named_functions,nested_functions,function_locations.sort
+    return line_by_line_contents,named_functions,nested_functions
 
 
   end
@@ -350,8 +388,11 @@ def compile(input_file_path)
 
     line_by_line_contents = read_file_line_by_line(temporary_nila_file)
 
-    return variables.uniq,line_by_line_contents
+    variable_declaration_string = "var " + variables.uniq.join(", ") + "\n\n"
 
+    line_by_line_contents = [variable_declaration_string,line_by_line_contents].flatten
+
+    return variables.uniq,line_by_line_contents
 
   end
 
@@ -592,6 +633,36 @@ def compile(input_file_path)
     
   end
 
+  def compile_custom_function_map(input_file_contents)
+
+    function_map = ["puts"]
+
+    function_map_replacements = {
+
+        "puts" => "console.log"
+
+    }
+
+    modified_file_contents = input_file_contents.dup
+
+    input_file_contents.each_with_index do |line,index|
+
+      function_map.each do |function|
+
+        if line.include?(function+"(") or line.include?(function+" ")
+
+          modified_file_contents[index] = line.sub(function,function_map_replacements[function])
+
+        end
+
+      end
+
+    end
+
+    return modified_file_contents
+
+  end
+
   def compile_conditional_structures(input_file_contents,temporary_nila_file)
 
     #Implementation is pending
@@ -648,7 +719,7 @@ def compile(input_file_path)
 
     line_by_line_contents = read_file_line_by_line(temporary_nila_file)
 
-    return line_by_line_contents
+    line_by_line_contents
 
   end
 
@@ -928,19 +999,19 @@ def compile(input_file_path)
 
   file_contents,multiline_comments,temp_file,output_js_file = replace_multiline_comments(file_contents,input_file_path)
 
+  file_contents = compile_interpolated_strings(file_contents)
+
   file_contents,singleline_comments = replace_singleline_comments(file_contents)
 
-  file_contents,named_functions,nested_functions,function_locations = replace_named_functions(file_contents,temp_file)
+  file_contents,named_functions,nested_functions = replace_named_functions(file_contents,temp_file)
 
   comments = [singleline_comments,multiline_comments]
 
   list_of_variables,file_contents = get_variables(file_contents,temp_file)
 
-  variable_declaration_string = "var " + list_of_variables.join(", ") + "\n\n"
-
-  file_contents = [variable_declaration_string,file_contents].flatten
-
   file_contents = compile_named_functions(file_contents,named_functions,nested_functions,temp_file)
+
+  file_contents = compile_custom_function_map(file_contents)
 
   file_contents = remove_question_marks(file_contents,list_of_variables,temp_file)
 
