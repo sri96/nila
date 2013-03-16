@@ -84,15 +84,17 @@ def compile(input_file_path)
 
     multiline_comment_counter = 1
 
-    location_of_multiline_comments = find_all_matching_indices(file_contents_as_string,"###")
+    multiline_comments_start = find_all_matching_indices(file_contents_as_string,"=begin")
 
-    for y in 0...(location_of_multiline_comments.length)/2
+    multiline_comments_end = find_all_matching_indices(file_contents_as_string,"=end")
 
-      start_of_multiline_comment = location_of_multiline_comments[y]
+    for y in 0...multiline_comments_start.length
 
-      end_of_multiline_comment = location_of_multiline_comments[y+1]
+      start_of_multiline_comment = multiline_comments_start[y]
 
-      multiline_comment = file_contents_as_string[start_of_multiline_comment..end_of_multiline_comment+2]
+      end_of_multiline_comment = multiline_comments_end[y]
+
+      multiline_comment = file_contents_as_string[start_of_multiline_comment..end_of_multiline_comment+3]
 
       modified_file_contents = modified_file_contents.gsub(multiline_comment,"--multiline_comment[#{multiline_comment_counter}]")
 
@@ -701,9 +703,9 @@ def compile(input_file_path)
 
       current_multiline_comment = "--multiline_comment[#{multi_line_comment_counter}]"
 
-      replacement_multiline_string = multiline_comments[y].sub("###","/*\n")
+      replacement_multiline_string = multiline_comments[y].sub("=begin","/*\n")
 
-      replacement_multiline_string = replacement_multiline_string.sub("###","\n*/")
+      replacement_multiline_string = replacement_multiline_string.sub("=end","\n*/")
 
       file_contents_as_string = file_contents_as_string.sub(current_multiline_comment,replacement_multiline_string)
 
