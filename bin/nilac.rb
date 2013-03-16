@@ -443,6 +443,83 @@ def compile(input_file_path)
 
   end
 
+  def compile_arrays(input_file_contents)
+
+    #Currently the following kinds of array constructs are compilable
+
+    # 1. %w{} syntax
+    # 2. Range - Coming soon!
+
+    def extract(input_string,pattern_start,pattern_end)
+
+      def find_all_matching_indices(input_string,pattern)
+
+        locations = []
+
+        index = input_string.index(pattern)
+
+        while index != nil
+
+          locations << index
+
+          index = input_string.index(pattern,index+1)
+
+
+        end
+
+        return locations
+
+
+      end
+
+      all_start_locations = find_all_matching_indices(input_string,pattern_start)
+
+      all_end_locations = find_all_matching_indices(input_string,pattern_end)
+
+      pattern = []
+
+      all_start_locations.each_with_index do |location,index|
+
+        pattern << input_string[location..all_end_locations[index]]
+
+      end
+
+      return pattern
+
+    end
+
+    def compile_w_syntax(input_string)
+
+      modified_input_string = input_string[3...-1]
+
+      string_split = modified_input_string.split(" ")
+
+      return string_split.to_s
+
+    end
+
+    modified_file_contents = input_file_contents.dup
+
+    input_file_contents.each_with_index do |line,index|
+
+      if line.include?("%w{")
+
+        string_arrays = extract(line,"%w{","}")
+
+        string_arrays.each do |array|
+
+          modified_file_contents[index] = modified_file_contents[index].sub(array,compile_w_syntax(array))
+
+        end
+
+      end
+
+    end
+
+    return modified_file_contents
+
+  end
+
   def compile_named_functions(input_file_contents,named_code_blocks,nested_functions,temporary_nila_file)
 
     #This method compiles all the named Nila functions. Below is an example of what is meant
@@ -979,6 +1056,18 @@ def compile(input_file_path)
 
   end
 
+  def pretty_print_nila(input_file_contents)
+
+    #Implementation is pending
+
+  end
+
+  def static_analysis(input_file_contents)
+
+    #Implementation is pending
+
+  end
+
   def output_javascript(file_contents,output_file,temporary_nila_file)
 
     file_id = open(output_file, 'w')
@@ -1010,6 +1099,8 @@ def compile(input_file_path)
   comments = [singleline_comments,multiline_comments]
 
   list_of_variables,file_contents = get_variables(file_contents,temp_file)
+
+  file_contents = compile_arrays(file_contents)
 
   file_contents = compile_named_functions(file_contents,named_functions,nested_functions,temp_file)
 
