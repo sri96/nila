@@ -1,13 +1,9 @@
 //Written in Nila and compiled into Javascript.Have fun!
 
-//Nila is written and maintained by Adhithya Rajasekaran and Sri Madhavi Rajasekaran!
-
 //Visit http://adhithyan15.github.com/nila to know more!
 
-var hello, msg, message, goal_reached, isprime;
+var hello, msg, message, goal_reached, isprime, names;
 
-
-//This is a very basic Nila file. 
 
 hello = "world";
 
@@ -22,6 +18,9 @@ goal_reached = 72;
 
 
 isprime = false;
+
+
+names = ["adhi", "alex", "john", "bill", "kelly"];
 
 
 function printsquare(input_number) {
@@ -51,6 +50,14 @@ function printsquare(input_number) {
 
 
 printsquare(5);
+
+
+function welcome_message() {
+  
+  console.log("Welcome to Nila!");
+  
+  
+}
 
 
 

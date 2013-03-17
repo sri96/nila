@@ -1,5 +1,3 @@
-#This is a very basic Nila file. 
-
 hello = "world"
 
 msg = "Nila"
@@ -9,6 +7,8 @@ message = "Welcome to #{msg}"
 goal_reached = 72
 
 isprime? = false
+
+names = %w{adhi alex john bill kelly}
 
 def printsquare(input_number) #This is a very simple Nila function
 
@@ -22,11 +22,17 @@ def printsquare(input_number) #This is a very simple Nila function
 
 	end
 
-	puts("Square of #{add_number} is #{square(add_number)}")
+	puts "Square of #{add_number} is #{square(add_number)}"
 
 end
 
-printsquare(5)
+printsquare 5
+
+def welcome_message
+
+  puts "Welcome to Nila!"
+
+end
 
 
 

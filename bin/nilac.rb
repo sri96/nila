@@ -680,11 +680,35 @@ def compile(input_file_path)
 
     end
 
+    def extract_function_name(input_code_block)
+
+      first_line = input_code_block[0]
+
+      first_line_split = first_line.split(" ")
+
+      if first_line_split[1].include?("(")
+
+        function_name,parameters = first_line_split[1].split("(")
+
+      else
+
+        function_name = first_line_split[1]
+
+      end
+
+      return function_name
+
+    end
+
     joined_file_contents = input_file_contents.join
 
     codeblock_counter = 1
 
+    function_names = []
+
     named_code_blocks.each do |codeblock|
+
+      function_names[codeblock_counter-1] = []
 
       joined_file_contents = joined_file_contents.sub("--named_function[#{codeblock_counter}]\n",compile_function(codeblock,temporary_nila_file).join)
 
@@ -692,7 +716,11 @@ def compile(input_file_path)
 
       current_nested_functions = nested_functions[codeblock_counter-2]
 
+      function_names[codeblock_counter-2] << extract_function_name(codeblock)
+
       current_nested_functions.each do |nested_function|
+
+        function_names[codeblock_counter-2] << extract_function_name(nested_function)
 
         joined_file_contents = joined_file_contents.sub(nested_function.join,compile_function(nested_function,temporary_nila_file).join)
 
@@ -708,7 +736,7 @@ def compile(input_file_path)
 
     line_by_line_contents = read_file_line_by_line(temporary_nila_file)
 
-    return line_by_line_contents
+    return line_by_line_contents,function_names
     
   end
 
@@ -738,7 +766,84 @@ def compile(input_file_path)
 
     end
 
-    return modified_file_contents
+    return modified_file_contents,function_map_replacements.values
+
+  end
+
+  def compile_whitespace_delimited_functions(input_file_contents,function_names,temporary_nila_file)
+
+    def extract(input_string,pattern_start,pattern_end)
+
+      def find_all_matching_indices(input_string,pattern)
+
+        locations = []
+
+        index = input_string.index(pattern)
+
+        while index != nil
+
+          locations << index
+
+          index = input_string.index(pattern,index+1)
+
+
+        end
+
+        return locations
+
+
+      end
+
+      all_start_locations = find_all_matching_indices(input_string,pattern_start)
+
+      pattern = []
+
+      all_start_locations.each do |location|
+
+        extracted_string = input_string[location..-1]
+
+        pattern << extracted_string[0..extracted_string.index(pattern_end)]
+
+      end
+
+
+      return pattern
+
+    end
+
+    joined_file_contents = input_file_contents.join
+
+    function_names.each do |list_of_functions|
+
+      list_of_functions.each do |function|
+
+        matching_strings = extract(joined_file_contents,function+" ","\n")
+
+        matching_strings.each do |string|
+
+          modified_string = string.dup
+
+          modified_string = modified_string.sub(function+" ",function+"(")
+
+          modified_string = modified_string.sub("\n",")\n")
+
+          joined_file_contents = joined_file_contents.sub(string,modified_string)
+
+        end
+
+      end
+
+    end
+
+    file_id = open(temporary_nila_file, 'w')
+
+    file_id.write(joined_file_contents)
+
+    file_id.close()
+
+    line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+    return line_by_line_contents
 
   end
 
@@ -1076,8 +1181,6 @@ def compile(input_file_path)
 
     file_id.write("//Written in Nila and compiled into Javascript.Have fun!\n\n")
 
-    file_id.write("//Nila is written and maintained by Adhithya Rajasekaran and Sri Madhavi Rajasekaran!\n\n")
-
     file_id.write("//Visit http://adhithyan15.github.com/nila to know more!\n\n")
 
     file_id.write(file_contents.join)
@@ -1102,9 +1205,13 @@ def compile(input_file_path)
 
   file_contents = compile_arrays(file_contents)
 
-  file_contents = compile_named_functions(file_contents,named_functions,nested_functions,temp_file)
+  file_contents, function_names = compile_named_functions(file_contents,named_functions,nested_functions,temp_file)
 
-  file_contents = compile_custom_function_map(file_contents)
+  file_contents, ruby_functions = compile_custom_function_map(file_contents)
+
+  function_names << ruby_functions
+
+  file_contents = compile_whitespace_delimited_functions(file_contents,function_names,temp_file)
 
   file_contents = remove_question_marks(file_contents,list_of_variables,temp_file)
 
