@@ -129,6 +129,46 @@ def compile(input_file_path)
 
   end
 
+  def split_semicolon_seperated_expressions(input_file_contents)
+
+    modified_file_contents = input_file_contents.dup
+
+    input_file_contents.each_with_index do |line,index|
+
+      if line.include?("\"")
+
+        first_index = line.index("\"")
+
+        modified_line = line.sub(line[first_index..line.index("\"",first_index+1)],"--string")
+
+      elsif line.include?("'")
+
+        first_index = line.index("'")
+
+        modified_line = line.sub(line[first_index..line.index("'",first_index+1)],"--string")
+
+      else
+
+        modified_line = line
+
+      end
+
+      if modified_line.include?(";")
+
+        replacement_line = modified_file_contents[index]
+
+        replacement_line = replacement_line.split(";").join("\n\n") + "\n"
+
+        modified_file_contents[index] = replacement_line
+
+      end
+
+    end
+
+    return modified_file_contents
+
+  end
+
   def compile_interpolated_strings(input_file_contents)
 
     modified_file_contents = input_file_contents.dup
@@ -602,6 +642,28 @@ def compile(input_file_path)
 
     end
 
+    def add_auto_return_statement(input_array)
+
+      joined_array = input_array.join
+
+      reversed_input_array = input_array.reverse
+
+      if !joined_array.include?("return ")
+
+        rejected_array = reversed_input_array.reject {|content| content.eql?("\n") || content.lstrip.eql?("}\n")}
+
+        last_statement = rejected_array[0]
+
+        replacement_string = "return #{last_statement.lstrip}"
+
+        input_array[input_array.index(last_statement)] = replacement_string
+
+      end
+
+      return input_array
+
+    end
+
     def compile_function(input_array,temporary_nila_file)
 
       modified_input_array = input_array.dup
@@ -675,6 +737,8 @@ def compile(input_file_path)
       end
 
       modified_input_array = remove_question_marks(modified_input_array,variables,temporary_nila_file)
+
+      modified_input_array = add_auto_return_statement(modified_input_array)
 
       return modified_input_array
 
@@ -849,7 +913,11 @@ def compile(input_file_path)
 
   def compile_conditional_structures(input_file_contents,temporary_nila_file)
 
-    #Implementation is pending
+    #Currently the following conditional structures have been implemented
+
+    #1. If, Elsif, Else Statement
+
+
 
   end
 
@@ -1057,7 +1125,7 @@ def compile(input_file_path)
 
     end
 
-    javascript_regexp = /(function )/
+    javascript_regexp = /(function |function\()/
 
     locations = []
 
@@ -1072,6 +1140,22 @@ def compile(input_file_path)
     combined_location = [code_block_starting_locations,code_block_ending_locations.dup].flatten.sort
 
     last_matching_location = 0
+
+    self_invoking_function_extract = joined_file_contents[code_block_starting_locations[0]..code_block_ending_locations[-1]]
+
+    self_invoking_function_array = convert_string_to_array(self_invoking_function_extract,temporary_nila_file)
+
+    combined_location.delete_at(0); combined_location.delete_at(-1); code_block_ending_locations.delete_at(-1); code_block_starting_locations.delete_at(0)
+
+    modified_self_invoking_array = self_invoking_function_array.dup
+
+    for x in 1...self_invoking_function_array.length-1
+
+      modified_self_invoking_array[x] = "  " + self_invoking_function_array[x]
+
+    end
+
+    modified_self_invoking_array[-1] = "\n\n" + modified_self_invoking_array[-1]
 
     while code_block_ending_locations.length > 0
 
@@ -1109,9 +1193,11 @@ def compile(input_file_path)
 
     modified_joined_file_contents = joined_file_contents.dup
 
+    modified_joined_file_contents = modified_joined_file_contents.sub(self_invoking_function_extract,modified_self_invoking_array.join)
+
     modified_locations.each do |location|
 
-      soft_tabs_counter = 1
+      soft_tabs_counter = 2
 
       location.each do |sublocation|
 
@@ -1173,6 +1259,17 @@ def compile(input_file_path)
 
   end
 
+  def create_self_invoking_function(input_file_contents)
+
+    # A feature imported from Coffeescript 1.6.1. This makes all the function private by default
+    # and prevents global variables from leaking.
+
+    modified_file_contents = ["(function() {\n\n",input_file_contents,"\n\n}).call(this);\n"].flatten
+
+    return modified_file_contents
+
+  end
+
   def output_javascript(file_contents,output_file,temporary_nila_file)
 
     file_id = open(output_file, 'w')
@@ -1192,6 +1289,8 @@ def compile(input_file_path)
   file_contents = read_file_line_by_line(input_file_path)
 
   file_contents,multiline_comments,temp_file,output_js_file = replace_multiline_comments(file_contents,input_file_path)
+
+  file_contents = split_semicolon_seperated_expressions(file_contents)
 
   file_contents = compile_interpolated_strings(file_contents)
 
@@ -1218,6 +1317,8 @@ def compile(input_file_path)
   file_contents = add_semicolons(file_contents)
 
   file_contents = compile_comments(file_contents,comments,temp_file)
+
+  file_contents = create_self_invoking_function(file_contents)
 
   file_contents = pretty_print_javascript(file_contents,temp_file)
 

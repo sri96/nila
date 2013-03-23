@@ -1,6 +1,4 @@
-hello = "world"
-
-msg = "Nila"
+hello = "world";msg = "Nila"
 
 message = "Welcome to #{msg}"
 
@@ -12,17 +10,17 @@ names = %w{adhi alex john bill kelly}
 
 def printsquare(input_number) #This is a very simple Nila function
 
-	add_number = input_number + 10
+  add_number = input_number + 10
 
-	isvalid? = true
+  isvalid? = true
 
-	def square(number)
+  def square(number)
 
-		return number*number
+    number*number
 
-	end
+  end
 
-	puts "Square of #{add_number} is #{square(add_number)}"
+  puts "Square of #{add_number} is #{square(add_number)}"
 
 end
 
@@ -33,6 +31,3 @@ def welcome_message
   puts "Welcome to Nila!"
 
 end
-
-
-
