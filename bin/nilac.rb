@@ -1532,7 +1532,7 @@ OptionParser.new do |opts|
 
   end
 
-  opts.on("-b", "--build FILE", "Builds Itself") do |file|
+  opts.on("-b", "--build", "Builds Itself") do
 
     file_path = Dir.pwd + "/nilac.rb"
 
@@ -1542,13 +1542,21 @@ OptionParser.new do |opts|
 
   end
 
-  opts.on("-m", "--buildmac FILE", "Builds Mac Executables") do |macfile|
+  opts.on("-m", "--buildmac", "Builds Mac Executables") do
 
     file_path = Dir.pwd + "/nilac.rb"
 
     create_mac_executable(file_path)
 
     puts "Build Successful!"
+
+  end
+
+  opts.on("-v", "--version", "Version of Nilac") do
+
+    version_number = "0.0.1"
+
+    puts "Current Nilac Version: #{version_number}"
 
   end
 
