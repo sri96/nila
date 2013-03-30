@@ -4,7 +4,11 @@
 
 #Nila was created by Adhithya Rajasekaran and Nilac is maintained by Adhithya Rajasekaran and Sri Madhavi Rajasekaran
 
+<<<<<<< HEAD
 require 'optparse'
+=======
+require 'optparse' #Nilac uses optparse to parse command line options.
+>>>>>>> f4687fd26e3c7520a3ff7f1c01d6d7d746482596
 
 def compile(input_file_path)
 
@@ -20,6 +24,7 @@ def compile(input_file_path)
 
   end
 
+<<<<<<< HEAD
   def extract_parsable_array(input_file_contents)
 
     #This method finds and removes the __END__ keyword and the following lines in a Nila file.
@@ -58,6 +63,8 @@ def compile(input_file_path)
 
   end
 
+=======
+>>>>>>> f4687fd26e3c7520a3ff7f1c01d6d7d746482596
   def replace_multiline_comments(input_file_contents,nila_file_path)
 
     #This method will replace both the single and multiline comments
@@ -195,7 +202,11 @@ def compile(input_file_path)
 
         replacement_line = modified_file_contents[index]
 
+<<<<<<< HEAD
         replacement_line = replacement_line.split(";").join("\n\n")
+=======
+        replacement_line = replacement_line.split(";").join("\n\n") + "\n"
+>>>>>>> f4687fd26e3c7520a3ff7f1c01d6d7d746482596
 
         modified_file_contents[index] = replacement_line
 
@@ -207,6 +218,7 @@ def compile(input_file_path)
 
   end
 
+<<<<<<< HEAD
   def compile_heredoc_strings(input_file_contents,temporary_nila_file)
 
     #This method will compile all the Heredoc strings in Nila into pure
@@ -284,6 +296,8 @@ def compile(input_file_path)
 
   end
 
+=======
+>>>>>>> f4687fd26e3c7520a3ff7f1c01d6d7d746482596
   def compile_interpolated_strings(input_file_contents)
 
     modified_file_contents = input_file_contents.dup
@@ -392,7 +406,11 @@ def compile(input_file_path)
 
         key_word_locations << x
 
+<<<<<<< HEAD
       elsif current_row.include?("end\n")
+=======
+      elsif current_row.include?("end\n") || current_row.include?("end")
+>>>>>>> f4687fd26e3c7520a3ff7f1c01d6d7d746482596
 
         end_locations << x
 
@@ -1403,14 +1421,20 @@ def compile(input_file_path)
 
   file_contents = read_file_line_by_line(input_file_path)
 
+<<<<<<< HEAD
   file_contents = extract_parsable_array(file_contents)
 
+=======
+>>>>>>> f4687fd26e3c7520a3ff7f1c01d6d7d746482596
   file_contents,multiline_comments,temp_file,output_js_file = replace_multiline_comments(file_contents,input_file_path)
 
   file_contents = split_semicolon_seperated_expressions(file_contents)
 
+<<<<<<< HEAD
   file_contents = compile_heredoc_strings(file_contents,temp_file)
 
+=======
+>>>>>>> f4687fd26e3c7520a3ff7f1c01d6d7d746482596
   file_contents = compile_interpolated_strings(file_contents)
 
   file_contents,singleline_comments = replace_singleline_comments(file_contents)

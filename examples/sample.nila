@@ -2,6 +2,7 @@ hello = "world";msg = "Nila"
 
 message = "Welcome to #{msg}"
 
+<<<<<<< HEAD
 long_passage = <<-ipsumtext    
 
 Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor 
@@ -13,6 +14,8 @@ deserunt mollit anim id est laborum.
 
 ipsumtext
 
+=======
+>>>>>>> f4687fd26e3c7520a3ff7f1c01d6d7d746482596
 goal_reached = 72
 
 isprime? = false
@@ -41,8 +44,12 @@ def welcome_message
 
   puts "Welcome to Nila!"
 
+<<<<<<< HEAD
 end
 
 __END__
 
 puts "This wont execute!"
+=======
+end
+>>>>>>> f4687fd26e3c7520a3ff7f1c01d6d7d746482596
