@@ -1,0 +1,48 @@
+hello = "world";msg = "Nila"
+
+message = "Welcome to #{msg}"
+
+long_passage = <<-ipsumtext    
+
+Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor 
+incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud 
+exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute 
+irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla 
+pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia
+deserunt mollit anim id est laborum.
+
+ipsumtext
+
+goal_reached = 72
+
+isprime? = false
+
+names = %w{adhi alex john bill kelly}
+
+def printsquare(input_number) #This is a very simple Nila function
+
+  add_number = input_number + 10
+
+  isvalid? = true
+
+  def square(number)
+
+    number*number
+
+  end
+
+  puts "Square of #{add_number} is #{square(add_number)}"
+
+end
+
+printsquare 5
+
+def welcome_message
+
+  puts "Welcome to Nila!"
+
+end
+
+__END__
+
+puts "This wont execute!"
