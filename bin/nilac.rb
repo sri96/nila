@@ -4,7 +4,7 @@
 
 #Nila was created by Adhithya Rajasekaran and Nilac is maintained by Adhithya Rajasekaran and Sri Madhavi Rajasekaran
 
-require 'optparse' #Nilac uses optparse to parse command line options.
+require 'optparse'
 
 def compile(input_file_path)
 
@@ -17,6 +17,22 @@ def compile(input_file_path)
     file_id.close
 
     return file_line_by_line
+
+  end
+
+  def extract_parsable_file(input_file_contents)
+
+    reversed_file_contents = input_file_contents.reverse
+
+    line_counter = 0
+
+    while !reversed_file_contents[line_counter].strip.include?("__END__")
+
+      line_counter += 1
+
+    end
+
+    puts input_file_contents[-1*line_counter-1]
 
   end
 
@@ -430,9 +446,13 @@ def compile(input_file_path)
 
     line_by_line_contents = read_file_line_by_line(temporary_nila_file)
 
-    variable_declaration_string = "var " + variables.uniq.join(", ") + "\n\n"
+    if variables.length > 0
 
-    line_by_line_contents = [variable_declaration_string,line_by_line_contents].flatten
+      variable_declaration_string = "var " + variables.uniq.join(", ") + "\n\n"
+
+      line_by_line_contents = [variable_declaration_string,line_by_line_contents].flatten
+
+    end
 
     return variables.uniq,line_by_line_contents
 
@@ -1287,6 +1307,8 @@ def compile(input_file_path)
   end
 
   file_contents = read_file_line_by_line(input_file_path)
+
+  extract_parasable_file(file_contents)
 
   file_contents,multiline_comments,temp_file,output_js_file = replace_multiline_comments(file_contents,input_file_path)
 
