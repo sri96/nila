@@ -20,19 +20,42 @@ def compile(input_file_path)
 
   end
 
-  def extract_parsable_file(input_file_contents)
 
-    reversed_file_contents = input_file_contents.reverse
+  def extract_parsable_array(input_file_contents)
 
-    line_counter = 0
+    #This method finds and removes the __END__ keyword and the following lines in a Nila file.
 
-    while !reversed_file_contents[line_counter].strip.include?("__END__")
+    modified_file_contents = input_file_contents.dup
 
-      line_counter += 1
+    end_index = 0
+
+    input_file_contents.each_with_index do |line,index|
+
+      if line.strip.eql?("__END__")
+
+        end_index = index
+
+      end
 
     end
 
-    puts input_file_contents[-1*line_counter-1]
+    if end_index == 0
+
+      output = modified_file_contents
+
+    else
+
+      output = modified_file_contents[0..end_index-1]
+
+      while output[-1].eql?("\n")
+
+        output.delete_at(-1)
+
+      end
+
+    end
+
+    return output
 
   end
 
@@ -131,11 +154,7 @@ def compile(input_file_path)
 
     file_id.write(modified_file_contents)
 
-    file_id2.write("//Written in Nila and compiled to Javascript. Have fun!\n\n")
-
     file_id.close()
-
-    file_id2.close()
 
     line_by_line_contents = read_file_line_by_line(temporary_nila_file)
 
@@ -173,7 +192,7 @@ def compile(input_file_path)
 
         replacement_line = modified_file_contents[index]
 
-        replacement_line = replacement_line.split(";").join("\n\n") + "\n"
+        replacement_line = replacement_line.split(";").join("\n\n")
 
         modified_file_contents[index] = replacement_line
 
@@ -182,6 +201,83 @@ def compile(input_file_path)
     end
 
     return modified_file_contents
+
+  end
+
+  def compile_heredoc_strings(input_file_contents,temporary_nila_file)
+
+    #This method will compile all the Heredoc strings in Nila into pure
+    #Javascript strings. Ruby has two types of Heredocs. Currently, Nila doesn't support both of them.
+    #Here is an example of what Nila supports
+
+    #long_passage = <<-ipsumtext
+    #
+    #Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
+    #incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+    #exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute
+    #irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+    #pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia
+    #deserunt mollit anim id est laborum.
+    #
+    #ipsumtext
+
+    def find_all_matching_indices(input_string,pattern)
+
+      locations = []
+
+      index = input_string.index(pattern)
+
+      while index != nil
+
+        locations << index
+
+        index = input_string.index(pattern,index+1)
+
+
+      end
+
+      return locations
+
+
+    end
+
+    preserve_formatting = %w{ \n \t }
+
+    joined_file_contents = input_file_contents.join
+
+    modified_file_contents = joined_file_contents.dup
+
+    heredoc_start_locations = find_all_matching_indices(joined_file_contents,"<<-")
+
+    heredoc_start_locations.each do |location|
+
+      string_extract = joined_file_contents[location..-1]
+
+      end_of_first_line = string_extract.index("\n")
+
+      name_of_heredoc = string_extract[3...end_of_first_line].rstrip
+
+      heredoc_start,heredoc_end = find_all_matching_indices(string_extract,name_of_heredoc)
+
+      heredoc = string_extract[heredoc_start..heredoc_end+name_of_heredoc.length-1]
+
+      heredoc_content = heredoc.split(name_of_heredoc)
+
+      heredoc_content = heredoc_content[1].lstrip.rstrip.gsub("\n","\\n").gsub("\t","\\t")
+
+      modified_file_contents = modified_file_contents.sub(string_extract[heredoc_start-3..heredoc_end+name_of_heredoc.length-1],"\""+heredoc_content+"\"")
+
+    end
+
+    file_id = open(temporary_nila_file, 'w')
+
+    file_id.write(modified_file_contents)
+
+    file_id.close()
+
+    line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+    return line_by_line_contents
 
   end
 
@@ -293,7 +389,7 @@ def compile(input_file_path)
 
         key_word_locations << x
 
-      elsif current_row.include?("end\n") || current_row.include?("end")
+      elsif current_row.include?("end\n")
 
         end_locations << x
 
@@ -1308,11 +1404,13 @@ def compile(input_file_path)
 
   file_contents = read_file_line_by_line(input_file_path)
 
-  extract_parasable_file(file_contents)
+  file_contents = extract_parsable_array(file_contents)
 
   file_contents,multiline_comments,temp_file,output_js_file = replace_multiline_comments(file_contents,input_file_path)
 
   file_contents = split_semicolon_seperated_expressions(file_contents)
+
+  file_contents = compile_heredoc_strings(file_contents,temp_file)
 
   file_contents = compile_interpolated_strings(file_contents)
 
@@ -1435,7 +1533,7 @@ OptionParser.new do |opts|
 
   end
 
-  opts.on("-b", "--build FILE", "Builds Itself") do |file|
+  opts.on("-b", "--build", "Builds Itself") do
 
     file_path = Dir.pwd + "/nilac.rb"
 
@@ -1445,7 +1543,7 @@ OptionParser.new do |opts|
 
   end
 
-  opts.on("-m", "--buildmac FILE", "Builds Mac Executables") do |macfile|
+  opts.on("-m", "--buildmac", "Builds Mac Executables") do
 
     file_path = Dir.pwd + "/nilac.rb"
 
@@ -1454,5 +1552,6 @@ OptionParser.new do |opts|
     puts "Build Successful!"
 
   end
+
 
 end.parse!
