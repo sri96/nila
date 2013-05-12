@@ -26,13 +26,21 @@ def compile(input_file_path)
 
     line_counter = 0
 
-    while !reversed_file_contents[line_counter].strip.include?("__END__")
+    if input_file_contents.join.include?("__END__")
 
-      line_counter += 1
+      while !reversed_file_contents[line_counter].strip.include?("__END__")
+
+        line_counter += 1
+
+      end
+
+      return_contents = input_file_contents[0...-1*line_counter-1]
+
+    else
+
+      input_file_contents
 
     end
-
-    return_contents = input_file_contents[0...-1*line_counter-1]
 
   end
 
@@ -1341,7 +1349,7 @@ def compile(input_file_path)
 
   def create_self_invoking_function(input_file_contents)
 
-    # A feature imported from Coffeescript 1.6.1. This makes all the function private by default
+    # A feature imported from Coffeescript. This makes all the function private by default
     # and prevents global variables from leaking.
 
     modified_file_contents = ["(function() {\n\n",input_file_contents,"\n\n}).call(this);\n"].flatten
