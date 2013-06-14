@@ -26,13 +26,21 @@ def compile(input_file_path)
 
     line_counter = 0
 
-    while !reversed_file_contents[line_counter].strip.include?("__END__")
+    if input_file_contents.join.include?("__END__")
 
-      line_counter += 1
+      while !reversed_file_contents[line_counter].strip.include?("__END__")
+
+        line_counter += 1
+
+      end
+
+      return_contents = input_file_contents[0...-1*line_counter-1]
+
+    else
+
+      input_file_contents
 
     end
-
-    return_contents = input_file_contents[0...-1*line_counter-1]
 
   end
 
@@ -131,8 +139,6 @@ def compile(input_file_path)
 
     file_id.write(modified_file_contents)
 
-    file_id2.write("//Written in Nila and compiled to Javascript. Have fun!\n\n")
-
     file_id.close()
 
     file_id2.close()
@@ -142,6 +148,107 @@ def compile(input_file_path)
     comments = multiline_comments.dup
 
     return line_by_line_contents,comments,temporary_nila_file,output_js_file
+
+  end
+
+  def no_output_js_file(input_file_contents)
+
+    #This method will replace both the single and multiline comments
+    #
+    #Single line comment will be replaced by => --single_line_comment[n]
+    #
+    #Multiline comment will be replaced by => --multiline_comment[n]
+
+    def find_all_matching_indices(input_string,pattern)
+
+      locations = []
+
+      index = input_string.index(pattern)
+
+      while index != nil
+
+        locations << index
+
+        index = input_string.index(pattern,index+1)
+
+
+      end
+
+      return locations
+
+
+    end
+
+    def find_file_path(input_path,file_extension)
+
+      extension_remover = input_path.split(file_extension)
+
+      remaining_string = extension_remover[0].reverse
+
+      path_finder = remaining_string.index("/")
+
+      remaining_string = remaining_string.reverse
+
+      return remaining_string[0...remaining_string.length-path_finder]
+
+    end
+
+    def find_file_name(input_path,file_extension)
+
+      extension_remover = input_path.split(file_extension)
+
+      remaining_string = extension_remover[0].reverse
+
+      path_finder = remaining_string.index("/")
+
+      remaining_string = remaining_string.reverse
+
+      return remaining_string[remaining_string.length-path_finder..-1]
+
+    end
+
+    multiline_comments = []
+
+    file_contents_as_string = input_file_contents.join
+
+    modified_file_contents = file_contents_as_string.dup
+
+    multiline_comment_counter = 1
+
+    multiline_comments_start = find_all_matching_indices(file_contents_as_string,"=begin")
+
+    multiline_comments_end = find_all_matching_indices(file_contents_as_string,"=end")
+
+    for y in 0...multiline_comments_start.length
+
+      start_of_multiline_comment = multiline_comments_start[y]
+
+      end_of_multiline_comment = multiline_comments_end[y]
+
+      multiline_comment = file_contents_as_string[start_of_multiline_comment..end_of_multiline_comment+3]
+
+      modified_file_contents = modified_file_contents.gsub(multiline_comment,"--multiline_comment[#{multiline_comment_counter}]")
+
+      multiline_comment_counter += 1
+
+      multiline_comments << multiline_comment
+
+
+    end
+
+    temporary_nila_file = Dir.pwd + "temp_nila.nila"
+
+    file_id = open(temporary_nila_file, 'w')
+
+    file_id.write(modified_file_contents)
+
+    file_id.close()
+
+    line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+    comments = multiline_comments.dup
+
+    return line_by_line_contents,comments,temporary_nila_file
 
   end
 
@@ -414,7 +521,7 @@ def compile(input_file_path)
 
       #The condition below verifies if the rows contain any equation operators.
 
-      if current_row.include?("=")
+      if current_row.include?("=") and !current_row.include?("def")
 
         current_row = current_row.rstrip + "\n"
 
@@ -587,7 +694,7 @@ def compile(input_file_path)
 
     #def square(input_number)
     #
-    #   return input_number*input_number
+    #   input_number*input_number
     #
     #end
 
@@ -622,7 +729,7 @@ def compile(input_file_path)
 
       input_function_block.each do |line|
 
-        if line.include? "="
+        if line.include? "=" and !line.include?("def")
 
           current_line_split = line.strip.split("=")
 
@@ -826,15 +933,17 @@ def compile(input_file_path)
 
   def compile_custom_function_map(input_file_contents)
 
-    function_map = ["puts","print"]
-
     function_map_replacements = {
 
         "puts" => "console.log",
 
-        "print" => "console.log"
+        "print" => "console.log",
+
+        "p" => "console.log"
 
     }
+
+    function_map = function_map_replacements.keys
 
     modified_file_contents = input_file_contents.dup
 
@@ -897,6 +1006,8 @@ def compile(input_file_path)
 
     end
 
+    input_file_contents[-1] = input_file_contents[-1] + "\n" if !input_file_contents[-1].include?("\n")
+
     joined_file_contents = input_file_contents.join
 
     function_names.each do |list_of_functions|
@@ -937,7 +1048,7 @@ def compile(input_file_path)
 
     #Currently the following conditional structures have been implemented
 
-    #1. If, Elsif, Else Statement
+    #1. If and While Inline Statements
 
     def compile_inline_conditionals(input_file_contents,temporary_nila_file)
 
@@ -1259,7 +1370,17 @@ def compile(input_file_path)
 
     nested_indices.each_with_index do |loc,index|
 
-      locations[loc-1] << nested_elements[index]
+      begin
+
+        locations[loc-1] << nested_elements[index]
+
+      rescue NoMethodError
+
+        p "The pretty printing process exited with errors!"
+
+      end
+
+
 
     end
 
@@ -1327,6 +1448,12 @@ def compile(input_file_path)
 
   end
 
+  def fix_newlines(input_file_contents)
+
+
+
+  end
+
   def pretty_print_nila(input_file_contents)
 
     #Implementation is pending
@@ -1341,10 +1468,10 @@ def compile(input_file_path)
 
   def create_self_invoking_function(input_file_contents)
 
-    # A feature imported from Coffeescript 1.6.1. This makes all the function private by default
+    # A feature imported from Coffeescript. This makes all the function private by default
     # and prevents global variables from leaking.
 
-    modified_file_contents = ["(function() {\n\n",input_file_contents,"\n\n}).call(this);\n"].flatten
+    modified_file_contents = ["(function() {\n",input_file_contents,"\n}).call(this);"].flatten
 
     return modified_file_contents
 
@@ -1356,9 +1483,7 @@ def compile(input_file_path)
 
     File.delete(temporary_nila_file)
 
-    file_id.write("//Written in Nila and compiled into Javascript.Have fun!\n\n")
-
-    file_id.write("//Visit http://adhithyan15.github.com/nila to know more!\n\n")
+    file_id.write("//Written in Nila 0.0.3.2. Visit http://adhithyan15.github.io/nila\n\n")
 
     file_id.write(file_contents.join)
 
@@ -1443,7 +1568,7 @@ def create_mac_executable(input_file)
 
   end
 
-  mac_file_contents = ["#!/usr/bin/env ruby\n\n"] + read_file_line_by_line(input_file)
+  mac_file_contents = ["#!/usr/bin/env ruby"] + read_file_line_by_line(input_file)
 
   mac_file_path = input_file.sub(".rb","")
 
@@ -1497,7 +1622,7 @@ OptionParser.new do |opts|
 
   end
 
-  opts.on("-b", "--build FILE", "Builds Itself") do |file|
+  opts.on("-b", "--build", "Builds Itself") do
 
     file_path = Dir.pwd + "/nilac.rb"
 
@@ -1507,7 +1632,7 @@ OptionParser.new do |opts|
 
   end
 
-  opts.on("-m", "--buildmac FILE", "Builds Mac Executables") do |macfile|
+  opts.on("-m", "--buildmac", "Builds Mac Executables") do
 
     file_path = Dir.pwd + "/nilac.rb"
 
