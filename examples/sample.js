@@ -1,10 +1,7 @@
-//Written in Nila and compiled into Javascript.Have fun!
-
-//Visit http://adhithyan15.github.com/nila to know more!
+//Written in Nila 0.0.3.2. Visit http://adhithyan15.github.io/nila
 
 (function() {
-  
-  var hello, msg, message, long_passage, goal_reached, isprime, names;
+  var hello, msg, message, goal_reached, isprime, visitor_present, names;
   
   
   hello = "world";
@@ -13,10 +10,8 @@
   msg = "Nila";
   
   
+  
   message = "Welcome to " + msg;
-  
-  
-  long_passage = "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor \nincididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud \nexercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute \nirure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla \npariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia\ndeserunt mollit anim id est laborum.";
   
   
   goal_reached = 72;
@@ -24,6 +19,15 @@
   
   isprime = false;
   
+  
+  visitor_present = true;
+  
+  
+  if (visitor_present) {
+    
+    console.log("Hello Visitor!");
+    
+  }
   
   names = ["adhi", "alex", "john", "bill", "kelly"];
   
@@ -54,7 +58,7 @@
   }
   
   
-  printsquare(5);
+  console.log(printsquare(5));
   
   
   function welcome_message() {
@@ -63,6 +67,9 @@
     
     
   }
+  
+  
+  console.log(welcome_message());
   
 
 
