@@ -492,9 +492,9 @@ OptionParser.new do |opts|
 
   opts.on("-i","--init","Initialize Shark in this project") do
 
-    FileUtils.mkdir_p "Shark\\features"
+    FileUtils.mkdir_p "shark\\features"
 
-    FileUtils.mkdir_p "Shark\\test_files"
+    FileUtils.mkdir_p "shark\\test_files"
 
     puts "Shark has been successfully initialized!"
 
