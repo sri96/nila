@@ -1,12 +1,12 @@
 #Nilac is the official Nila compiler. It compiles Nila into pure Javascript. Nilac is currently
-#written in Ruby but will be self hosted in the upcoming years. Nila targets mostly the
-#Node.js developers rather than client side developers.
+#written in Ruby but will be self hosted in the upcoming years.
 
-#Nila was created by Adhithya Rajasekaran and Nilac is maintained by Adhithya Rajasekaran and Sri Madhavi Rajasekaran
+#Nila and Nilac are being crafted by Adhithya Rajasekaran and Sri Madhavi Rajasekaran
 
-require 'optparse'
+require 'slop'
+require 'fileutils'
 
-def compile(input_file_path)
+def compile(input_file_path,*output_file_name)
 
   def read_file_line_by_line(input_path)
 
@@ -44,7 +44,7 @@ def compile(input_file_path)
 
   end
 
-  def replace_multiline_comments(input_file_contents,nila_file_path)
+  def replace_multiline_comments(input_file_contents,nila_file_path,*output_js_file_path)
 
     #This method will replace both the single and multiline comments
     #
@@ -131,7 +131,15 @@ def compile(input_file_path)
 
     temporary_nila_file = find_file_path(nila_file_path,".nila") + "temp_nila.nila"
 
-    output_js_file = find_file_path(nila_file_path,".nila") + find_file_name(nila_file_path,".nila") + ".js"
+    if output_js_file_path.empty?
+
+      output_js_file = find_file_path(nila_file_path,".nila") + find_file_name(nila_file_path,".nila") + ".js"
+
+    else
+
+      output_js_file = output_js_file_path[0]
+
+    end
 
     file_id = open(temporary_nila_file, 'w')
 
@@ -148,107 +156,6 @@ def compile(input_file_path)
     comments = multiline_comments.dup
 
     return line_by_line_contents,comments,temporary_nila_file,output_js_file
-
-  end
-
-  def no_output_js_file(input_file_contents)
-
-    #This method will replace both the single and multiline comments
-    #
-    #Single line comment will be replaced by => --single_line_comment[n]
-    #
-    #Multiline comment will be replaced by => --multiline_comment[n]
-
-    def find_all_matching_indices(input_string,pattern)
-
-      locations = []
-
-      index = input_string.index(pattern)
-
-      while index != nil
-
-        locations << index
-
-        index = input_string.index(pattern,index+1)
-
-
-      end
-
-      return locations
-
-
-    end
-
-    def find_file_path(input_path,file_extension)
-
-      extension_remover = input_path.split(file_extension)
-
-      remaining_string = extension_remover[0].reverse
-
-      path_finder = remaining_string.index("/")
-
-      remaining_string = remaining_string.reverse
-
-      return remaining_string[0...remaining_string.length-path_finder]
-
-    end
-
-    def find_file_name(input_path,file_extension)
-
-      extension_remover = input_path.split(file_extension)
-
-      remaining_string = extension_remover[0].reverse
-
-      path_finder = remaining_string.index("/")
-
-      remaining_string = remaining_string.reverse
-
-      return remaining_string[remaining_string.length-path_finder..-1]
-
-    end
-
-    multiline_comments = []
-
-    file_contents_as_string = input_file_contents.join
-
-    modified_file_contents = file_contents_as_string.dup
-
-    multiline_comment_counter = 1
-
-    multiline_comments_start = find_all_matching_indices(file_contents_as_string,"=begin")
-
-    multiline_comments_end = find_all_matching_indices(file_contents_as_string,"=end")
-
-    for y in 0...multiline_comments_start.length
-
-      start_of_multiline_comment = multiline_comments_start[y]
-
-      end_of_multiline_comment = multiline_comments_end[y]
-
-      multiline_comment = file_contents_as_string[start_of_multiline_comment..end_of_multiline_comment+3]
-
-      modified_file_contents = modified_file_contents.gsub(multiline_comment,"--multiline_comment[#{multiline_comment_counter}]")
-
-      multiline_comment_counter += 1
-
-      multiline_comments << multiline_comment
-
-
-    end
-
-    temporary_nila_file = Dir.pwd + "temp_nila.nila"
-
-    file_id = open(temporary_nila_file, 'w')
-
-    file_id.write(modified_file_contents)
-
-    file_id.close()
-
-    line_by_line_contents = read_file_line_by_line(temporary_nila_file)
-
-    comments = multiline_comments.dup
-
-    return line_by_line_contents,comments,temporary_nila_file
 
   end
 
@@ -777,7 +684,9 @@ def compile(input_file_path)
 
       if !joined_array.include?("return ")
 
-        rejected_array = reversed_input_array.reject {|content| content.eql?("\n") || content.lstrip.eql?("}\n")}
+        rejected_array = reversed_input_array.reject {|content| content.lstrip.eql?("")}
+
+        rejected_array = rejected_array.reject {|content| content.strip.eql? "}"}
 
         last_statement = rejected_array[0]
 
@@ -937,9 +846,7 @@ def compile(input_file_path)
 
         "puts" => "console.log",
 
-        "print" => "console.log",
-
-        "p" => "console.log"
+        "print" => "console.log"
 
     }
 
@@ -1000,7 +907,6 @@ def compile(input_file_path)
         pattern << extracted_string[0..extracted_string.index(pattern_end)]
 
       end
-
 
       return pattern
 
@@ -1184,7 +1090,7 @@ def compile(input_file_path)
 
         if !comment(line)
 
-          if !line.eql?("\n")
+          if !line.lstrip.eql?("")
 
             if !line.lstrip.eql?("}\n")
 
@@ -1304,6 +1210,95 @@ def compile(input_file_path)
 
     end
 
+    def fix_newlines(file_contents)
+
+      def extract_blocks(file_contents)
+
+        javascript_regexp = /(if |while |function |function\()/
+
+        block_starting_lines = file_contents.dup.reject { |element| element.index(javascript_regexp).nil?}[1..-1]
+
+        block_starting_lines = block_starting_lines.reject { |element| element.include?("    ")}
+
+        initial_starting_lines = block_starting_lines.dup
+
+        starting_line_indices = []
+
+        block_starting_lines.each do |line|
+
+          starting_line_indices << file_contents.index(line)
+
+        end
+
+        block_ending_lines = file_contents.dup.each_index.select { |index| file_contents[index].eql? "  }\n" }
+
+        modified_file_contents = file_contents.dup
+
+        code_blocks = []
+
+        starting_index = starting_line_indices[0]
+
+        for x in 0...initial_starting_lines.length
+
+          code_blocks << modified_file_contents[starting_index..block_ending_lines[0]]
+
+          modified_file_contents[starting_index..block_ending_lines[0]] = []
+
+          modified_file_contents.insert(starting_index,"  *****")
+
+          block_starting_lines = modified_file_contents.dup.reject { |element| element.index(javascript_regexp).nil?}[1..-1]
+
+          block_starting_lines = block_starting_lines.reject { |element| element.include?("    ")}
+
+          starting_line_indices = []
+
+          block_starting_lines.each do |line|
+
+            starting_line_indices << modified_file_contents.index(line)
+
+          end
+
+          block_ending_lines = modified_file_contents.dup.each_index.select { |index| modified_file_contents[index].eql? "  }\n" }
+
+          starting_index = starting_line_indices[0]
+
+        end
+
+        return modified_file_contents,code_blocks
+
+      end
+
+      compact_contents = file_contents.reject {|element| element.lstrip.eql? ""}
+
+      compact_contents,code_blocks = extract_blocks(compact_contents)
+
+      processed_contents = compact_contents[1...-1].collect {|line| line+"\n"}
+
+      compact_contents = [compact_contents[0]] + processed_contents + [compact_contents[-1]]
+
+      code_block_locations = compact_contents.each_index.select { |index| compact_contents[index].eql? "  *****\n"}
+
+      initial_locations = code_block_locations.dup
+
+      starting_index = code_block_locations[0]
+
+      for x in 0...initial_locations.length
+
+        code_blocks[x][-1] = code_blocks[x][-1] + "\n"
+
+        compact_contents = compact_contents[0...starting_index] + code_blocks[x] + compact_contents[starting_index+1..-1]
+
+        code_block_locations = compact_contents.each_index.select { |index| compact_contents[index].eql? "  *****\n"}
+
+        starting_index = code_block_locations[0]
+
+
+      end
+
+      return compact_contents
+
+    end
+
     javascript_regexp = /(if |while |function |function\()/
 
     locations = []
@@ -1376,7 +1371,7 @@ def compile(input_file_path)
 
       rescue NoMethodError
 
-        p "The pretty printing process exited with errors!"
+        puts "The pretty printing process exited with errors!"
 
       end
 
@@ -1444,13 +1439,9 @@ def compile(input_file_path)
 
     line_by_line_contents = read_file_line_by_line(temporary_nila_file)
 
+    line_by_line_contents = fix_newlines(line_by_line_contents)
+
     return line_by_line_contents
-
-  end
-
-  def fix_newlines(input_file_contents)
-
-
 
   end
 
@@ -1483,7 +1474,7 @@ def compile(input_file_path)
 
     File.delete(temporary_nila_file)
 
-    file_id.write("//Written in Nila 0.0.3.2. Visit http://adhithyan15.github.io/nila\n\n")
+    file_id.write("//Written in Nila 0.0.3.2. Visit http://adhithyan15.github.io/nila\n")
 
     file_id.write(file_contents.join)
 
@@ -1491,66 +1482,57 @@ def compile(input_file_path)
 
   end
 
-  file_contents = read_file_line_by_line(input_file_path)
+  if File.exist?(input_file_path)
 
-  file_contents = extract_parsable_file(file_contents)
+    file_contents = read_file_line_by_line(input_file_path)
 
-  file_contents,multiline_comments,temp_file,output_js_file = replace_multiline_comments(file_contents,input_file_path)
+    file_contents = extract_parsable_file(file_contents)
 
-  file_contents = split_semicolon_seperated_expressions(file_contents)
+    file_contents,multiline_comments,temp_file,output_js_file = replace_multiline_comments(file_contents,input_file_path,*output_file_name)
 
-  file_contents = compile_interpolated_strings(file_contents)
+    file_contents = split_semicolon_seperated_expressions(file_contents)
 
-  file_contents,singleline_comments = replace_singleline_comments(file_contents)
+    file_contents = compile_interpolated_strings(file_contents)
 
-  file_contents,named_functions,nested_functions = replace_named_functions(file_contents,temp_file)
+    file_contents,singleline_comments = replace_singleline_comments(file_contents)
 
-  comments = [singleline_comments,multiline_comments]
+    file_contents,named_functions,nested_functions = replace_named_functions(file_contents,temp_file)
 
-  list_of_variables,file_contents = get_variables(file_contents,temp_file)
+    comments = [singleline_comments,multiline_comments]
 
-  file_contents = compile_arrays(file_contents)
+    list_of_variables,file_contents = get_variables(file_contents,temp_file)
 
-  file_contents = compile_conditional_structures(file_contents,temp_file)
+    file_contents = compile_arrays(file_contents)
 
-  file_contents, function_names = compile_named_functions(file_contents,named_functions,nested_functions,temp_file)
+    file_contents = compile_conditional_structures(file_contents,temp_file)
 
-  file_contents, ruby_functions = compile_custom_function_map(file_contents)
+    file_contents, function_names = compile_named_functions(file_contents,named_functions,nested_functions,temp_file)
 
-  function_names << ruby_functions
+    file_contents, ruby_functions = compile_custom_function_map(file_contents)
 
-  file_contents = compile_whitespace_delimited_functions(file_contents,function_names,temp_file)
+    function_names << ruby_functions
 
-  file_contents = remove_question_marks(file_contents,list_of_variables,temp_file)
+    file_contents = compile_whitespace_delimited_functions(file_contents,function_names,temp_file)
 
-  file_contents = add_semicolons(file_contents)
+    file_contents = remove_question_marks(file_contents,list_of_variables,temp_file)
 
-  file_contents = compile_comments(file_contents,comments,temp_file)
+    file_contents = add_semicolons(file_contents)
 
-  file_contents = create_self_invoking_function(file_contents)
+    file_contents = compile_comments(file_contents,comments,temp_file)
 
-  file_contents = pretty_print_javascript(file_contents,temp_file)
+    file_contents = create_self_invoking_function(file_contents)
 
-  output_javascript(file_contents,output_js_file,temp_file)
+    file_contents = pretty_print_javascript(file_contents,temp_file)
 
+    output_javascript(file_contents,output_js_file,temp_file)
 
-end
+    puts "Compilation is successful!"
 
-def create_executable(input_file)
+  else
 
-  def read_file_line_by_line(input_path)
-
-    file_id = open(input_path)
-
-    file_line_by_line = file_id.readlines()
-
-    file_id.close
-
-    return file_line_by_line
+    puts "File doesn't exist!"
 
   end
-
-  windows_output = `ocra --add-all-core #{input_file}`
 
 end
 
@@ -1586,7 +1568,7 @@ def find_file_name(input_path,file_extension)
 
   remaining_string = extension_remover[0].reverse
 
-  path_finder = remaining_string.index("\\")
+  path_finder = remaining_string.index("/")
 
   remaining_string = remaining_string.reverse
 
@@ -1594,52 +1576,118 @@ def find_file_name(input_path,file_extension)
 
 end
 
-options = {}
+opts = Slop.parse do
+  on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
+  on :r, :run=, 'Run Nila File', as:Array
+  on :m, :buildmac=, 'Build Nilac for Linux/Mac/Rubygems',as:Array
+end
 
-OptionParser.new do |opts|
-  opts.banner = "Usage: nilac [options] nilafile"
+opts = opts.to_hash
 
-  opts.on("-c", "--compile FILE", "Compile to Javascript") do |file|
-    current_directory = Dir.pwd
-    file_path = current_directory + "/" + file
-    compile(file_path)
-    puts "Compilation Successful!"
+if opts[:compile] != nil
+
+  if opts[:compile].length == 1
+
+    input = opts[:compile][0]
+
+    if input.include? ".nila"
+
+      current_directory = Dir.pwd
+
+      input_file = input
+
+      file_path = current_directory + "/" + input_file
+
+      compile(file_path)
+
+    elsif input.include? "/"
+
+      folder_path = input
+
+      files = Dir.glob(File.join(folder_path, "*"))
+
+      files = files.reject {|path| !path.include? ".nila"}
+
+      files.each do |file|
+
+        file_path = Dir.pwd + "/" + file
+
+        compile(file_path)
+
+      end
+
+    end
+
+  elsif opts[:compile].length == 2
+
+    input = opts[:compile][0]
+
+    output = opts[:compile][1]
+
+    if input.include? ".nila" and output.include? ".js"
+
+      input_file = input
+
+      output_file = output
+
+      input_file_path = input_file
+
+      output_file_path = output_file
+
+      compile(input_file_path,output_file_path)
+
+    elsif input[-1].eql? "/" and output[-1].eql? "/"
+
+      input_folder_path = input
+
+      output_folder_path = output
+
+      if !File.directory?(output_folder_path)
+
+        FileUtils.mkdir_p(output_folder_path)
+
+      end
+
+      files = Dir.glob(File.join(input_folder_path, "*"))
+
+      files = files.reject {|path| !path.include? ".nila"}
+
+      files.each do |file|
+
+        input_file_path = file
+
+        output_file_path = output_folder_path + find_file_name(file,".nila") + ".js"
+
+        compile(input_file_path,output_file_path)
+
+      end
+
+    end
 
   end
 
-  opts.on("-r", "--run FILE", "Compile to Javascript and Run") do |file|
-    current_directory = Dir.pwd
+elsif opts[:run] != nil
 
-    file_path = current_directory + "/" + file
+  current_directory = Dir.pwd
 
-    compile(file_path)
+  file = opts[:run][0]
 
-    js_file_name = find_file_name(file_path,".nila") + ".js"
+  file_path = current_directory + "/" + file
 
-    node_output = `node #{js_file_name}`
+  compile(file_path)
 
-    puts node_output
+  js_file_name = find_file_name(file_path,".nila") + ".js"
 
-  end
+  node_output = `node #{js_file_name}`
 
-  opts.on("-b", "--build", "Builds Itself") do
+  puts node_output
 
-    file_path = Dir.pwd + "/nilac.rb"
+elsif opts[:buildmac] != nil
 
-    create_executable(file_path)
+  file_path = Dir.pwd + "/bin/nilac.rb"
 
-    puts "Build Successful!"
+  create_mac_executable(file_path)
 
-  end
+  puts "Build Successful!"
 
-  opts.on("-m", "--buildmac", "Builds Mac Executables") do
-
-    file_path = Dir.pwd + "/nilac.rb"
-
-    create_mac_executable(file_path)
-
-    puts "Build Successful!"
-
-  end
-
-end.parse!
+end

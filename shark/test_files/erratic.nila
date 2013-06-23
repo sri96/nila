@@ -1,0 +1,22 @@
+hello = "world"
+
+msg = "nila"
+
+message = "Welcome to #{msg}"
+
+goal_reached = 72
+
+def square(inputnumber)
+
+
+
+
+   inputnumber*inputnumber
+
+
+
+
+
+
+
+end

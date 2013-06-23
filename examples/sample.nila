@@ -30,10 +30,16 @@ end
 
 puts(printsquare(5))
 
+def test_message
+
+  puts "Welcome to Nila!"
+
+end
+
 def welcome_message
 
   puts "Welcome to Nila!"
 
 end
 
-puts welcome_message()
+puts welcome_message
