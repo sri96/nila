@@ -1,12 +1,12 @@
 # Nila
 
-Nila is a dialect of Coffeescript that leans towards a more Ruby oriented syntax. Nilac is the official compiler for the Nila language. Nila is still in its infancy and is not suitable for day to day usage.
+Nila is a dialect of Coffeescript with a Rubyspired syntax. Nilac is the official compiler for the Nila language. Nila is still in its infancy and is not suitable for day to day usage.
 
 ## Requirements
 
 You will definitely need
 
-* Ruby (1.90>) and Rubygems
+* Ruby 2.0 and Rubygems
 * Node.js with NPM 
 
 ## Installation
@@ -25,7 +25,9 @@ To compile and run your Nila file (requires Node.js):
 
 	$ nilac -r file.nila
 
-A detailed documentation is available at https://github.com/adhithyan15/nila/wiki/Documentation
+## Documentation
+
+A detailed documentation of the language is available at https://github.com/adhithyan15/nila/wiki/Documentation. Currently, we are working to ship RDoc and Ri based documentation along with the Nilac gem.  
 
 ## Tests
 
@@ -58,5 +60,3 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-The project is licensed under MIT License. Please review license.md for more details. 
