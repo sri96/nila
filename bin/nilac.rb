@@ -1550,7 +1550,7 @@ def create_mac_executable(input_file)
 
   end
 
-  mac_file_contents = ["#!/usr/bin/env ruby"] + read_file_line_by_line(input_file)
+  mac_file_contents = ["#!/usr/bin/env ruby\n\n"] + read_file_line_by_line(input_file)
 
   mac_file_path = input_file.sub(".rb","")
 
