@@ -1,0 +1,17 @@
+# This method demonstrates multiple return values
+
+def parse_name(input_name)
+
+  name_split = input_name.split(" ")
+
+  return name_split[0],name_split[1]
+
+end
+
+def test_method()
+
+  puts "Hello, Adhithya"
+
+end
+
+parsed_name = parse_name("Adhithya Rajasekaran")

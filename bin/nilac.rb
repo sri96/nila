@@ -412,6 +412,60 @@ def compile(input_file_path,*output_file_name)
 
   end
 
+  def compile_multiple_variable_initialization(input_file_contents,temporary_nila_file)
+
+    possible_variable_lines = input_file_contents.reject {|element| !element.include?"="}
+
+    possible_multiple_initialization = possible_variable_lines.reject {|element| !element.split("=")[0].include?","}
+
+    multiple_initialization_index = []
+
+    possible_multiple_initialization.each do |statement|
+
+      location_array = input_file_contents.each_index.select { |index| input_file_contents[index] == statement}
+
+      multiple_initialization_index << location_array[0]
+
+    end
+
+    modified_file_contents = input_file_contents.dup
+
+    multiple_init_counter = 1
+
+    possible_multiple_initialization.each_with_index do |line,index|
+
+      line_split = line.split(" = ")
+
+      right_side_variables = line_split[0].split(",")
+
+      replacement_string = "multipleinit#{multiple_init_counter} = #{line_split[1]}\n\n"
+
+      variable_string = ""
+
+      right_side_variables.each_with_index do |variable,var_index|
+
+        variable_string = variable_string + variable.rstrip + " = multipleinit#{multiple_init_counter}[#{var_index}]\n\n"
+
+      end
+
+      replacement_string = replacement_string + variable_string
+
+      modified_file_contents[multiple_initialization_index[index]] = replacement_string
+
+    end
+
+    file_id = open(temporary_nila_file, 'w')
+
+    file_id.write(modified_file_contents.join)
+
+    file_id.close()
+
+    line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+    return line_by_line_contents
+
+  end
+
   def get_variables(input_file_contents,temporary_nila_file)
 
     #This method is solely focused on getting a list of variables to be declared.
@@ -700,6 +754,134 @@ def compile(input_file_path,*output_file_name)
 
     end
 
+    def compile_multiple_return(input_array)
+
+      def find_all_matching_indices(input_string,pattern)
+
+        locations = []
+
+        index = input_string.index(pattern)
+
+        while index != nil
+
+          locations << index
+
+          index = input_string.index(pattern,index+1)
+
+
+        end
+
+        return locations
+
+
+      end
+
+      modified_input_array = input_array.dup
+
+      return_statements = input_array.dup.reject {|element| !element.include?"return"}
+
+      multiple_return_statements = return_statements.dup.reject {|element| !element.include?","}
+
+      modified_multiple_return_statements = multiple_return_statements.dup
+
+      return_statement_index = []
+
+      multiple_return_statements.each do |statement|
+
+        location_array = modified_input_array.each_index.select { |index| modified_input_array[index] == statement}
+
+        return_statement_index << location_array[0]
+
+      end
+
+      multiple_return_statements.each_with_index do |return_statement,index|
+
+        replacement_counter = 0
+
+        if return_statement.include? "\""
+
+          starting_quotes = find_all_matching_indices(return_statement,"\"")
+
+          for x in 0...(starting_quotes.length)/2
+
+            quotes = return_statement[starting_quotes[x]..starting_quotes[x+1]]
+
+            replacement_counter += 1
+
+            modified_multiple_return_statements[index] = modified_multiple_return_statements[index].sub(quotes,"repstring#{1}")
+
+            modified_input_array[return_statement_index[index]] = modified_multiple_return_statements[index].sub(quotes,"repstring#{1}")
+
+          end
+
+        end
+
+      end
+
+      modified_multiple_return_statements = modified_multiple_return_statements.reject {|element| !element.include?","}
+
+      return_statement_index = []
+
+      modified_multiple_return_statements.each do |statement|
+
+        location_array = modified_input_array.each_index.select { |index| modified_input_array[index] == statement}
+
+        return_statement_index << location_array[0]
+
+      end
+
+      modified_multiple_return_statements.each_with_index do |return_statement,index|
+
+        method_call_counter = 0
+
+        if return_statement.include?"("
+
+          open_paran_location = find_all_matching_indices(return_statement,"(")
+
+          open_paran_location.each do |paran_index|
+
+            method_call = return_statement[paran_index..return_statement.index(")",paran_index+1)]
+
+            method_call_counter += 1
+
+            modified_multiple_return_statements[index] = modified_multiple_return_statements[index].sub(method_call,"methodcall#{method_call_counter}")
+
+            modified_input_array[return_statement_index[index]] = modified_multiple_return_statements[index].sub(method_call,"methodcall#{method_call_counter}")
+
+          end
+
+        end
+
+      end
+
+      modified_multiple_return_statements = modified_multiple_return_statements.reject {|element| !element.include?(",")}
+
+      return_statement_index = []
+
+      modified_multiple_return_statements.each do |statement|
+
+        location_array = modified_input_array.each_index.select { |index| modified_input_array[index] == statement}
+
+        return_statement_index << location_array[0]
+
+      end
+
+      return_statement_index.each do |index|
+
+        original_statement = input_array[index]
+
+        statement_split = original_statement.split("return ")
+
+        replacement_split = "return [" + statement_split[1].rstrip + "]\n\n"
+
+        input_array[index] = replacement_split
+
+      end
+
+      return input_array
+
+    end
+
     def compile_function(input_array,temporary_nila_file)
 
       modified_input_array = input_array.dup
@@ -775,6 +957,8 @@ def compile(input_file_path,*output_file_name)
       modified_input_array = remove_question_marks(modified_input_array,variables,temporary_nila_file)
 
       modified_input_array = add_auto_return_statement(modified_input_array)
+
+      modified_input_array = compile_multiple_return(modified_input_array)
 
       return modified_input_array
 
@@ -1238,6 +1422,8 @@ def compile(input_file_path,*output_file_name)
 
         starting_index = starting_line_indices[0]
 
+        begin
+
         for x in 0...initial_starting_lines.length
 
           code_blocks << modified_file_contents[starting_index..block_ending_lines[0]]
@@ -1261,6 +1447,12 @@ def compile(input_file_path,*output_file_name)
           block_ending_lines = modified_file_contents.dup.each_index.select { |index| modified_file_contents[index].eql? "  }\n" }
 
           starting_index = starting_line_indices[0]
+
+        end
+
+        rescue TypeError
+
+          puts "Whitespace was left unfixed!"
 
         end
 
@@ -1474,7 +1666,7 @@ def compile(input_file_path,*output_file_name)
 
     File.delete(temporary_nila_file)
 
-    file_id.write("//Written in Nila 0.0.3.3. Visit http://adhithyan15.github.io/nila\n")
+    file_id.write("//Written using Nila. Visit http://adhithyan15.github.io/nila\n")
 
     file_id.write(file_contents.join)
 
@@ -1499,6 +1691,8 @@ def compile(input_file_path,*output_file_name)
     file_contents,named_functions,nested_functions = replace_named_functions(file_contents,temp_file)
 
     comments = [singleline_comments,multiline_comments]
+
+    file_contents = compile_multiple_variable_initialization(file_contents,temp_file)
 
     list_of_variables,file_contents = get_variables(file_contents,temp_file)
 
@@ -1576,7 +1770,21 @@ def find_file_name(input_path,file_extension)
 
 end
 
-nilac_version = "0.0.3.7"
+def find_file_path(input_path,file_extension)
+
+  extension_remover = input_path.split(file_extension)
+
+  remaining_string = extension_remover[0].reverse
+
+  path_finder = remaining_string.index("/")
+
+  remaining_string = remaining_string.reverse
+
+  return remaining_string[0...remaining_string.length-path_finder]
+
+end
+
+nilac_version = "0.0.3.8"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
@@ -1712,7 +1920,7 @@ elsif opts[:run] != nil
 
   compile(file_path)
 
-  js_file_name = find_file_name(file_path,".nila") + ".js"
+  js_file_name = find_file_path(file_path,".nila") + find_file_name(file_path,".nila") + ".js"
 
   node_output = `node #{js_file_name}`
 

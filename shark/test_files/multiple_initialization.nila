@@ -1,0 +1,13 @@
+# This file demonstrates multiple variable initialization
+
+def parse_name(input_name)
+
+  name_split = input_name.split(" ")
+
+  return name_split[0],name_split[1]
+
+end
+
+first_name,last_name = parse_name("Adhithya Rajasekaran")
+
+puts first_name + " " + last_name
