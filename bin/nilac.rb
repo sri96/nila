@@ -1474,7 +1474,7 @@ def compile(input_file_path,*output_file_name)
 
     File.delete(temporary_nila_file)
 
-    file_id.write("//Written in Nila 0.0.3.2. Visit http://adhithyan15.github.io/nila\n")
+    file_id.write("//Written in Nila 0.0.3.3. Visit http://adhithyan15.github.io/nila\n")
 
     file_id.write(file_contents.join)
 
@@ -1576,8 +1576,44 @@ def find_file_name(input_path,file_extension)
 
 end
 
+nilac_version = "0.0.3.7"
+
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
+  on :h, :help, 'Help With Nilac' do
+
+    puts "Nilac is the official compiler for the Nila language.This is a basic help\nmessage with pointers to more information.\n\n"
+
+    puts "  Basic Usage:\n\n"
+
+    puts "    nilac -h/--help\n"
+
+    puts "    nilac -v/--version\n"
+
+    puts "    nilac [command] [file_options]\n\n"
+
+    puts "  Available Commands:\n\n"
+
+    puts "    nilac -c [nila_file] => Compile Nila File\n\n"
+
+    puts "    nilac -c [nila_file]:[output_js_file] => Compile nila_file and saves it as\n    output_js_file\n\n"
+
+    puts "    nilac -c [nila_file_folder] => Compiles each .nila file in the nila_folder\n\n"
+
+    puts "    nilac -c [nila_file_folder]:[output_js_file_folder] => Compiles each .nila\n    file in the nila_folder and saves it in the output_js_file_folder\n\n"
+
+    puts "    nilac -r [nila_file] => Compile and Run nila_file\n\n"
+
+    puts "  Further Information:\n\n"
+
+    puts "    Visit http://adhithyan15.github.io/nila to know more about the project."
+
+  end
+  on :v, :version, 'Output Nilac Version No' do
+
+    puts nilac_version
+
+  end
   on :r, :run=, 'Run Nila File', as:Array
   on :m, :buildmac=, 'Build Nilac for Linux/Mac/Rubygems',as:Array
 end
