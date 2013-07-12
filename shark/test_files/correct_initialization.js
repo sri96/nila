@@ -1,6 +1,6 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
 (function() {
-  var multipleinit1, first_name, last_name;
+  var first_name, last_name, multipleinit1;
 
   // This file demonstrates multiple variable initialization
 

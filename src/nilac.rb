@@ -307,7 +307,7 @@ def compile(input_file_path,*output_file_name)
 
         key_word_locations << x
 
-      elsif current_row.include?("end\n") || current_row.include?("end")
+      elsif current_row.lstrip.include?("end\n") || current_row.include?("end")
 
         end_locations << x
 
@@ -516,7 +516,7 @@ def compile(input_file_path,*output_file_name)
 
     if variables.length > 0
 
-      variable_declaration_string = "var " + variables.uniq.join(", ") + "\n\n"
+      variable_declaration_string = "var " + variables.uniq.sort.join(", ") + "\n\n"
 
       line_by_line_contents = [variable_declaration_string,line_by_line_contents].flatten
 
@@ -578,73 +578,207 @@ def compile(input_file_path,*output_file_name)
     # 1. %w{} syntax
     # 2. Range - Coming soon!
 
-    def extract(input_string,pattern_start,pattern_end)
+    def compile_w_arrays(input_file_contents)
 
-      def find_all_matching_indices(input_string,pattern)
+      def extract(input_string,pattern_start,pattern_end)
 
-        locations = []
+        def find_all_matching_indices(input_string,pattern)
 
-        index = input_string.index(pattern)
+          locations = []
 
-        while index != nil
+          index = input_string.index(pattern)
 
-          locations << index
+          while index != nil
 
-          index = input_string.index(pattern,index+1)
+            locations << index
 
-
-        end
-
-        return locations
+            index = input_string.index(pattern,index+1)
 
 
-      end
+          end
 
-      all_start_locations = find_all_matching_indices(input_string,pattern_start)
+          return locations
 
-      all_end_locations = find_all_matching_indices(input_string,pattern_end)
-
-      pattern = []
-
-      all_start_locations.each_with_index do |location,index|
-
-        pattern << input_string[location..all_end_locations[index]]
-
-      end
-
-      return pattern
-
-    end
-
-    def compile_w_syntax(input_string)
-
-      modified_input_string = input_string[3...-1]
-
-      string_split = modified_input_string.split(" ")
-
-      return string_split.to_s
-
-    end
-
-    modified_file_contents = input_file_contents.dup
-
-    input_file_contents.each_with_index do |line,index|
-
-      if line.include?("%w{")
-
-        string_arrays = extract(line,"%w{","}")
-
-        string_arrays.each do |array|
-
-          modified_file_contents[index] = modified_file_contents[index].sub(array,compile_w_syntax(array))
 
         end
 
+        all_start_locations = find_all_matching_indices(input_string,pattern_start)
+
+        all_end_locations = find_all_matching_indices(input_string,pattern_end)
+
+        pattern = []
+
+        all_start_locations.each_with_index do |location,index|
+
+          pattern << input_string[location..all_end_locations[index]]
+
+        end
+
+        return pattern
+
       end
+
+      def compile_w_syntax(input_string)
+
+        modified_input_string = input_string[3...-1]
+
+        string_split = modified_input_string.split(" ")
+
+        return string_split.to_s
+
+      end
+
+      modified_file_contents = input_file_contents.dup
+
+      input_file_contents.each_with_index do |line,index|
+
+        if line.include?("%w{")
+
+          string_arrays = extract(line,"%w{","}")
+
+          string_arrays.each do |array|
+
+            modified_file_contents[index] = modified_file_contents[index].sub(array,compile_w_syntax(array))
+
+          end
+
+        end
+
+      end
+
+      return modified_file_contents
 
     end
 
-    return modified_file_contents
+    def compile_array_indexing(input_file_contents)
+
+      #Nila allows two different kinds of indexing operations on arrays and strings. They are
+
+      #1. Using Ranges => numbers[0...5]
+      #2. Using Start and End Indexes => numbers[0,5]
+
+      #This method implements this Nila feature
+
+      possible_indexing_operation = input_file_contents.dup.reject {|element| !element.include?"[" and !element.include?"]"}
+
+      possible_range_indexing = possible_indexing_operation.reject {|element| !element.include?".."}
+
+      triple_range_indexing = possible_range_indexing.reject {|element| !element.include?"..."}
+
+      triple_range_indexes = []
+
+      triple_range_indexing.each do |line|
+
+        triple_range_indexes << input_file_contents.dup.each_index.select {|index| input_file_contents[index] == line}
+
+      end
+
+      triple_range_indexes = triple_range_indexes.flatten
+
+      triple_range_indexing.each_with_index do |line,index|
+
+        split1,split2 = line.split("[")
+
+        range_index,split3 = split2.split("]")
+
+        index_start,index_end = range_index.split "..."
+
+        replacement_string =  nil
+
+        if index_end.strip == "end"
+
+          replacement_string = split1 + ".slice(#{index_start},#{split}.length)\n"
+
+        else
+
+          replacement_string = split1 + ".slice(#{index_start},#{index_end})\n"
+
+        end
+
+        possible_range_indexing.delete(input_file_contents[triple_range_indexes[index]])
+
+        possible_indexing_operation.delete(input_file_contents[triple_range_indexes[index]])
+
+        input_file_contents[triple_range_indexes[index]] = replacement_string
+
+      end
+
+      double_range_indexing = possible_range_indexing.reject {|element| !element.include?("..")}
+
+      double_range_indexes = []
+
+      double_range_indexing.each do |line|
+
+        double_range_indexes << input_file_contents.dup.each_index.select {|index| input_file_contents[index] == line}
+
+      end
+
+      double_range_indexes = double_range_indexes.flatten
+
+      double_range_indexing.each_with_index do |line,index|
+
+        split1,split2 = line.split("[")
+
+        range_index,split3 = split2.split("]")
+
+        index_start,index_end = range_index.split ".."
+
+        index_start = "" if index_start.nil?
+
+        index_end = "" if index_end.nil?
+
+        replacement_string = nil
+
+        if index_end.strip == "end"
+
+          replacement_string = split1 + ".slice(#{index_start})\n"
+
+        elsif index_end.strip == "" and index_start.strip == ""
+
+          replacement_string = split1 + ".slice(0)\n"
+
+        else
+
+          replacement_string = split1 + ".slice(#{index_start},#{index_end}+1)\n"
+
+        end
+
+        possible_range_indexing.delete(input_file_contents[double_range_indexes[index]])
+
+        possible_indexing_operation.delete(input_file_contents[double_range_indexes[index]])
+
+        input_file_contents[double_range_indexes[index]] = replacement_string
+
+      end
+
+      duplicating_operations = input_file_contents.dup.reject{|element| !element.include?(".dup")}
+
+      duplicating_operation_indexes = []
+
+      duplicating_operations.each do |line|
+
+        duplicating_operation_indexes << input_file_contents.dup.each_index.select {|index| input_file_contents[index] == line}
+
+      end
+
+      duplicating_operation_indexes = duplicating_operation_indexes.flatten
+
+      duplicating_operation_indexes.each do |index|
+
+        input_file_contents[index] = input_file_contents[index].sub(".dup",".slice(0)")
+
+      end
+
+      return input_file_contents
+
+    end
+
+    input_file_contents = compile_w_arrays(input_file_contents)
+
+    input_file_contents = compile_array_indexing(input_file_contents)
+
+    return input_file_contents
+
 
   end
 
@@ -1682,11 +1816,13 @@ def compile(input_file_path,*output_file_name)
 
     file_contents,multiline_comments,temp_file,output_js_file = replace_multiline_comments(file_contents,input_file_path,*output_file_name)
 
+    file_contents,singleline_comments = replace_singleline_comments(file_contents)
+
     file_contents = split_semicolon_seperated_expressions(file_contents)
 
     file_contents = compile_interpolated_strings(file_contents)
 
-    file_contents,singleline_comments = replace_singleline_comments(file_contents)
+    file_contents = compile_arrays(file_contents)
 
     file_contents,named_functions,nested_functions = replace_named_functions(file_contents,temp_file)
 
@@ -1695,8 +1831,6 @@ def compile(input_file_path,*output_file_name)
     file_contents = compile_multiple_variable_initialization(file_contents,temp_file)
 
     list_of_variables,file_contents = get_variables(file_contents,temp_file)
-
-    file_contents = compile_arrays(file_contents)
 
     file_contents = compile_conditional_structures(file_contents,temp_file)
 
@@ -1784,7 +1918,7 @@ def find_file_path(input_path,file_extension)
 
 end
 
-nilac_version = "0.0.3.8"
+nilac_version = "0.0.3.9"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
@@ -1823,7 +1957,16 @@ opts = Slop.parse do
 
   end
   on :r, :run=, 'Run Nila File', as:Array
-  on :m, :buildmac=, 'Build Nilac for Linux/Mac/Rubygems',as:Array
+
+  on :m, :buildmac, 'Build Nilac for Linux/Mac/Rubygems' do
+
+    file_path = Dir.pwd + "/src/nilac.rb"
+
+    create_mac_executable(file_path)
+
+    puts "Build Successful!"
+
+  end
 end
 
 opts = opts.to_hash
@@ -1925,13 +2068,5 @@ elsif opts[:run] != nil
   node_output = `node #{js_file_name}`
 
   puts node_output
-
-elsif opts[:buildmac] != nil
-
-  file_path = Dir.pwd + "/bin/nilac.rb"
-
-  create_mac_executable(file_path)
-
-  puts "Build Successful!"
 
 end

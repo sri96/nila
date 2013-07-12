@@ -13,5 +13,5 @@ Feature: Javascript, by default, doesn't allow for the return of multiple values
 
 Configurations:
 
-~compiler => bin/nilac.rb
+~compiler => src/nilac.rb
 :v $cliusage => ruby :v --compile $file

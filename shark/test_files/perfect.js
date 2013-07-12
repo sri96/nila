@@ -1,6 +1,6 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
 (function() {
-  var hello, msg, message, goal_reached;
+  var goal_reached, hello, message, msg;
 
   hello = "world";
 

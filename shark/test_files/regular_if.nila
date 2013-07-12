@@ -1,0 +1,8 @@
+#This is a simple if statement
+
+if happy and knowsIt
+  clapsHands()
+  chaChaCha()
+else
+  showIt()
+end
