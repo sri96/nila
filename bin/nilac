@@ -468,6 +468,84 @@ def compile(input_file_path,*output_file_name)
 
   end
 
+  def compile_default_values(input_file_contents,temporary_nila_file)
+
+    #This method compiles default values present in functions. An example is provided below
+
+    # def fill(container = "cup",liquid = "coffee")
+    #   puts "Filling the #{container} with #{liquid}"
+    # end
+
+    def parse_default_values(input_function_definition)
+
+      puts input_function_definition
+
+      split1,split2 = input_function_definition.split("(")
+
+      split2,split3 = split2.split(")")
+
+      function_parameters = split2.split(",")
+
+      default_value_parameters = function_parameters.reject {|element| !element.include?"="}
+
+      replacement_parameters = []
+
+      replacement_string = ""
+
+      default_value_parameters.each do |paramvalue|
+
+        param, value = paramvalue.split("=")
+
+        replacement_parameters << param.lstrip.rstrip
+
+        replacement_string = replacement_string + "\n" + "if (#{param.lstrip.rstrip} == null) {\n  #{paramvalue.lstrip.rstrip}\n}\n" +"\n"
+
+      end
+
+      return replacement_string,default_value_parameters,replacement_parameters
+
+    end
+
+    possible_default_values = input_file_contents.dup.reject {|element| !element.include?("def")}
+
+    possible_default_values = possible_default_values.reject {|element| !element.include?("=")}
+
+    if !possible_default_values.empty?
+
+      possible_default_values.each do |line|
+
+        current_line_index = input_file_contents.each_index.select {|index| input_file_contents[index] == line}.flatten[0]
+
+        replacement_string,value_parameters,replacement_parameters = parse_default_values(line)
+
+        modified_line = line.dup
+
+        value_parameters.each_with_index do |val,index|
+
+          modified_line = modified_line.sub(val,replacement_parameters[index])
+
+        end
+
+        input_file_contents[current_line_index] = modified_line
+
+        input_file_contents[current_line_index + 1] = replacement_string
+
+      end
+
+    end
+
+    file_id = open(temporary_nila_file, 'w')
+
+    file_id.write(input_file_contents.join)
+
+    file_id.close()
+
+    line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+    return line_by_line_contents
+
+  end
+
   def get_variables(input_file_contents,temporary_nila_file)
 
     #This method is solely focused on getting a list of variables to be declared.
@@ -725,6 +803,10 @@ def compile(input_file_path,*output_file_name)
 
         index_start,index_end = range_index.split ".."
 
+        index_start = "" if index_start.nil?
+
+        index_end = "" if index_end.nil?
+
         replacement_string = nil
 
         if index_end.strip == "end"
@@ -818,11 +900,19 @@ def compile(input_file_path,*output_file_name)
       #This method will pickup and declare all the variables inside a function block. In future, this method will be
       #merged with the get variables method
 
+      controlregexp = /(if |while |def |function |function\()/
+
       variables = []
+
+      function_name,parameters = input_function_block[0].split("(")
+
+      parameters = parameters.split(")")[0].split(",")
+
+      parameters = parameters.collect {|element| element.strip}
 
       input_function_block.each do |line|
 
-        if line.include? "=" and !line.include?("def")
+        if line.include? "=" and line.index(controlregexp).nil?
 
           current_line_split = line.strip.split("=")
 
@@ -832,7 +922,25 @@ def compile(input_file_path,*output_file_name)
 
       end
 
-      variables.uniq
+      parameters.each do |param|
+
+        if variables.include?(param)
+
+          variables.delete(param)
+
+        end
+
+      end
+
+      if variables.empty?
+
+        return []
+
+      else
+
+        return variables.uniq
+
+      end
 
     end
 
@@ -1075,6 +1183,8 @@ def compile(input_file_path,*output_file_name)
       end
 
       modified_input_array[-1] = input_array[-1].sub "end","}\n"
+
+      modified_input_array = compile_multiple_variable_initialization(modified_input_array,temporary_nila_file)
 
       variables = lexical_scoped_variables(modified_input_array)
 
@@ -1822,6 +1932,8 @@ def compile(input_file_path,*output_file_name)
 
     file_contents = compile_arrays(file_contents)
 
+    file_contents = compile_default_values(file_contents,temp_file)
+
     file_contents,named_functions,nested_functions = replace_named_functions(file_contents,temp_file)
 
     comments = [singleline_comments,multiline_comments]
@@ -1916,7 +2028,7 @@ def find_file_path(input_path,file_extension)
 
 end
 
-nilac_version = "0.0.3.9"
+nilac_version = "0.0.4.0"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
