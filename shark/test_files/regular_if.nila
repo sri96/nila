@@ -1,0 +1,45 @@
+if visitor_present?
+
+  if active? or happy?
+
+    puts "Hello Wonderful Visitor!"
+
+  elsif idle? and not_engaged?
+
+    puts "Hello Visitor! It is time to engage!"
+
+    def mainfunc
+
+      puts "Hello!"
+
+      if charmander?
+
+        puts "Hello There!"
+
+      end
+
+      puts "Hello There"
+
+    end
+
+  else
+
+    puts "Welcome Visitor!"
+
+    if helly?
+
+      puts "Hello There!"
+
+    end
+
+  end
+
+end
+
+if delcatty?
+
+  puts "Hello There!"
+
+end
+
+puts "Hello" if visitor_present?
