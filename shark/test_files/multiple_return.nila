@@ -2,9 +2,9 @@
 
 def parse_name(input_name)
 
-  name_split = input_name.split(" ")
+  first_name,last_name = input_name.split(" ")
 
-  return name_split[0],name_split[1]
+  return first_name,last_name
 
 end
 
