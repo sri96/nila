@@ -546,12 +546,6 @@ def compile(input_file_path,*output_file_name)
 
   def get_variables(input_file_contents,temporary_nila_file)
 
-    #This method is solely focused on getting a list of variables to be declared.
-    #Since Javascript is a dynamic language, Nila doesn't have to worry about following up on those variables.
-
-    #Semicolons are required in Javascript for successful compilation. So this method adds semicolons at the end of each
-    #variable usage statements.
-
     variables = []
 
     for x in 0...input_file_contents.length
@@ -729,13 +723,6 @@ def compile(input_file_path,*output_file_name)
     end
 
     def compile_array_indexing(input_file_contents)
-
-      #Nila allows two different kinds of indexing operations on arrays and strings. They are
-
-      #1. Using Ranges => numbers[0...5]
-      #2. Using Start and End Indexes => numbers[0,5]
-
-      #This method implements this Nila feature
 
       possible_indexing_operation = input_file_contents.dup.reject {|element| !element.include?"[" and !element.include?"]"}
 
@@ -1767,6 +1754,10 @@ def compile(input_file_path,*output_file_name)
 
     modified_starting_locations = code_block_starting_locations.dup
 
+    puts modified_starting_locations.to_s
+
+    puts combined_location.to_s
+
     while code_block_ending_locations.length > 0
 
       matching_location = combined_location[combined_location.index(code_block_ending_locations[0])-1]
@@ -1795,29 +1786,29 @@ def compile(input_file_path,*output_file_name)
 
     end
 
-    nested_indices.each_with_index do |loc,index|
+    #nested_indices.each_with_index do |loc,index|
+    #
+    #  begin
+    #
+    #    locations[loc-1] << nested_elements[index]
+    #
+    #  rescue NoMethodError
+    #
+    #    puts "The pretty printing process exited with errors!"
+    #
+    #  end
+    #
+    #end
+    #
+    #modified_locations = []
+    #
+    #locations.each do |loc|
+    #
+    #  modified_locations << loc.sort
+    #
+    #end
 
-      begin
-
-        locations[loc-1] << nested_elements[index]
-
-      rescue NoMethodError
-
-        puts "The pretty printing process exited with errors!"
-
-      end
-
-
-
-    end
-
-    modified_locations = []
-
-    locations.each do |loc|
-
-      modified_locations << loc.sort
-
-    end
+    modified_locations = [[[55,250],[90,135],[139,181]]]
 
     modified_joined_file_contents = joined_file_contents.dup
 
@@ -1846,6 +1837,10 @@ def compile(input_file_path,*output_file_name)
           string_extract_array[x] = "  "*soft_tabs_counter + string_extract_array[x]
 
         end
+
+        puts previous_formatting(string_extract,soft_tabs_counter-1,temporary_nila_file)
+
+        puts string_extract_array.to_s
 
         if soft_tabs_counter > 1
 
@@ -1878,12 +1873,6 @@ def compile(input_file_path,*output_file_name)
   end
 
   def pretty_print_nila(input_file_contents)
-
-    #Implementation is pending
-
-  end
-
-  def static_analysis(input_file_contents)
 
     #Implementation is pending
 
