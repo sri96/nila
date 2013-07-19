@@ -1,6 +1,7 @@
 # Nila
 
-Nila is a dialect of Coffeescript with a Rubyspired syntax. Nilac is the official compiler for the Nila language. Nila is still in its infancy and is not suitable for day to day usage.
+Nila is a dialect of Coffeescript with a Rubyspired syntax. Nilac is the official compiler for the Nila language. Nila language is
+still in its infancy. The gems released are developmental releases not production releases. So use with caution.  
 
 ## Requirements
 
