@@ -2507,7 +2507,7 @@ def find_file_path(input_path,file_extension)
 
 end
 
-nilac_version = "0.0.4.1.1"
+nilac_version = "0.0.4.1.2"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"

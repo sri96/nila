@@ -319,96 +319,107 @@ def compile(input_file_path,*output_file_name)
 
     end
 
-    modified_file_contents = nila_file_contents.dup
+    unless key_word_locations.empty?
 
-    for y in 0...end_locations.length
+      modified_file_contents = nila_file_contents.dup
 
-      current_location = end_locations[y]
+      for y in 0...end_locations.length
 
-      current_string = modified_file_contents[current_location]
+        current_location = end_locations[y]
 
-      finder_location = current_location
+        current_string = modified_file_contents[current_location]
 
-      begin
+        finder_location = current_location
 
-        while current_string.index(nila_regexp) == nil
+        begin
 
-          finder_location -= 1
+          while current_string.index(nila_regexp) == nil
 
-          current_string = modified_file_contents[finder_location]
+            finder_location -= 1
+
+            current_string = modified_file_contents[finder_location]
+
+          end
+
+          code_block_begin = finder_location
+
+          code_block_end = current_location
+
+          start_blocks << code_block_begin
+
+          end_blocks << code_block_end
+
+          code_block_begin_string_split = modified_file_contents[code_block_begin].split(" ")
+
+          code_block_begin_string_split[0] = code_block_begin_string_split[0].reverse
+
+          code_block_begin_string = code_block_begin_string_split.join(" ")
+
+          modified_file_contents[code_block_begin] = code_block_begin_string
+
+        rescue NoMethodError
+
+          puts "Function compilation failed!"
 
         end
 
-        code_block_begin = finder_location
+      end
 
-        code_block_end = current_location
+      final_modified_file_contents = nila_file_contents.dup
 
-        start_blocks << code_block_begin
+      joined_file_contents = final_modified_file_contents.join
 
-        end_blocks << code_block_end
+      while start_blocks.length != 0
 
-        code_block_begin_string_split = modified_file_contents[code_block_begin].split(" ")
+        top_most_level = start_blocks.min
 
-        code_block_begin_string_split[0] = code_block_begin_string_split[0].reverse
+        top_most_level_index = start_blocks.index(top_most_level)
 
-        code_block_begin_string = code_block_begin_string_split.join(" ")
+        matching_level = end_blocks[top_most_level_index]
 
-        modified_file_contents[code_block_begin] = code_block_begin_string
+        named_code_blocks << extract_array(final_modified_file_contents,top_most_level,matching_level)
 
-      rescue NoMethodError
+        start_blocks.delete_at(top_most_level_index)
 
-        puts "Function compilation failed!"
+        end_blocks.delete(matching_level)
 
       end
 
-    end
+      codeblock_counter = 1
 
-    final_modified_file_contents = nila_file_contents.dup
+      named_functions = named_code_blocks.dup
 
-    joined_file_contents = final_modified_file_contents.join
+      nested_functions = []
 
-    while start_blocks.length != 0
+      named_code_blocks.each do |codeblock|
 
-      top_most_level = start_blocks.min
+        if joined_file_contents.include?(codeblock.join)
 
-      top_most_level_index = start_blocks.index(top_most_level)
+          joined_file_contents = joined_file_contents.sub(codeblock.join,"--named_function[#{codeblock_counter}]\n")
 
-      matching_level = end_blocks[top_most_level_index]
+          codeblock_counter += 1
 
-      named_code_blocks << extract_array(final_modified_file_contents,top_most_level,matching_level)
+          nested_functions = nested_functions + [[]]
 
-      start_blocks.delete_at(top_most_level_index)
+        else
 
-      end_blocks.delete(matching_level)
+          nested_functions[codeblock_counter-2] << codeblock
 
-    end
+          named_functions.delete(codeblock)
 
-    codeblock_counter = 1
-
-    named_functions = named_code_blocks.dup
-
-    nested_functions = []
-
-    named_code_blocks.each do |codeblock|
-
-      if joined_file_contents.include?(codeblock.join)
-
-        joined_file_contents = joined_file_contents.sub(codeblock.join,"--named_function[#{codeblock_counter}]\n")
-
-        codeblock_counter += 1
-
-        nested_functions = nested_functions + [[]]
-
-      else
-
-        nested_functions[codeblock_counter-2] << codeblock
-
-        named_functions.delete(codeblock)
+        end
 
       end
 
-    end
+    else
 
+      joined_file_contents = nila_file_contents.join
+
+      named_functions = []
+
+      nested_functions = []
+
+    end
 
     file_id = open(temporary_nila_file, 'w')
 
@@ -557,6 +568,10 @@ def compile(input_file_path,*output_file_name)
 
     variables = []
 
+    input_file_contents = input_file_contents.collect {|element| element.gsub("==","equalequal")}
+
+    input_file_contents = input_file_contents.collect {|element| element.gsub("!=","notequal")}
+
     input_file_contents = input_file_contents.collect {|element| element.gsub("+=","plusequal")}
 
     input_file_contents = input_file_contents.collect {|element| element.gsub("-=","minusequal")}
@@ -622,6 +637,10 @@ def compile(input_file_path,*output_file_name)
     line_by_line_contents = line_by_line_contents.collect {|element| element.gsub("divequal","/=")}
 
     line_by_line_contents = line_by_line_contents.collect {|element| element.gsub("modequal","%=")}
+
+    line_by_line_contents = line_by_line_contents.collect {|element| element.gsub("equalequal","==")}
+
+    line_by_line_contents = line_by_line_contents.collect {|element| element.gsub("notequal","!=")}
 
     return variables.uniq,line_by_line_contents
 
@@ -1250,29 +1269,37 @@ def compile(input_file_path,*output_file_name)
 
     joined_file_contents = input_file_contents.join
 
-    codeblock_counter = 1
+    unless named_code_blocks.empty?
 
-    function_names = []
+      codeblock_counter = 1
 
-    named_code_blocks.each do |codeblock|
+      function_names = []
 
-      function_names[codeblock_counter-1] = []
+      named_code_blocks.each do |codeblock|
 
-      joined_file_contents = joined_file_contents.sub("--named_function[#{codeblock_counter}]\n",compile_function(codeblock,temporary_nila_file).join)
+        function_names[codeblock_counter-1] = []
 
-      codeblock_counter += 1
+        joined_file_contents = joined_file_contents.sub("--named_function[#{codeblock_counter}]\n",compile_function(codeblock,temporary_nila_file).join)
 
-      current_nested_functions = nested_functions[codeblock_counter-2]
+        codeblock_counter += 1
 
-      function_names[codeblock_counter-2] << extract_function_name(codeblock)
+        current_nested_functions = nested_functions[codeblock_counter-2]
 
-      current_nested_functions.each do |nested_function|
+        function_names[codeblock_counter-2] << extract_function_name(codeblock)
 
-        function_names[codeblock_counter-2] << extract_function_name(nested_function)
+        current_nested_functions.each do |nested_function|
 
-        joined_file_contents = joined_file_contents.sub(nested_function.join,compile_function(nested_function,temporary_nila_file).join)
+          function_names[codeblock_counter-2] << extract_function_name(nested_function)
+
+          joined_file_contents = joined_file_contents.sub(nested_function.join,compile_function(nested_function,temporary_nila_file).join)
+
+        end
 
       end
+
+    else
+
+      function_names = []
 
     end
 
@@ -1512,7 +1539,7 @@ def compile(input_file_path,*output_file_name)
 
           current_block.each_with_index do |line,index|
 
-            if line.lstrip.eql? "end\n"
+            if line.strip.eql? "end"
 
               end_counter += 1
 
@@ -1556,7 +1583,7 @@ def compile(input_file_path,*output_file_name)
 
               current_block.each_with_index do |line,index|
 
-                if line.lstrip.eql? "end\n"
+                if line.strip.eql? "end"
 
                   end_counter += 1
 
@@ -1577,6 +1604,32 @@ def compile(input_file_path,*output_file_name)
       end
 
       def compile_if_syntax(input_block)
+
+        strings = []
+
+        string_counter = 0
+
+        modified_input_block = input_block.dup
+
+        input_block.each_with_index do |line,index|
+
+          if line.include?("\"")
+
+            opening_quotes = line.index("\"")
+
+            string_extract = line[opening_quotes..line.index("\"",opening_quotes+1)]
+
+            strings << string_extract
+
+            modified_input_block[index] = modified_input_block[index].sub(string_extract,"--string{#{string_counter}}")
+
+            string_counter += 1
+
+          end
+
+        end
+
+        input_block = modified_input_block
 
         starting_line = input_block[0]
 
@@ -1606,7 +1659,23 @@ def compile(input_file_path,*output_file_name)
 
         end
 
-        return input_block
+        modified_input_block = input_block.dup
+
+        input_block.each_with_index do |line,index|
+
+          if line.include?("--string{")
+
+            junk,remains = line.split("--string{")
+
+            string_index,junk = remains.split("}")
+
+            modified_input_block[index] = modified_input_block[index].sub("--string{#{string_index.strip}}",strings[string_index.strip.to_i])
+
+          end
+
+        end
+
+        return modified_input_block
 
       end
 
@@ -2440,7 +2509,7 @@ def find_file_path(input_path,file_extension)
 
 end
 
-nilac_version = "0.0.4.1"
+nilac_version = "0.0.4.1.2"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
