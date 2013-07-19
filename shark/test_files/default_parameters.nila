@@ -6,12 +6,6 @@ def fill(container = "cup",liquid = "coffee")
 
 end
 
-def filly(container = "cup",liquid = "coffee")
-
-  puts "Filling #{container} with #{liquid}" 
-
-end
-
 fill()
 
 fill("cup")

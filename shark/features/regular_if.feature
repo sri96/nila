@@ -1,5 +1,5 @@
-Feature: This feature bring Ruby style if statements to Nila.   
-  Scenario: Input function with regular if statements
+Feature: This feature bring Ruby's if statement to Nila.   
+  Scenario: Input function with if statements
     Given the input file "regular_if.nila"
     When the ~compiler is run
     The output file must be "regular_if.js"

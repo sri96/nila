@@ -3,11 +3,16 @@
   // This is a demo of default parameters
 
   function fill(container,liquid) {
-    if (liquid == null) {
+    if (container === null) {
+      container = "cup";
+    }
+    if (liquid === null) {
       liquid = "coffee";
     }
     return console.log("Filling " + container + " with " + liquid);
   }
+
+  fill();
 
   fill("cup");
 

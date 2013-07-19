@@ -329,29 +329,37 @@ def compile(input_file_path,*output_file_name)
 
       finder_location = current_location
 
-      while current_string.index(nila_regexp) == nil
+      begin
 
-        finder_location -= 1
+        while current_string.index(nila_regexp) == nil
 
-        current_string = modified_file_contents[finder_location]
+          finder_location -= 1
+
+          current_string = modified_file_contents[finder_location]
+
+        end
+
+        code_block_begin = finder_location
+
+        code_block_end = current_location
+
+        start_blocks << code_block_begin
+
+        end_blocks << code_block_end
+
+        code_block_begin_string_split = modified_file_contents[code_block_begin].split(" ")
+
+        code_block_begin_string_split[0] = code_block_begin_string_split[0].reverse
+
+        code_block_begin_string = code_block_begin_string_split.join(" ")
+
+        modified_file_contents[code_block_begin] = code_block_begin_string
+
+      rescue NoMethodError
+
+        puts "Function compilation failed!"
 
       end
-
-      code_block_begin = finder_location
-
-      code_block_end = current_location
-
-      start_blocks << code_block_begin
-
-      end_blocks << code_block_end
-
-      code_block_begin_string_split = modified_file_contents[code_block_begin].split(" ")
-
-      code_block_begin_string_split[0] = code_block_begin_string_split[0].reverse
-
-      code_block_begin_string = code_block_begin_string_split.join(" ")
-
-      modified_file_contents[code_block_begin] = code_block_begin_string
 
     end
 
@@ -400,6 +408,7 @@ def compile(input_file_path,*output_file_name)
       end
 
     end
+
 
     file_id = open(temporary_nila_file, 'w')
 
@@ -478,8 +487,6 @@ def compile(input_file_path,*output_file_name)
 
     def parse_default_values(input_function_definition)
 
-      puts input_function_definition
-
       split1,split2 = input_function_definition.split("(")
 
       split2,split3 = split2.split(")")
@@ -548,13 +555,17 @@ def compile(input_file_path,*output_file_name)
 
   def get_variables(input_file_contents,temporary_nila_file)
 
-    #This method is solely focused on getting a list of variables to be declared.
-    #Since Javascript is a dynamic language, Nila doesn't have to worry about following up on those variables.
-
-    #Semicolons are required in Javascript for successful compilation. So this method adds semicolons at the end of each
-    #variable usage statements.
-
     variables = []
+
+    input_file_contents = input_file_contents.collect {|element| element.gsub("+=","plusequal")}
+
+    input_file_contents = input_file_contents.collect {|element| element.gsub("-=","minusequal")}
+
+    input_file_contents = input_file_contents.collect {|element| element.gsub("*=","multiequal")}
+
+    input_file_contents = input_file_contents.collect {|element| element.gsub("/=","divequal")}
+
+    input_file_contents = input_file_contents.collect {|element| element.gsub("%=","modequal")}
 
     for x in 0...input_file_contents.length
 
@@ -601,6 +612,16 @@ def compile(input_file_path,*output_file_name)
       line_by_line_contents = [variable_declaration_string,line_by_line_contents].flatten
 
     end
+
+    line_by_line_contents = line_by_line_contents.collect {|element| element.gsub("plusequal","+=")}
+
+    line_by_line_contents = line_by_line_contents.collect {|element| element.gsub("minusequal","-=")}
+
+    line_by_line_contents = line_by_line_contents.collect {|element| element.gsub("multiequal","*=")}
+
+    line_by_line_contents = line_by_line_contents.collect {|element| element.gsub("divequal","/=")}
+
+    line_by_line_contents = line_by_line_contents.collect {|element| element.gsub("modequal","%=")}
 
     return variables.uniq,line_by_line_contents
 
@@ -731,13 +752,6 @@ def compile(input_file_path,*output_file_name)
     end
 
     def compile_array_indexing(input_file_contents)
-
-      #Nila allows two different kinds of indexing operations on arrays and strings. They are
-
-      #1. Using Ranges => numbers[0...5]
-      #2. Using Start and End Indexes => numbers[0,5]
-
-      #This method implements this Nila feature
 
       possible_indexing_operation = input_file_contents.dup.reject {|element| !element.include?"[" and !element.include?"]"}
 
@@ -980,13 +994,21 @@ def compile(input_file_path,*output_file_name)
 
         rejected_array = reversed_input_array.reject {|content| content.lstrip.eql?("")}
 
-        rejected_array = rejected_array.reject {|content| content.strip.eql? "}"}
+        rejected_array = rejected_array[1..-1]
 
-        last_statement = rejected_array[0]
+        if !rejected_array[0].strip.eql?("}")
 
-        replacement_string = "return #{last_statement.lstrip}"
+          if !rejected_array[0].strip.eql?("end")
 
-        input_array[input_array.index(last_statement)] = replacement_string
+            last_statement = rejected_array[0]
+
+            replacement_string = "return #{last_statement.lstrip}"
+
+            input_array[input_array.index(last_statement)] = replacement_string
+
+          end
+
+        end
 
       end
 
@@ -1272,7 +1294,7 @@ def compile(input_file_path,*output_file_name)
 
         "puts" => "console.log",
 
-        "print" => "console.log"
+        "print" => "process.stdout.write"
 
     }
 
@@ -1338,29 +1360,37 @@ def compile(input_file_path,*output_file_name)
 
     end
 
-    input_file_contents[-1] = input_file_contents[-1] + "\n" if !input_file_contents[-1].include?("\n")
+    begin
 
-    joined_file_contents = input_file_contents.join
+      input_file_contents[-1] = input_file_contents[-1] + "\n" if !input_file_contents[-1].include?("\n")
 
-    function_names.each do |list_of_functions|
+      joined_file_contents = input_file_contents.join
 
-      list_of_functions.each do |function|
+      function_names.each do |list_of_functions|
 
-        matching_strings = extract(joined_file_contents,function+" ","\n")
+        list_of_functions.each do |function|
 
-        matching_strings.each do |string|
+          matching_strings = extract(joined_file_contents,function+" ","\n")
 
-          modified_string = string.dup
+          matching_strings.each do |string|
 
-          modified_string = modified_string.sub(function+" ",function+"(")
+            modified_string = string.dup
 
-          modified_string = modified_string.sub("\n",")\n")
+            modified_string = modified_string.sub(function+" ",function+"(")
 
-          joined_file_contents = joined_file_contents.sub(string,modified_string)
+            modified_string = modified_string.sub("\n",")\n")
+
+            joined_file_contents = joined_file_contents.sub(string,modified_string)
+
+          end
 
         end
 
       end
+
+    rescue NoMethodError
+
+      puts "Whitespace delimitation exited with errors!"
 
     end
 
@@ -1384,9 +1414,9 @@ def compile(input_file_path,*output_file_name)
 
     def compile_inline_conditionals(input_file_contents,temporary_nila_file)
 
-      conditionals = [/( if )/,/( while )/]
+      conditionals = [/( if )/,/( while )/,/( unless )/,/( until )/]
 
-      plain_conditionals = [" if "," while "]
+      plain_conditionals = [" if "," while "," unless "," until "]
 
       joined_file_contents = input_file_contents.join
 
@@ -1394,7 +1424,7 @@ def compile(input_file_path,*output_file_name)
 
       conditionals.each_with_index do |regex,index|
 
-        matching_lines = input_file_contents.reject {|content| !content.index(regex)}
+        matching_lines = input_file_contents.reject {|content| content.index(regex).nil?}
 
         matching_lines.each do |line|
 
@@ -1402,11 +1432,19 @@ def compile(input_file_path,*output_file_name)
 
           if index == 0
 
-            output_statement = "if (#{line_split[1].lstrip.rstrip}) {\n\n#{line_split[0]}\n}\n"
+            output_statement = "if (#{line_split[1].lstrip.rstrip.gsub("?","")}) {\n\n#{line_split[0]}\n}\n"
 
           elsif index == 1
 
-            output_statement = "while (#{line_split[1].lstrip.rstrip}) {\n\n#{line_split[0]}\n}\n"
+            output_statement = "while (#{line_split[1].lstrip.rstrip.gsub("?","")}) {\n\n#{line_split[0]}\n}\n"
+
+          elsif index == 2
+
+            output_statement = "if (!(#{line_split[1].lstrip.rstrip.gsub("?","")})) {\n\n#{line_split[0]}\n}\n"
+
+          elsif index == 3
+
+            output_statement = "while (!(#{line_split[1].lstrip.rstrip.gsub("?","")})) {\n\n#{line_split[0]}\n}\n"
 
           end
 
@@ -1428,7 +1466,263 @@ def compile(input_file_path,*output_file_name)
 
     end
 
-    line_by_line_contents = compile_inline_conditionals(input_file_contents,temporary_nila_file)
+    def compile_regular_if(input_file_contents,temporary_nila_file)
+
+      def convert_string_to_array(input_string,temporary_nila_file)
+
+        file_id = open(temporary_nila_file, 'w')
+
+        file_id.write(input_string)
+
+        file_id.close()
+
+        line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+        return line_by_line_contents
+
+      end
+
+      def extract_if_blocks(if_statement_indexes,input_file_contents)
+
+        possible_if_blocks = []
+
+        if_block_counter = 0
+
+        extracted_blocks = []
+
+        controlregexp = /(if |while |def )/
+
+        rejectionregexp = /( if | while )/
+
+        for x in 0...if_statement_indexes.length-1
+
+          possible_if_blocks << input_file_contents[if_statement_indexes[x]..if_statement_indexes[x+1]]
+
+        end
+
+        end_counter = 0
+
+        end_index = []
+
+        current_block = []
+
+        possible_if_blocks.each_with_index do |block|
+
+          current_block += block
+
+          current_block.each_with_index do |line,index|
+
+            if line.lstrip.eql? "end\n"
+
+              end_counter += 1
+
+              end_index << index
+
+            end
+
+          end
+
+          if end_counter > 0
+
+            until end_index.empty?
+
+              array_extract = current_block[0..end_index[0]].reverse
+
+              index_counter = 0
+
+              array_extract.each_with_index do |line|
+
+                break if (line.lstrip.index(controlregexp) != nil and line.lstrip.index(rejectionregexp).nil?)
+
+                index_counter += 1
+
+              end
+
+              block_extract = array_extract[0..index_counter].reverse
+
+              extracted_blocks << block_extract
+
+              block_start = current_block.index(block_extract[0])
+
+              block_end = current_block.index(block_extract[-1])
+
+              current_block[block_start..block_end] = "--ifblock#{if_block_counter}"
+
+              if_block_counter += 1
+
+              end_counter = 0
+
+              end_index = []
+
+              current_block.each_with_index do |line,index|
+
+                if line.lstrip.eql? "end\n"
+
+                  end_counter += 1
+
+                  end_index << index
+
+                end
+
+              end
+
+            end
+
+          end
+
+        end
+
+        return current_block,extracted_blocks
+
+      end
+
+      def compile_if_syntax(input_block)
+
+        starting_line = input_block[0]
+
+        starting_line = starting_line + "\n" if starting_line.lstrip == starting_line
+
+        junk,condition = starting_line.split("if")
+
+        input_block[0] = "Euuf (#{condition.lstrip.rstrip.gsub("?","")}) {\n"
+
+        input_block[-1] = input_block[-1].lstrip.sub("end","}")
+
+        elsif_statements = input_block.reject {|element| !element.include?("elsuf")}
+
+        elsif_statements.each do |statement|
+
+          junk,condition = statement.split("elsuf")
+
+          input_block[input_block.index(statement)] = "} elsuf (#{condition.lstrip.rstrip.gsub("?","")}) {\n"
+
+        end
+
+        else_statements = input_block.reject {|element| !element.include?("else")}
+
+        else_statements.each do |statement|
+
+          input_block[input_block.index(statement)] = "} else {\n"
+
+        end
+
+        return input_block
+
+      end
+
+      input_file_contents = input_file_contents.collect {|element| element.sub("elsif","elsuf")}
+
+      possible_if_statements = input_file_contents.reject {|element| !element.include?("if")}
+
+      possible_if_statements = possible_if_statements.reject {|element| element.include?("else")}
+
+      possible_if_statements = possible_if_statements.reject {|element| element.lstrip.include?(" if ")}
+
+      if !possible_if_statements.empty?
+
+        if_statement_indexes = []
+
+        possible_if_statements.each do |statement|
+
+          if_statement_indexes << input_file_contents.dup.each_index.select {|index| input_file_contents[index] == statement}
+
+        end
+
+        if_statement_indexes = if_statement_indexes.flatten + [-1]
+
+        controlregexp = /(while |def )/
+
+        modified_input_contents,extracted_statements = extract_if_blocks(if_statement_indexes,input_file_contents.clone)
+
+        joined_blocks = extracted_statements.collect {|element| element.join}
+
+        if_statements = joined_blocks.reject {|element| element.index(controlregexp) != nil}
+
+        rejected_elements = joined_blocks - if_statements
+
+        rejected_elements_index = []
+
+        rejected_elements.each do |element|
+
+          rejected_elements_index << joined_blocks.each_index.select {|index| joined_blocks[index] == element}
+
+        end
+
+        if_blocks_index = (0...extracted_statements.length).to_a
+
+        rejected_elements_index = rejected_elements_index.flatten
+
+        if_blocks_index -= rejected_elements_index
+
+        modified_if_statements = if_statements.collect {|string| convert_string_to_array(string,temporary_nila_file)}
+
+        modified_if_statements = modified_if_statements.collect {|block| compile_if_syntax(block)}.reverse
+
+        if_blocks_index = if_blocks_index.collect {|element| "--ifblock#{element}"}.reverse
+
+        rejected_elements_index = rejected_elements_index.collect {|element| "--ifblock#{element}"}.reverse
+
+        rejected_elements = rejected_elements.reverse
+
+        joined_file_contents = modified_input_contents.join
+
+        until if_blocks_index.empty? and rejected_elements_index.empty?
+
+          if !if_blocks_index.empty?
+
+            if joined_file_contents.include?(if_blocks_index[0])
+
+              joined_file_contents = joined_file_contents.sub(if_blocks_index[0],modified_if_statements[0].join)
+
+              if_blocks_index.delete_at(0)
+
+              modified_if_statements.delete_at(0)
+
+            else
+
+              joined_file_contents = joined_file_contents.sub(rejected_elements_index[0],rejected_elements[0])
+
+              rejected_elements_index.delete_at(0)
+
+              rejected_elements.delete_at(0)
+
+            end
+
+          else
+
+            joined_file_contents = joined_file_contents.sub(rejected_elements_index[0],rejected_elements[0])
+
+            rejected_elements_index.delete_at(0)
+
+            rejected_elements.delete_at(0)
+
+          end
+
+        end
+
+      else
+
+        joined_file_contents = input_file_contents.join
+
+      end
+
+      file_id = open(temporary_nila_file, 'w')
+
+      file_id.write(joined_file_contents)
+
+      file_id.close()
+
+      line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+      return line_by_line_contents
+
+    end
+
+    file_contents = compile_regular_if(input_file_contents,temporary_nila_file)
+
+    file_contents = compile_inline_conditionals(file_contents,temporary_nila_file)
+
+    return file_contents
 
   end
 
@@ -1696,6 +1990,10 @@ def compile(input_file_path,*output_file_name)
 
           puts "Whitespace was left unfixed!"
 
+        rescue ArgumentError
+
+          puts "Whitespace was left unfixed!"
+
         end
 
         return modified_file_contents,code_blocks
@@ -1733,141 +2031,254 @@ def compile(input_file_path,*output_file_name)
 
     end
 
-    javascript_regexp = /(if |while |function |function\()/
+    def roll_blocks(input_file_contents,code_block_starting_locations)
 
-    locations = []
+      if !code_block_starting_locations.empty?
 
-    javascript_file_contents = reset_tabs(javascript_file_contents)
+        controlregexp = /(if |while |function |function\()/
 
-    joined_file_contents = javascript_file_contents.join
+        code_block_starting_locations = [0,code_block_starting_locations,-1].flatten
 
-    code_block_starting_locations = find_all_matching_indices(joined_file_contents,javascript_regexp)
+        possible_blocks = []
 
-    code_block_ending_locations = find_all_matching_indices(joined_file_contents,"}")
+        block_counter = 0
 
-    combined_location = [code_block_starting_locations,code_block_ending_locations.dup].flatten.sort
+        extracted_blocks = []
 
-    self_invoking_function_extract = joined_file_contents[code_block_starting_locations[0]..code_block_ending_locations[-1]]
+        for x in 0...code_block_starting_locations.length-1
 
-    self_invoking_function_array = convert_string_to_array(self_invoking_function_extract,temporary_nila_file)
+          possible_blocks << input_file_contents[code_block_starting_locations[x]..code_block_starting_locations[x+1]]
 
-    combined_location.delete_at(0); combined_location.delete_at(-1); code_block_ending_locations.delete_at(-1); code_block_starting_locations.delete_at(0)
+        end
 
-    modified_self_invoking_array = self_invoking_function_array.dup
+        end_counter = 0
 
-    for x in 1...self_invoking_function_array.length-1
+        end_index = []
 
-      modified_self_invoking_array[x] = "  " + self_invoking_function_array[x]
+        current_block = []
 
-    end
+        possible_blocks.each_with_index do |block|
 
-    modified_self_invoking_array[-1] = "\n\n" + modified_self_invoking_array[-1]
+          current_block += block
 
-    nested_elements = []
+          current_block.each_with_index do |line,index|
 
-    nested_indices = []
+            if line.lstrip.eql? "}\n"
 
-    modified_starting_locations = code_block_starting_locations.dup
+              end_counter += 1
 
-    while code_block_ending_locations.length > 0
+              end_index << index
 
-      matching_location = combined_location[combined_location.index(code_block_ending_locations[0])-1]
+            end
 
-      combined_location.delete(matching_location)
+          end
 
-      location_among_start_locations = code_block_starting_locations.index(matching_location)
+          if end_counter > 0
 
-      if location_among_start_locations == 0
+            until end_index.empty?
 
-        locations << [[matching_location,combined_location[combined_location.index(code_block_ending_locations[0])]]]
+              array_extract = current_block[0..end_index[0]].reverse
+
+              index_counter = 0
+
+              array_extract.each_with_index do |line|
+
+                break if line.index(controlregexp) != nil
+
+                index_counter += 1
+
+              end
+
+              block_extract = array_extract[0..index_counter].reverse
+
+              extracted_blocks << block_extract
+
+              block_start = current_block.index(block_extract[0])
+
+              block_end = current_block.index(block_extract[-1])
+
+              current_block[block_start..block_end] = "--block#{block_counter}"
+
+              block_counter += 1
+
+              end_counter = 0
+
+              end_index = []
+
+              current_block.each_with_index do |line,index|
+
+                if line.lstrip.eql? "}\n"
+
+                  end_counter += 1
+
+                  end_index << index
+
+                end
+
+              end
+
+            end
+
+          end
+
+        end
+
+        return current_block,extracted_blocks
 
       else
 
-        nested_elements << [matching_location,combined_location[combined_location.index(code_block_ending_locations[0])]]
-
-        nested_indices << modified_starting_locations.index(matching_location)
+        return input_file_contents,[]
 
       end
 
-      combined_location.delete(code_block_ending_locations[0])
-
-      code_block_ending_locations.delete_at(0)
-
-      code_block_starting_locations.delete(matching_location)
-
     end
 
-    nested_indices.each_with_index do |loc,index|
+    def fix_syntax_indentation(input_file_contents)
 
-      begin
+      fixableregexp = /(else |elsuf )/
 
-        locations[loc-1] << nested_elements[index]
+      need_fixes = input_file_contents.reject {|line| line.index(fixableregexp).nil?}
 
-      rescue NoMethodError
+      need_fixes.each do |fix|
 
-        puts "The pretty printing process exited with errors!"
+        input_file_contents[input_file_contents.index(fix)] = input_file_contents[input_file_contents.index(fix)].sub("  ","")
 
       end
 
-
-
-    end
-
-    modified_locations = []
-
-    locations.each do |loc|
-
-      modified_locations << loc.sort
+      return input_file_contents
 
     end
 
-    modified_joined_file_contents = joined_file_contents.dup
+    javascript_regexp = /(if |while |function |function\()/
 
-    modified_joined_file_contents = modified_joined_file_contents.sub(self_invoking_function_extract,modified_self_invoking_array.join)
+    javascript_file_contents = javascript_file_contents.collect {|element| element.sub("Euuf","if")}
 
-    modified_locations.each do |location|
+    javascript_file_contents = reset_tabs(javascript_file_contents)
 
-      soft_tabs_counter = 2
+    starting_locations = []
 
-      location.each do |sublocation|
+    javascript_file_contents.each_with_index do |line,index|
 
-        string_extract = joined_file_contents[sublocation[0]..sublocation[1]]
+      if line.index(javascript_regexp) != nil
 
-        string_extract_array = convert_string_to_array(string_extract,temporary_nila_file)
+        starting_locations << index
 
-        if soft_tabs_counter > 1
+      end
 
-          string_extract_array[0] = "  "*(soft_tabs_counter-1) + string_extract_array[0]
+    end
 
-          string_extract_array[-1] = "  "*(soft_tabs_counter-1) + string_extract_array[-1]
+    remaining_file_contents,blocks = roll_blocks(javascript_file_contents,starting_locations)
 
-        end
+    joined_file_contents = ""
 
-        for x in 1...string_extract_array.length-1
+    if !blocks.empty?
 
-          string_extract_array[x] = "  "*soft_tabs_counter + string_extract_array[x]
+      remaining_file_contents = remaining_file_contents.collect {|element| "  " + element}
 
-        end
+      main_blocks = remaining_file_contents.reject {|element| !element.include?("--block")}
 
-        if soft_tabs_counter > 1
+      main_block_numbers = main_blocks.collect {|element| element.split("--block")[1]}
 
-          modified_joined_file_contents = modified_joined_file_contents.sub(previous_formatting(string_extract,soft_tabs_counter-1,temporary_nila_file),string_extract_array.join)
+      modified_blocks = main_blocks.dup
 
-        else
+      soft_tabs = "  "
 
-          modified_joined_file_contents = modified_joined_file_contents.sub(string_extract,string_extract_array.join)
+      for x in (0...main_blocks.length)
 
-        end
+        soft_tabs_counter = 1
+
+        current_block = blocks[main_block_numbers[x].to_i]
+
+        current_block = [soft_tabs + current_block[0]] + current_block[1...-1] + [soft_tabs*(soft_tabs_counter)+current_block[-1]]
 
         soft_tabs_counter += 1
 
+        current_block = [current_block[0]] + current_block[1...-1].collect {|element| soft_tabs*(soft_tabs_counter)+element} + [current_block[-1]]
+
+        nested_block = current_block.reject {|row| !row.include?("--block")}
+
+        nested_block = nested_block.collect {|element| element.split("--block")[1]}
+
+        nested_block = nested_block.collect {|element| element.rstrip.to_i}
+
+        modified_nested_block = nested_block.clone
+
+        current_block = current_block.join
+
+        until modified_nested_block.empty?
+
+          nested_block.each do |block_index|
+
+            nested_block_contents = blocks[block_index]
+
+            nested_block_contents = nested_block_contents[0...-1] + [soft_tabs*(soft_tabs_counter)+nested_block_contents[-1]]
+
+            soft_tabs_counter += 1
+
+            nested_block_contents = [nested_block_contents[0]] + nested_block_contents[1...-1].collect {|element| soft_tabs*(soft_tabs_counter)+element} + [nested_block_contents[-1]]
+
+            nested_block_contents = nested_block_contents.reject {|element| element.gsub(" ","").eql?("")}
+
+            current_block = current_block.sub("--block#{block_index}",nested_block_contents.join)
+
+            blocks[block_index] = nested_block_contents
+
+            modified_nested_block.delete_at(0)
+
+            soft_tabs_counter -= 1
+
+          end
+
+          current_block = convert_string_to_array(current_block,temporary_nila_file)
+
+          nested_block = current_block.reject {|element| !element.include?("--block")}
+
+          nested_block = nested_block.collect {|element| element.split("--block")[1]}
+
+          nested_block = nested_block.collect {|element| element.rstrip.to_i}
+
+          modified_nested_block = nested_block.clone
+
+          current_block = current_block.join
+
+          if !nested_block.empty?
+
+            soft_tabs_counter += 1
+
+          end
+
+        end
+
+        modified_blocks[x] = current_block
+
       end
+
+
+
+      remaining_file_contents = ["(function() {\n",remaining_file_contents,"\n}).call(this);"].flatten
+
+      joined_file_contents = remaining_file_contents.join
+
+      main_blocks.each_with_index do |block_id,index|
+
+        joined_file_contents = joined_file_contents.sub(block_id,modified_blocks[index])
+
+      end
+
+    else
+
+      remaining_file_contents = remaining_file_contents.collect {|element| "  " + element}
+
+      remaining_file_contents = ["(function() {\n",remaining_file_contents,"\n}).call(this);"].flatten
+
+      joined_file_contents = remaining_file_contents.join
 
     end
 
+
     file_id = open(temporary_nila_file, 'w')
 
-    file_id.write(modified_joined_file_contents)
+    file_id.write(joined_file_contents)
 
     file_id.close()
 
@@ -1875,30 +2286,31 @@ def compile(input_file_path,*output_file_name)
 
     line_by_line_contents = fix_newlines(line_by_line_contents)
 
+    line_by_line_contents = fix_syntax_indentation(line_by_line_contents)
+
     return line_by_line_contents
+
+  end
+
+  def compile_operators(input_file_contents)
+
+    input_file_contents = input_file_contents.collect {|element| element.sub(" and "," && ")}
+
+    input_file_contents = input_file_contents.collect {|element| element.sub(" or "," || ")}
+
+    input_file_contents = input_file_contents.collect {|element| element.sub("==","===")}
+
+    input_file_contents = input_file_contents.collect {|element| element.sub("!=","!==")}
+
+    input_file_contents = input_file_contents.collect {|element| element.sub("elsuf","else if")}
+
+    return input_file_contents
 
   end
 
   def pretty_print_nila(input_file_contents)
 
     #Implementation is pending
-
-  end
-
-  def static_analysis(input_file_contents)
-
-    #Implementation is pending
-
-  end
-
-  def create_self_invoking_function(input_file_contents)
-
-    # A feature imported from Coffeescript. This makes all the function private by default
-    # and prevents global variables from leaking.
-
-    modified_file_contents = ["(function() {\n",input_file_contents,"\n}).call(this);"].flatten
-
-    return modified_file_contents
 
   end
 
@@ -1930,6 +2342,8 @@ def compile(input_file_path,*output_file_name)
 
     file_contents = compile_interpolated_strings(file_contents)
 
+    file_contents = compile_conditional_structures(file_contents,temp_file)
+
     file_contents = compile_arrays(file_contents)
 
     file_contents = compile_default_values(file_contents,temp_file)
@@ -1941,8 +2355,6 @@ def compile(input_file_path,*output_file_name)
     file_contents = compile_multiple_variable_initialization(file_contents,temp_file)
 
     list_of_variables,file_contents = get_variables(file_contents,temp_file)
-
-    file_contents = compile_conditional_structures(file_contents,temp_file)
 
     file_contents, function_names = compile_named_functions(file_contents,named_functions,nested_functions,temp_file)
 
@@ -1958,9 +2370,9 @@ def compile(input_file_path,*output_file_name)
 
     file_contents = compile_comments(file_contents,comments,temp_file)
 
-    file_contents = create_self_invoking_function(file_contents)
-
     file_contents = pretty_print_javascript(file_contents,temp_file)
+
+    file_contents = compile_operators(file_contents)
 
     output_javascript(file_contents,output_js_file,temp_file)
 
@@ -2028,7 +2440,7 @@ def find_file_path(input_path,file_extension)
 
 end
 
-nilac_version = "0.0.4.0"
+nilac_version = "0.0.4.1"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
