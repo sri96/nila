@@ -1867,7 +1867,7 @@ def compile(input_file_path,*output_file_name)
 
     end
 
-    reject_regexp = /(function |if |else|switch |case|while |for )/
+    reject_regexp = /(function |Euuf |if |else|elsuf|switch |case|while |for )/
 
     modified_file_contents = []
 
@@ -2507,7 +2507,7 @@ def find_file_path(input_path,file_extension)
 
 end
 
-nilac_version = "0.0.4.1.2"
+nilac_version = "0.0.4.1.3"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
