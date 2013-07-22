@@ -122,7 +122,7 @@ def compile(input_file_path,*output_file_name)
 
       multiline_comment = file_contents_as_string[start_of_multiline_comment..end_of_multiline_comment+3]
 
-      modified_file_contents = modified_file_contents.gsub(multiline_comment,"--multiline_comment[#{multiline_comment_counter}]")
+      modified_file_contents = modified_file_contents.gsub(multiline_comment,"--multiline_comment[#{multiline_comment_counter}]\n\n")
 
       multiline_comment_counter += 1
 
@@ -265,7 +265,7 @@ def compile(input_file_path,*output_file_name)
 
           single_line_comments << comment
 
-          current_row = current_row.gsub(comment,"--single_line_comment[#{singleline_comment_counter}]")
+          current_row = current_row.gsub(comment,"--single_line_comment[#{singleline_comment_counter}]\n\n")
 
           singleline_comment_counter += 1
 
@@ -1321,7 +1321,10 @@ def compile(input_file_path,*output_file_name)
 
         "puts" => "console.log",
 
+        "p" => "console.log",
+
         "print" => "process.stdout.write"
+
 
     }
 
@@ -1403,6 +1406,8 @@ def compile(input_file_path,*output_file_name)
 
             modified_string = string.dup
 
+            modified_string = modified_string.rstrip + modified_string.split(modified_string.rstrip)[1].gsub(" ","")
+
             modified_string = modified_string.sub(function+" ",function+"(")
 
             modified_string = modified_string.sub("\n",")\n")
@@ -1435,9 +1440,41 @@ def compile(input_file_path,*output_file_name)
 
   def compile_conditional_structures(input_file_contents,temporary_nila_file)
 
-    #Currently the following conditional structures have been implemented
+    def replace_unless_until(input_file_contents)
 
-    #1. If and While Inline Statements
+      modified_file_contents = input_file_contents.clone
+
+      possible_unless_commands = input_file_contents.reject {|element| !element.include?("unless")}
+
+      unless_commands = possible_unless_commands.reject {|element| !element.lstrip.split("unless")[0].empty?}
+
+      unless_commands.each do |command|
+
+        junk,condition = command.split("unless ")
+
+        replacement_string = "if !(#{condition.lstrip.rstrip})\n"
+
+        modified_file_contents[modified_file_contents.index(command)] = replacement_string
+
+      end
+
+      possible_until_commands = input_file_contents.reject {|element| !element.include?("until")}
+
+      until_commands = possible_until_commands.reject {|element| !element.lstrip.split("until")[0].empty?}
+
+      until_commands.each do |command|
+
+        junk,condition = command.split("until ")
+
+        replacement_string = "while !(#{condition.lstrip.rstrip})\n"
+
+        modified_file_contents[modified_file_contents.index(command)] = replacement_string
+
+      end
+
+      return modified_file_contents
+
+    end
 
     def compile_inline_conditionals(input_file_contents,temporary_nila_file)
 
@@ -1697,7 +1734,7 @@ def compile(input_file_path,*output_file_name)
 
         end
 
-        if_statement_indexes = if_statement_indexes.flatten + [-1]
+        if_statement_indexes = [0] + if_statement_indexes.flatten + [-1]
 
         controlregexp = /(while |def )/
 
@@ -1787,65 +1824,285 @@ def compile(input_file_path,*output_file_name)
 
     end
 
-    file_contents = compile_regular_if(input_file_contents,temporary_nila_file)
+    def compile_regular_while(input_file_contents,temporary_nila_file)
+
+      def convert_string_to_array(input_string,temporary_nila_file)
+
+        file_id = open(temporary_nila_file, 'w')
+
+        file_id.write(input_string)
+
+        file_id.close()
+
+        line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+        return line_by_line_contents
+
+      end
+
+      def extract_while_blocks(while_statement_indexes,input_file_contents)
+
+        possible_while_blocks = []
+
+        while_block_counter = 0
+
+        extracted_blocks = []
+
+        controlregexp = /(if |while |def )/
+
+        rejectionregexp = /( if | while )/
+
+        for x in 0...while_statement_indexes.length-1
+
+          possible_while_blocks << input_file_contents[while_statement_indexes[x]..while_statement_indexes[x+1]]
+
+        end
+
+        end_counter = 0
+
+        end_index = []
+
+        current_block = []
+
+        possible_while_blocks.each_with_index do |block|
+
+          current_block += block
+
+          current_block.each_with_index do |line,index|
+
+            if line.strip.eql? "end"
+
+              end_counter += 1
+
+              end_index << index
+
+            end
+
+          end
+
+          if end_counter > 0
+
+            until end_index.empty?
+
+              array_extract = current_block[0..end_index[0]].reverse
+
+              index_counter = 0
+
+              array_extract.each_with_index do |line|
+
+                break if (line.lstrip.index(controlregexp) != nil and line.lstrip.index(rejectionregexp).nil?)
+
+                index_counter += 1
+
+              end
+
+              block_extract = array_extract[0..index_counter].reverse
+
+              extracted_blocks << block_extract
+
+              block_start = current_block.index(block_extract[0])
+
+              block_end = current_block.index(block_extract[-1])
+
+              current_block[block_start..block_end] = "--whileblock#{while_block_counter}"
+
+              while_block_counter += 1
+
+              end_counter = 0
+
+              end_index = []
+
+              current_block.each_with_index do |line,index|
+
+                if line.strip.eql? "end"
+
+                  end_counter += 1
+
+                  end_index << index
+
+                end
+
+              end
+
+            end
+
+          end
+
+        end
+
+        return current_block,extracted_blocks
+
+      end
+
+      def compile_while_syntax(input_block)
+
+        strings = []
+
+        string_counter = 0
+
+        modified_input_block = input_block.dup
+
+        input_block.each_with_index do |line,index|
+
+          if line.include?("\"")
+
+            opening_quotes = line.index("\"")
+
+            string_extract = line[opening_quotes..line.index("\"",opening_quotes+1)]
+
+            strings << string_extract
+
+            modified_input_block[index] = modified_input_block[index].sub(string_extract,"--string{#{string_counter}}")
+
+            string_counter += 1
+
+          end
+
+        end
+
+        input_block = modified_input_block
+
+        starting_line = input_block[0]
+
+        starting_line = starting_line + "\n" if starting_line.lstrip == starting_line
+
+        junk,condition = starting_line.split("while")
+
+        input_block[0] = "whaaleskey (#{condition.lstrip.rstrip.gsub("?","")}) {\n"
+
+        input_block[-1] = input_block[-1].lstrip.sub("end","}")
+
+        modified_input_block = input_block.dup
+
+        input_block.each_with_index do |line,index|
+
+          if line.include?("--string{")
+
+            junk,remains = line.split("--string{")
+
+            string_index,junk = remains.split("}")
+
+            modified_input_block[index] = modified_input_block[index].sub("--string{#{string_index.strip}}",strings[string_index.strip.to_i])
+
+          end
+
+        end
+
+        return modified_input_block
+
+      end
+
+      possible_while_statements = input_file_contents.reject {|element| !element.include?("while")}
+
+      if !possible_while_statements.empty?
+
+        while_statement_indexes = []
+
+        possible_while_statements.each do |statement|
+
+          while_statement_indexes << input_file_contents.dup.each_index.select {|index| input_file_contents[index] == statement}
+
+        end
+
+        while_statement_indexes = [0] + while_statement_indexes.flatten + [-1]
+
+        controlregexp = /(if |def )/
+
+        modified_input_contents,extracted_statements = extract_while_blocks(while_statement_indexes,input_file_contents.clone)
+
+        joined_blocks = extracted_statements.collect {|element| element.join}
+
+        while_statements = joined_blocks.reject {|element| element.index(controlregexp) != nil}
+
+        rejected_elements = joined_blocks - while_statements
+
+        rejected_elements_index = []
+
+        rejected_elements.each do |element|
+
+          rejected_elements_index << joined_blocks.each_index.select {|index| joined_blocks[index] == element}
+
+        end
+
+        while_blocks_index = (0...extracted_statements.length).to_a
+
+        rejected_elements_index = rejected_elements_index.flatten
+
+        while_blocks_index -= rejected_elements_index
+
+        modified_while_statements = while_statements.collect {|string| convert_string_to_array(string,temporary_nila_file)}
+
+        modified_while_statements = modified_while_statements.collect {|block| compile_while_syntax(block)}.reverse
+
+        while_blocks_index = while_blocks_index.collect {|element| "--whileblock#{element}"}.reverse
+
+        rejected_elements_index = rejected_elements_index.collect {|element| "--whileblock#{element}"}.reverse
+
+        rejected_elements = rejected_elements.reverse
+
+        joined_file_contents = modified_input_contents.join
+
+        until while_blocks_index.empty? and rejected_elements_index.empty?
+
+          if !while_blocks_index.empty?
+
+            if joined_file_contents.include?(while_blocks_index[0])
+
+              joined_file_contents = joined_file_contents.sub(while_blocks_index[0],modified_while_statements[0].join)
+
+              while_blocks_index.delete_at(0)
+
+              modified_while_statements.delete_at(0)
+
+            else
+
+              joined_file_contents = joined_file_contents.sub(rejected_elements_index[0],rejected_elements[0])
+
+              rejected_elements_index.delete_at(0)
+
+              rejected_elements.delete_at(0)
+
+            end
+
+          else
+
+            joined_file_contents = joined_file_contents.sub(rejected_elements_index[0],rejected_elements[0])
+
+            rejected_elements_index.delete_at(0)
+
+            rejected_elements.delete_at(0)
+
+          end
+
+        end
+
+      else
+
+        joined_file_contents = input_file_contents.join
+
+      end
+
+      file_id = open(temporary_nila_file, 'w')
+
+      file_id.write(joined_file_contents)
+
+      file_id.close()
+
+      line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+      return line_by_line_contents
+
+    end
+
+    file_contents = replace_unless_until(input_file_contents)
+
+    file_contents = compile_regular_if(file_contents,temporary_nila_file)
+
+    file_contents = compile_regular_while(file_contents,temporary_nila_file)
 
     file_contents = compile_inline_conditionals(file_contents,temporary_nila_file)
 
     return file_contents
-
-  end
-
-  def compile_comments(input_file_contents,comments,temporary_nila_file)
-
-    #This method converts Nila comments into pure Javascript comments. This method
-    #handles both single line and multiline comments.
-
-    file_contents_as_string = input_file_contents.join
-
-    single_line_comments = comments[0]
-
-    multiline_comments = comments[1]
-
-    single_line_comment_counter = 1
-
-    multi_line_comment_counter = 1
-
-    for x in 0...single_line_comments.length
-
-      current_singleline_comment = "--single_line_comment[#{single_line_comment_counter}]"
-
-      replacement_singleline_string = single_line_comments[x].sub("#","//")
-
-      file_contents_as_string = file_contents_as_string.sub(current_singleline_comment,replacement_singleline_string)
-
-      single_line_comment_counter += 1
-
-
-    end
-
-    for y in 0...multiline_comments.length
-
-      current_multiline_comment = "--multiline_comment[#{multi_line_comment_counter}]"
-
-      replacement_multiline_string = multiline_comments[y].sub("=begin","/*\n")
-
-      replacement_multiline_string = replacement_multiline_string.sub("=end","\n*/")
-
-      file_contents_as_string = file_contents_as_string.sub(current_multiline_comment,replacement_multiline_string)
-
-      multi_line_comment_counter += 1
-
-    end
-
-    file_id = open(temporary_nila_file, 'w')
-
-    file_id.write(file_contents_as_string)
-
-    file_id.close()
-
-    line_by_line_contents = read_file_line_by_line(temporary_nila_file)
-
-    line_by_line_contents
 
   end
 
@@ -1869,7 +2126,7 @@ def compile(input_file_path,*output_file_name)
 
     end
 
-    reject_regexp = /(function |Euuf |if |else|elsuf|switch |case|while |for )/
+    reject_regexp = /(function |Euuf |if |else|elsuf|switch |case|while |whaaleskey |for )/
 
     modified_file_contents = []
 
@@ -1923,7 +2180,85 @@ def compile(input_file_path,*output_file_name)
 
   end
 
-  def pretty_print_javascript(javascript_file_contents,temporary_nila_file)
+  def compile_comments(input_file_contents,comments,temporary_nila_file)
+
+    #This method converts Nila comments into pure Javascript comments. This method
+    #handles both single line and multiline comments.
+
+    file_contents_as_string = input_file_contents.join
+
+    single_line_comments = comments[0]
+
+    multiline_comments = comments[1]
+
+    single_line_comment_counter = 1
+
+    multi_line_comment_counter = 1
+
+    ignorable_keywords = [/if/,/while/,/function/]
+
+    dummy_replacement_words = ["eeuuff","whaalesskkey","conffoolotion"]
+
+    for x in 0...single_line_comments.length
+
+      current_singleline_comment = "--single_line_comment[#{single_line_comment_counter}]"
+
+      replacement_singleline_string = single_line_comments[x].sub("#","//")
+
+      ignorable_keywords.each_with_index do |keyword,index|
+
+        if replacement_singleline_string.index(keyword) != nil
+
+          replacement_singleline_string = replacement_singleline_string.sub(keyword.inspect[1...-1],dummy_replacement_words[index])
+
+        end
+
+      end
+
+      file_contents_as_string = file_contents_as_string.sub(current_singleline_comment,replacement_singleline_string)
+
+      single_line_comment_counter += 1
+
+
+    end
+
+    for y in 0...multiline_comments.length
+
+      current_multiline_comment = "--multiline_comment[#{multi_line_comment_counter}]"
+
+      replacement_multiline_string = multiline_comments[y].sub("=begin","/*\n")
+
+      replacement_multiline_string = replacement_multiline_string.sub("=end","\n*/")
+
+      ignorable_keywords.each_with_index do |keyword,index|
+
+        if replacement_multiline_string.index(keyword) != nil
+
+          replacement_multiline_string = replacement_multiline_string.sub(keyword.inspect[1...-1],dummy_replacement_words[index])
+
+        end
+
+      end
+
+      file_contents_as_string = file_contents_as_string.sub(current_multiline_comment,replacement_multiline_string)
+
+      multi_line_comment_counter += 1
+
+    end
+
+    file_id = open(temporary_nila_file, 'w')
+
+    file_id.write(file_contents_as_string)
+
+    file_id.close()
+
+    line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+    line_by_line_contents
+
+  end
+
+  def pretty_print_javascript(javascript_file_contents,temporary_nila_file,comments)
 
     def reset_tabs(input_file_contents)
 
@@ -1980,22 +2315,6 @@ def compile(input_file_path,*output_file_name)
       line_by_line_contents = read_file_line_by_line(temporary_nila_file)
 
       return line_by_line_contents
-
-    end
-
-    def previous_formatting(input_string,tab_counter,temporary_nila_file)
-
-      string_as_array = convert_string_to_array(input_string,temporary_nila_file)
-
-      modified_array = []
-
-      string_as_array.each do |line|
-
-        modified_array << "  "*tab_counter + line
-
-      end
-
-      return modified_array.join
 
     end
 
@@ -2218,9 +2537,27 @@ def compile(input_file_path,*output_file_name)
 
     end
 
+    def replace_ignored_words(input_string)
+
+      ignorable_keywords = [/if/,/while/,/function/]
+
+      dummy_replacement_words = ["eeuuff","whaalesskkey","conffoolotion"]
+
+      dummy_replacement_words.each_with_index do |word,index|
+
+        input_string = input_string.sub(word,ignorable_keywords[index].inspect[1...-1])
+
+      end
+
+      return input_string
+
+    end
+
     javascript_regexp = /(if |while |function |function\()/
 
     javascript_file_contents = javascript_file_contents.collect {|element| element.sub("Euuf","if")}
+
+    javascript_file_contents = javascript_file_contents.collect {|element| element.sub("whaaleskey","while")}
 
     javascript_file_contents = reset_tabs(javascript_file_contents)
 
@@ -2322,8 +2659,6 @@ def compile(input_file_path,*output_file_name)
 
       end
 
-
-
       remaining_file_contents = ["(function() {\n",remaining_file_contents,"\n}).call(this);"].flatten
 
       joined_file_contents = remaining_file_contents.join
@@ -2344,7 +2679,6 @@ def compile(input_file_path,*output_file_name)
 
     end
 
-
     file_id = open(temporary_nila_file, 'w')
 
     file_id.write(joined_file_contents)
@@ -2356,6 +2690,8 @@ def compile(input_file_path,*output_file_name)
     line_by_line_contents = fix_newlines(line_by_line_contents)
 
     line_by_line_contents = fix_syntax_indentation(line_by_line_contents)
+
+    line_by_line_contents = line_by_line_contents.collect {|element| replace_ignored_words(element)}
 
     return line_by_line_contents
 
@@ -2439,7 +2775,7 @@ def compile(input_file_path,*output_file_name)
 
     file_contents = compile_comments(file_contents,comments,temp_file)
 
-    file_contents = pretty_print_javascript(file_contents,temp_file)
+    file_contents = pretty_print_javascript(file_contents,temp_file,comments)
 
     file_contents = compile_operators(file_contents)
 

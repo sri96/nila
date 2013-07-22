@@ -12,10 +12,16 @@
     console.log("There's no such person");
   }
 
-  i = 0;
+  if (!(person.present)) {
+    console.log("There's no such person");
+  }
+
+  i=1;
 
   while (!(i > 10)) {
-    i += 1;
+    process.stdout.write("" + i + " ");
+    i+=1;
+    //redo if i > 10
   }
 
 }).call(this);

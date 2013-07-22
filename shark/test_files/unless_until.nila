@@ -5,6 +5,13 @@
 
 puts "There's no such person" unless person.present?
 
-i = 0
+unless person.present?
+   puts "There's no such person" 
+end
 
-i += 1 until i > 10
+i=1
+until i > 10
+  print "#{i} "
+  i+=1
+  #redo if i > 10
+end
