@@ -13,5 +13,5 @@ i=1
 until i > 10
   print "#{i} "
   i+=1
-  #redo if i > 10
+  break if i == 9
 end

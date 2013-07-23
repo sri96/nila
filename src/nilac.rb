@@ -694,7 +694,6 @@ def compile(input_file_path,*output_file_name)
     #Currently the following kinds of array constructs are compilable
 
     # 1. %w{} syntax
-    # 2. Range - Coming soon!
 
     def compile_w_arrays(input_file_contents)
 
@@ -890,6 +889,98 @@ def compile(input_file_path,*output_file_name)
 
     return input_file_contents
 
+
+  end
+
+  def compile_strings(input_file_contents)
+
+    # This method will compile %q, %Q and %{} syntax. Heredocs support will be added in the future
+
+    def compile_small_q_syntax(input_file_contents)
+
+      possible_syntax_usage = input_file_contents.reject {|element| !element.include?("%q")}
+
+      possible_syntax_usage.each do |line|
+
+        modified_line = line.dup
+
+        line_split = line.split("+").collect {|element| element.lstrip.rstrip}
+
+        line_split.each do |str|
+
+          delimiter = str[str.index("%q")+2]
+
+          string_extract = str[str.index("%q")..-1]
+
+          delimiter = "}" if delimiter.eql?("{")
+
+          if string_extract[-1].eql?(delimiter)
+
+            input_file_contents[input_file_contents.index(modified_line)] = input_file_contents[input_file_contents.index(modified_line)].sub(string_extract,"'#{string_extract[3...-1]}'")
+
+            modified_line = modified_line.sub(string_extract,"'#{string_extract[3...-1]}'")
+
+          elsif delimiter.eql?(" ")
+
+            input_file_contents[input_file_contents.index(modified_line)] = input_file_contents[input_file_contents.index(modified_line)].sub(string_extract,"'#{string_extract[3..-1]}'")
+
+            modified_line = modified_line.sub(string_extract,"'#{string_extract[3..-1]}'")
+
+          end
+
+        end
+
+      end
+
+      return input_file_contents
+
+    end
+
+    def compile_big_q_syntax(input_file_contents)
+
+      possible_syntax_usage = input_file_contents.reject {|element| !element.include?("%Q")}
+
+      possible_syntax_usage.each do |line|
+
+        modified_line = line.dup
+
+        line_split = line.split("+").collect {|element| element.lstrip.rstrip}
+
+        line_split.each do |str|
+
+          delimiter = str[str.index("%Q")+2]
+
+          string_extract = str[str.index("%Q")..-1]
+
+          delimiter = "}" if delimiter.eql?("{")
+
+          if string_extract[-1].eql?(delimiter)
+
+            input_file_contents[input_file_contents.index(modified_line)] = input_file_contents[input_file_contents.index(modified_line)].sub(string_extract,"\"#{string_extract[3...-1]}\"")
+
+            modified_line = modified_line.sub(string_extract,"\"#{string_extract[3...-1]}\"")
+
+          elsif delimiter.eql?(" ")
+
+            input_file_contents[input_file_contents.index(modified_line)] = input_file_contents[input_file_contents.index(modified_line)].sub(string_extract,"\"#{string_extract[3..-1]}\"")
+
+            modified_line = modified_line.sub(string_extract,"\"#{string_extract[3..-1]}\"")
+
+          end
+
+        end
+
+      end
+
+      return input_file_contents
+
+    end
+
+    file_contents = compile_small_q_syntax(input_file_contents)
+
+    file_contents = compile_big_q_syntax(input_file_contents)
+
+    return file_contents
 
   end
 
@@ -1322,8 +1413,6 @@ def compile(input_file_path,*output_file_name)
         "p" => "console.log",
 
         "print" => "process.stdout.write"
-
-
     }
 
     function_map = function_map_replacements.keys
@@ -1934,11 +2023,11 @@ def compile(input_file_path,*output_file_name)
 
       def compile_while_syntax(input_block)
 
+        modified_input_block = input_block.dup
+
         strings = []
 
         string_counter = 0
-
-        modified_input_block = input_block.dup
 
         input_block.each_with_index do |line,index|
 
@@ -2054,7 +2143,7 @@ def compile(input_file_path,*output_file_name)
 
             else
 
-              joined_file_contents = joined_file_contents.sub(rejected_elements_index[0],rejected_elements[0])
+              joined_file_contents = joined_file_contents.sub(rejected_elements_index[0],rejected_elements[0].join)
 
               rejected_elements_index.delete_at(0)
 
@@ -2064,7 +2153,7 @@ def compile(input_file_path,*output_file_name)
 
           else
 
-            joined_file_contents = joined_file_contents.sub(rejected_elements_index[0],rejected_elements[0])
+            joined_file_contents = joined_file_contents.sub(rejected_elements_index[0],rejected_elements[0].join)
 
             rejected_elements_index.delete_at(0)
 
@@ -2092,11 +2181,83 @@ def compile(input_file_path,*output_file_name)
 
     end
 
-    file_contents = replace_unless_until(input_file_contents)
+    def ignore_statement_modifiers(input_block)
+
+      modified_input_block = input_block.dup
+
+      rejectionregexp = /( if | while )/
+
+      rejected_lines = {}
+
+      rejected_line_counter = 0
+
+      input_block.each_with_index do |line,index|
+
+        if line.lstrip.index(rejectionregexp) != nil
+
+          rejected_lines["--rejected{#{rejected_line_counter}}\n\n"] = line
+
+          modified_input_block[index] = "--rejected{#{rejected_line_counter}}\n\n"
+
+          rejected_line_counter += 1
+
+        end
+
+      end
+
+      return modified_input_block,rejected_lines
+
+    end
+
+    def replace_statement_modifiers(input_block,rejected_lines)
+
+      unless rejected_lines.empty?
+
+        rejected_replacements = rejected_lines.keys
+
+        loc = 0
+
+        indices = []
+
+        index_counter = 0
+
+        rejected_replacements.each do |replacement_string|
+
+          input_block.each_with_index do |line,index|
+
+            break if line.include?(replacement_string.rstrip)
+
+            index_counter += 1
+
+          end
+
+          indices << index_counter
+
+          index_counter = 0
+
+        end
+
+        indices.each_with_index do |location,index|
+
+          input_block[location] = rejected_lines.values[index] + "\n\n"
+
+        end
+
+      end
+
+      return input_block
+
+    end
+
+    file_contents,rejected_lines = ignore_statement_modifiers(input_file_contents)
+
+    file_contents = replace_unless_until(file_contents)
 
     file_contents = compile_regular_if(file_contents,temporary_nila_file)
 
     file_contents = compile_regular_while(file_contents,temporary_nila_file)
+
+    file_contents = replace_statement_modifiers(file_contents,rejected_lines)
 
     file_contents = compile_inline_conditionals(file_contents,temporary_nila_file)
 
@@ -2256,7 +2417,7 @@ def compile(input_file_path,*output_file_name)
 
   end
 
-  def pretty_print_javascript(javascript_file_contents,temporary_nila_file,comments)
+  def pretty_print_javascript(javascript_file_contents,temporary_nila_file)
 
     def reset_tabs(input_file_contents)
 
@@ -2697,6 +2858,26 @@ def compile(input_file_path,*output_file_name)
 
   def compile_operators(input_file_contents)
 
+    def compile_power_operator(input_string)
+
+      matches = input_string.scan(/(\w{1,}\*\*\w{1,})/).to_a.flatten
+
+      unless matches.empty?
+
+        matches.each do |match|
+
+          left,right = match.split("**")
+
+          input_string = input_string.sub(match,"Math.pow(#{left},#{right})")
+
+        end
+
+      end
+
+      return input_string
+
+    end
+
     input_file_contents = input_file_contents.collect {|element| element.sub(" and "," && ")}
 
     input_file_contents = input_file_contents.collect {|element| element.sub(" or "," || ")}
@@ -2707,13 +2888,15 @@ def compile(input_file_path,*output_file_name)
 
     input_file_contents = input_file_contents.collect {|element| element.sub("elsuf","else if")}
 
+    input_file_contents = input_file_contents.collect {|element| compile_power_operator(element)}
+
     return input_file_contents
 
   end
 
-  def pretty_print_nila(input_file_contents)
+  def pretty_print_nila(input_file_contents,temporary_nila_file)
 
-    #Implementation is pending
+
 
   end
 
@@ -2749,6 +2932,8 @@ def compile(input_file_path,*output_file_name)
 
     file_contents = compile_arrays(file_contents)
 
+    file_contents = compile_strings(file_contents)
+
     file_contents = compile_default_values(file_contents,temp_file)
 
     file_contents,named_functions,nested_functions = replace_named_functions(file_contents,temp_file)
@@ -2773,7 +2958,7 @@ def compile(input_file_path,*output_file_name)
 
     file_contents = compile_comments(file_contents,comments,temp_file)
 
-    file_contents = pretty_print_javascript(file_contents,temp_file,comments)
+    file_contents = pretty_print_javascript(file_contents,temp_file)
 
     file_contents = compile_operators(file_contents)
 

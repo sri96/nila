@@ -21,7 +21,9 @@
   while (!(i > 10)) {
     process.stdout.write("" + i + " ");
     i+=1;
-    //redo if i > 10
+    if (i === 9) {
+      break;
+    }
   }
 
 }).call(this);

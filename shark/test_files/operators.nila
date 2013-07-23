@@ -1,0 +1,3 @@
+a = 2**3
+
+puts "Correct Calculation!" if a == 8
