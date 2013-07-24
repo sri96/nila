@@ -6,6 +6,7 @@
 require 'slop'
 require 'fileutils'
 
+
 def compile(input_file_path,*output_file_name)
 
   def read_file_line_by_line(input_path)
@@ -584,8 +585,6 @@ def compile(input_file_path,*output_file_name)
 
       current_row = input_file_contents[x]
 
-      #The condition below verifies if the rows contain any equation operators.
-
       if current_row.include?("=") and !current_row.include?("def")
 
         current_row = current_row.rstrip + "\n"
@@ -596,6 +595,12 @@ def compile(input_file_path,*output_file_name)
 
           current_row_split[y] = current_row_split[y].strip
 
+
+        end
+
+        if current_row_split[0].include?("[") or current_row_split[0].include?("(")
+
+          current_row_split[0] = current_row_split[0][0...current_row_split[0].index("[")]
 
         end
 
@@ -689,7 +694,7 @@ def compile(input_file_path,*output_file_name)
 
   end
 
-  def compile_arrays(input_file_contents)
+  def compile_arrays(input_file_contents,temporary_nila_file)
 
     #Currently the following kinds of array constructs are compilable
 
@@ -883,9 +888,65 @@ def compile(input_file_path,*output_file_name)
 
     end
 
+    def compile_multiline(input_file_contents,temporary_nila_file)
+
+      possible_arrays = input_file_contents.reject {|element| !element.include?("[")}
+
+      possible_multiline_arrays = possible_arrays.reject {|element| element.include?("]")}
+
+      multiline_arrays = []
+
+      possible_multiline_arrays.each do |starting_line|
+
+        index = input_file_contents.index(starting_line)
+
+        line = starting_line
+
+        until line.include?("]")
+
+          index += 1
+
+          line = input_file_contents[index]
+
+        end
+
+        multiline_arrays << input_file_contents[input_file_contents.index(starting_line)..index]
+
+      end
+
+      joined_file_contents = input_file_contents.join
+
+      multiline_arrays.each do |array|
+
+        modified_array = array.join
+
+        array_extract = modified_array[modified_array.index("[")..modified_array.index("]")]
+
+        array_contents = array_extract.split("[")[1].split("]")[0].lstrip.rstrip.split(",").collect {|element| element.lstrip.rstrip}
+
+        array_contents = "[" + array_contents.join(",") + "]"
+
+        joined_file_contents = joined_file_contents.sub(array_extract,array_contents)
+
+      end
+
+      file_id = open(temporary_nila_file, 'w')
+
+      file_id.write(joined_file_contents)
+
+      file_id.close()
+
+      line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+      return line_by_line_contents
+
+    end
+
     input_file_contents = compile_w_arrays(input_file_contents)
 
     input_file_contents = compile_array_indexing(input_file_contents)
+
+    input_file_contents = compile_multiline(input_file_contents,temporary_nila_file)
 
     return input_file_contents
 
@@ -894,7 +955,7 @@ def compile(input_file_path,*output_file_name)
 
   def compile_strings(input_file_contents)
 
-    # This method will compile %q, %Q and %{} syntax. Heredocs support will be added in the future
+    # This method will compile %q, %Q and % syntax. Heredocs support will be added in the future
 
     def compile_small_q_syntax(input_file_contents)
 
@@ -976,9 +1037,53 @@ def compile(input_file_path,*output_file_name)
 
     end
 
+    def compile_percentage_syntax(input_file_contents)
+
+      possible_syntax_usage = input_file_contents.reject {|element| !element.include?("%")}
+
+      possible_syntax_usage = possible_syntax_usage.reject {|element| element.index(/(\%(\W|\s)\w{1,})/).nil?}
+
+      possible_syntax_usage.each do |line|
+
+        modified_line = line.dup
+
+        line_split = line.split("+").collect {|element| element.lstrip.rstrip}
+
+        line_split.each do |str|
+
+          delimiter = str[str.index("%")+1]
+
+          string_extract = str[str.index("%")..-1]
+
+          delimiter = "}" if delimiter.eql?("{")
+
+          if string_extract[-1].eql?(delimiter)
+
+            input_file_contents[input_file_contents.index(modified_line)] = input_file_contents[input_file_contents.index(modified_line)].sub(string_extract,"\"#{string_extract[2...-1]}\"")
+
+            modified_line = modified_line.sub(string_extract,"\"#{string_extract[2...-1]}\"")
+
+          elsif delimiter.eql?(" ")
+
+            input_file_contents[input_file_contents.index(modified_line)] = input_file_contents[input_file_contents.index(modified_line)].sub(string_extract,"\"#{string_extract[2..-1]}\"")
+
+            modified_line = modified_line.sub(string_extract,"\"#{string_extract[2..-1]}\"")
+
+          end
+
+        end
+
+      end
+
+      return input_file_contents
+
+    end
+
     file_contents = compile_small_q_syntax(input_file_contents)
 
-    file_contents = compile_big_q_syntax(input_file_contents)
+    file_contents = compile_big_q_syntax(file_contents)
+
+    file_contents = compile_percentage_syntax(file_contents)
 
     return file_contents
 
@@ -1001,7 +1106,7 @@ def compile(input_file_path,*output_file_name)
     #
     #  return input_number*input_number;
     #
-    # }
+    #}
 
     def is_parameterless?(input_function_block)
 
@@ -2930,7 +3035,7 @@ def compile(input_file_path,*output_file_name)
 
     file_contents = compile_conditional_structures(file_contents,temp_file)
 
-    file_contents = compile_arrays(file_contents)
+    file_contents = compile_arrays(file_contents,temp_file)
 
     file_contents = compile_strings(file_contents)
 
@@ -3028,7 +3133,7 @@ def find_file_path(input_path,file_extension)
 
 end
 
-nilac_version = "0.0.4.1.3"
+nilac_version = "0.0.4.1.6"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
@@ -3073,6 +3178,8 @@ opts = Slop.parse do
     file_path = Dir.pwd + "/src/nilac.rb"
 
     create_mac_executable(file_path)
+
+    FileUtils.mv("#{file_path[0...-3]}","#{Dir.pwd}/bin/nilac")
 
     puts "Build Successful!"
 

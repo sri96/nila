@@ -18,4 +18,4 @@ second_name = name[9..end]
 
 name_copy = name.dup
 
-name_copy = name[..] 
+name_copy = name[..]

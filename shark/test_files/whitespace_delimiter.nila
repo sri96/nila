@@ -1,0 +1,16 @@
+
+def square(input_number)
+
+  input_number*input_number
+
+end
+
+def return_number(input_number)
+
+  input_number
+
+end
+
+puts message
+
+puts square return_number 5
