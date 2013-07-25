@@ -3171,6 +3171,7 @@ opts = Slop.parse do
     puts nilac_version
 
   end
+
   on :r, :run=, 'Run Nila File', as:Array
 
   on :m, :buildmac, 'Build Nilac for Linux/Mac/Rubygems' do
@@ -3182,6 +3183,50 @@ opts = Slop.parse do
     FileUtils.mv("#{file_path[0...-3]}","#{Dir.pwd}/bin/nilac")
 
     puts "Build Successful!"
+
+  end
+
+  on :u, :update, 'Check if Nilac is up to date.' do
+
+    outdated_gems = `gem outdated`
+
+    outdated_gems = outdated_gems.split("\n")
+
+    outdated = false
+
+    old_version = ""
+
+    new_version = ""
+
+    outdated_gems.each do |gem_name|
+
+      if gem_name.include?("nilac")
+
+        outdated = true
+
+        old_version = gem_name.split("(")[1].split(")")[0].split("<")[0].lstrip
+
+        new_version = gem_name.split("(")[1].split(")")[0].split("<")[1].lstrip.rstrip
+
+        break
+
+      end
+
+    end
+
+    if outdated
+
+      puts "Your version of Nilac (#{old_version}) is outdated! Please update to the latest version (#{new_version}) by running 'gem update nilac'.\n\n"
+
+      exec = `gem update nilac`
+
+      puts "Updated to the latest version!"
+
+    else
+
+      puts "Your version of Nilac is up to date!"
+
+    end
 
   end
 end
