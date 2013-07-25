@@ -202,13 +202,101 @@ def compile(input_file_path,*output_file_name)
 
   def compile_interpolated_strings(input_file_contents)
 
+    def find_all_matching_indices(input_string,pattern)
+
+      locations = []
+
+      index = input_string.index(pattern)
+
+      while index != nil
+
+        locations << index
+
+        index = input_string.index(pattern,index+1)
+
+
+      end
+
+      return locations
+
+
+    end
+
     modified_file_contents = input_file_contents.dup
 
     input_file_contents.each_with_index do |line,index|
 
       if line.include?("\#{")
 
-        interpolated_strings = line.scan(/\#{\S{1,}}/)
+        modified_line = line.dup
+
+        interpol_starting_loc = find_all_matching_indices(modified_line,"\#{") + [-1]
+
+        interpolated_strings = []
+
+        until interpol_starting_loc.empty?
+
+          interpol_starting_loc[1] = -2 if interpol_starting_loc[1] == -1
+
+          string_extract = modified_line[interpol_starting_loc[0]+1..interpol_starting_loc[1]+1]
+
+          closed_curly_brace_index = find_all_matching_indices(string_extract,"}")
+
+          index_counter = 0
+
+          test_string = ""
+
+          until closed_curly_brace_index.empty?
+
+            test_string = string_extract[0..closed_curly_brace_index[0]]
+
+            original_string = test_string.dup
+
+            if test_string.include?("{")
+
+              test_string = test_string.reverse.sub("{","$#{index_counter}$").reverse
+
+              test_string[-1] = "@#{index_counter}@"
+
+            end
+
+            string_extract = string_extract.sub(original_string,test_string)
+
+            closed_curly_brace_index = find_all_matching_indices(string_extract,"}")
+
+            index_counter += 1
+
+          end
+
+          string_extract = string_extract[0..string_extract.length-string_extract.reverse.index(/@\d@/)]
+
+          interpolated_string = "\#{" + string_extract.split("@#{index_counter-1}@")[0].split("$#{index_counter-1}$")[1] + "}"
+
+          to_be_replaced = interpolated_string.scan(/\$\d\$/)
+
+          closing_brace_rep = interpolated_string.scan(/@\d@/)
+
+          to_be_replaced.each_with_index do |rep,index|
+
+            interpolated_string = interpolated_string.sub(rep,"{").sub(closing_brace_rep[index],"}")
+
+          end
+
+          interpolated_strings << interpolated_string
+
+          modified_line = modified_line.sub(interpolated_string,"--interpolate")
+
+          if find_all_matching_indices(modified_line,"\#{").empty?
+
+            interpol_starting_loc = []
+
+          else
+
+            interpol_starting_loc = find_all_matching_indices(modified_line,"\#{") + [-1]
+
+          end
+
+        end
 
         interpolated_strings.each do |interpol|
 
@@ -975,6 +1063,10 @@ def compile(input_file_path,*output_file_name)
 
           delimiter = "}" if delimiter.eql?("{")
 
+          delimiter = ")" if delimiter.eql?("(")
+
+          delimiter = ">" if delimiter.eql?("<")
+
           if string_extract[-1].eql?(delimiter)
 
             input_file_contents[input_file_contents.index(modified_line)] = input_file_contents[input_file_contents.index(modified_line)].sub(string_extract,"'#{string_extract[3...-1]}'")
@@ -1014,6 +1106,10 @@ def compile(input_file_path,*output_file_name)
           string_extract = str[str.index("%Q")..-1]
 
           delimiter = "}" if delimiter.eql?("{")
+
+          delimiter = ")" if delimiter.eql?("(")
+
+          delimiter = ">" if delimiter.eql?("<")
 
           if string_extract[-1].eql?(delimiter)
 
@@ -1056,6 +1152,10 @@ def compile(input_file_path,*output_file_name)
           string_extract = str[str.index("%")..-1]
 
           delimiter = "}" if delimiter.eql?("{")
+
+          delimiter = ")" if delimiter.eql?("(")
+
+          delimiter = ">" if delimiter.eql?("<")
 
           if string_extract[-1].eql?(delimiter)
 
@@ -3133,7 +3233,7 @@ def find_file_path(input_path,file_extension)
 
 end
 
-nilac_version = "0.0.4.1.7"
+nilac_version = "0.0.4.1.8"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"

@@ -1,3 +1,3 @@
 module Nilac
-  VERSION = "0.0.4.1.7"
+  VERSION = "0.0.4.1.8"
 end
