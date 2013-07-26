@@ -5,10 +5,10 @@
   // This method demonstrates multiple return values
 
   function parse_name(input_name) {
-    var multipleinit1, first_name, last_name;
-    multipleinit1 = input_name.split(" ");
-    first_name = multipleinit1[0];
-    last_name = multipleinit1[1];
+    var _ref1, first_name, last_name;
+    _ref1 = input_name.split(" ");
+    first_name = _ref1[0];
+    last_name = _ref1[1];
     return [first_name,last_name];
   }
 
