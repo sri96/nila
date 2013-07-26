@@ -200,6 +200,67 @@ def compile(input_file_path,*output_file_name)
 
   end
 
+  def compile_heredocs(input_file_contents,temporary_nila_file)
+
+    joined_file_contents = input_file_contents.join
+
+    possible_heredocs = input_file_contents.reject{|element| !element.include?("<<-")}
+
+    possible_heredocs = possible_heredocs.collect {|element| element.match(/<<-(.*|\w*)/).to_a[0]}
+
+    possible_heredocs.each do |heredoc|
+
+      delimiter = heredoc[3..-1]
+
+      quote = 2
+
+      if delimiter.include?("'")
+
+        quote = 1
+
+      end
+
+      delimiter = delimiter.gsub("\"","") if quote == 2
+
+      delimiter = delimiter.gsub("'","") if quote == 1
+
+      string_split = joined_file_contents.split(heredoc,2)
+
+      string_extract = string_split[1]
+
+      heredoc_extract = string_extract[0...string_extract.index(delimiter)]
+
+      replacement_string = ""
+
+      if quote == 1
+
+        replacement_string = "'#{heredoc_extract.delete("\"")}'".lstrip.inspect
+
+        replacement_string = replacement_string[1..-2]
+
+      elsif quote == 2
+
+        replacement_string = heredoc_extract.lstrip.inspect
+
+      end
+
+      joined_file_contents = joined_file_contents.sub(heredoc + heredoc_extract + delimiter,replacement_string)
+
+    end
+
+    file_id = open(temporary_nila_file, 'w')
+
+    file_id.write(joined_file_contents)
+
+    file_id.close()
+
+    line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+    return line_by_line_contents
+
+
+  end
+
   def compile_interpolated_strings(input_file_contents)
 
     def find_all_matching_indices(input_string,pattern)
@@ -223,6 +284,26 @@ def compile(input_file_path,*output_file_name)
     end
 
     modified_file_contents = input_file_contents.dup
+
+    single_quoted_strings = input_file_contents.reject {|element| !(element.count("'") >= 2)}
+
+    single_quoted_strings.each do |str|
+
+      modified_string = str.dup
+
+      while modified_string.include?("'")
+
+        first_index = modified_string.index("'")
+
+        string_extract = modified_string[first_index..modified_string.index("'",first_index+1)]
+
+        modified_string = modified_string.sub(string_extract,"--single_quoted")
+
+      end
+
+      input_file_contents[input_file_contents.index(str)] = modified_string
+
+    end
 
     input_file_contents.each_with_index do |line,index|
 
@@ -784,10 +865,6 @@ def compile(input_file_path,*output_file_name)
 
   def compile_arrays(input_file_contents,temporary_nila_file)
 
-    #Currently the following kinds of array constructs are compilable
-
-    # 1. %w{} syntax
-
     def compile_w_arrays(input_file_contents)
 
       def extract(input_string,pattern_start,pattern_end)
@@ -1030,11 +1107,29 @@ def compile(input_file_path,*output_file_name)
 
     end
 
+    def compile_array_operators(input_file_contents)
+
+      possible_operator_usage = input_file_contents.reject {|element| !element.include?("<<")}
+
+      possible_operator_usage.each do |usage|
+
+        left,right = usage.split("<<")
+
+        input_file_contents[input_file_contents.index(usage)] = left.rstrip + ".push(#{right.lstrip})"
+
+      end
+
+      return input_file_contents
+
+    end
+
     input_file_contents = compile_w_arrays(input_file_contents)
 
     input_file_contents = compile_array_indexing(input_file_contents)
 
     input_file_contents = compile_multiline(input_file_contents,temporary_nila_file)
+
+    input_file_contents = compile_array_operators(input_file_contents)
 
     return input_file_contents
 
@@ -3131,6 +3226,8 @@ def compile(input_file_path,*output_file_name)
 
     file_contents = split_semicolon_seperated_expressions(file_contents)
 
+    file_contents = compile_heredocs(file_contents,temp_file)
+
     file_contents = compile_interpolated_strings(file_contents)
 
     file_contents = compile_conditional_structures(file_contents,temp_file)
@@ -3233,7 +3330,7 @@ def find_file_path(input_path,file_extension)
 
 end
 
-nilac_version = "0.0.4.1.8"
+nilac_version = "0.0.4.1.9"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
@@ -3246,6 +3343,8 @@ opts = Slop.parse do
     puts "    nilac -h/--help\n"
 
     puts "    nilac -v/--version\n"
+
+    puts "    nilac -u/--update => Update Checker\n"
 
     puts "    nilac [command] [file_options]\n\n"
 
@@ -3263,7 +3362,7 @@ opts = Slop.parse do
 
     puts "  Further Information:\n\n"
 
-    puts "    Visit http://adhithyan15.github.io/nila to know more about the project."
+    puts "    Visit http://adhithyan15.github.io/nila to know more about the project.\n\n"
 
   end
   on :v, :version, 'Output Nilac Version No' do

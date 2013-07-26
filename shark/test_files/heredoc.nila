@@ -1,0 +1,14 @@
+puts <<-Hello
+Grocery list
+----
+1. Salad mix.
+2. Strawberries.*
+3. Cereal.
+4. Milk.*
+ 
+* Organic
+Hello
+
+numbers = [1,2,3,4,5,6,7]
+
+numbers << 7
