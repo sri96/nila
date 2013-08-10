@@ -3743,7 +3743,7 @@ def find_file_path(input_path, file_extension)
 
 end
 
-nilac_version = "0.0.4.2.3"
+nilac_version = "0.0.4.2.4"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
@@ -3952,14 +3952,12 @@ elsif opts[:release] != nil
 
   FileUtils.mv("#{file_path[0...-3]}", "#{Dir.pwd}/bin/nilac")
 
-  puts "Your build was successful. What is your commit message? \n"
+  puts "Your build was successful!\n"
 
   commit_message = opts[:release][0]
 
   `git commit -am "#{commit_message}"`
 
   puts `rake release`
-
-  puts output
 
 end
