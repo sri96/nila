@@ -1971,6 +1971,32 @@ def compile(input_file_path, *output_file_name)
 
     end
 
+    def compile_ternary_if(input_file_contents)
+
+      possible_ternary_if = input_file_contents.reject{|element| !element.include?("if")}
+
+      possible_ternary_if = possible_ternary_if.reject {|element| !element.include?("then")}
+
+      possible_ternary_if.each do |statement|
+
+        statement_extract = statement[statement.index("if")..statement.index("end")+2]
+
+        condition = statement_extract.split("then")[0].split("if")[1].lstrip.rstrip
+
+        true_condition = statement_extract.split("then")[1].split("else")[0].lstrip.rstrip
+
+        false_condition = statement_extract.split("else")[1].split("end")[0].lstrip.rstrip
+
+        replacement_string = "#{condition} ? #{true_condition} : #{false_condition}"
+
+        input_file_contents[input_file_contents.index(statement)] = input_file_contents[input_file_contents.index(statement)].sub(statement_extract,replacement_string)
+
+      end
+
+      return input_file_contents
+
+    end
+
     def compile_inline_conditionals(input_file_contents, temporary_nila_file)
 
       conditionals = [/( if )/, /( while )/, /( unless )/, /( until )/]
@@ -2933,7 +2959,9 @@ def compile(input_file_path, *output_file_name)
 
     end
 
-    file_contents, rejected_lines = ignore_statement_modifiers(input_file_contents)
+    file_contents = compile_ternary_if(input_file_contents)
+
+    file_contents, rejected_lines = ignore_statement_modifiers(file_contents)
 
     file_contents = replace_unless_until(file_contents)
 
