@@ -1,3 +1,9 @@
 a = 2**3
 
 puts "Correct Calculation!" if a == 8
+
+line = "My favorite language is Ruby!"
+
+if line =~ /Ruby|Python/
+	puts "Scripting language mentioned: #{line}"
+end

@@ -1,0 +1,21 @@
+# This file demonstrates several Hash features in Nila
+
+inst_section = {
+  'cello' => 'string',
+  'clarinet' => 'woodwind',
+  'drum': 'percussion',
+  'oboe' : 'woodwind',
+  'trumpet' => 'brass',
+  'violin' => 'string',
+  :guitar => 'string'
+}
+
+if variable == 10
+   print "Variable is 10"
+elsif variable == 20
+   print "Variable is 20"
+else
+   print "Variable is something else"
+end
+
+student_ages = {"Jack" => 10,"Jill" => 12,"Bob" => 14}
