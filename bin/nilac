@@ -3745,7 +3745,7 @@ def find_file_path(input_path, file_extension)
 
 end
 
-nilac_version = "0.0.4.2.2"
+nilac_version = "0.0.4.2.3"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
@@ -3800,23 +3800,7 @@ opts = Slop.parse do
 
   end
 
-  on :release, 'Build and Release Nilac for Rubygems' do
-
-    file_path = Dir.pwd + "/src/nilac.rb"
-
-    create_mac_executable(file_path)
-
-    FileUtils.mv("#{file_path[0...-3]}", "#{Dir.pwd}/bin/nilac")
-
-    `git commit -am "Updated Executable to #{nilac_version}"`
-
-    output = `rake release`
-
-    puts "Build Successful!"
-
-    puts output
-
-  end
+  on :release=, 'Build and Release Nilac for Rubygems', as:Array
 
   on :u, :update, 'Check if Nilac is up to date.' do
 
@@ -3961,5 +3945,23 @@ elsif opts[:run] != nil
   node_output = `node #{js_file_name}`
 
   puts node_output
+
+elsif opts[:release] != nil
+
+  file_path = Dir.pwd + "/src/nilac.rb"
+
+  create_mac_executable(file_path)
+
+  FileUtils.mv("#{file_path[0...-3]}", "#{Dir.pwd}/bin/nilac")
+
+  puts "Your build was successful. What is your commit message? \n"
+
+  commit_message = opts[:release][0]
+
+  `git commit -am "#{commit_message}"`
+
+  puts `rake release`
+
+  puts output
 
 end
