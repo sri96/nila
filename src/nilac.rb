@@ -3806,6 +3806,8 @@ opts = Slop.parse do
 
     FileUtils.mv("#{file_path[0...-3]}", "#{Dir.pwd}/bin/nilac")
 
+    `git commit -am "Updated Executable to #{nilac_version}"`
+
     output = `rake release`
 
     puts "Build Successful!"

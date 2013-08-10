@@ -752,6 +752,8 @@ def compile(input_file_path, *output_file_name)
 
     input_file_contents = input_file_contents.collect { |element| element.gsub("%=", "modequal") }
 
+    input_file_contents = input_file_contents.collect { |element| element.gsub("=~", "matchequal") }
+
     for x in 0...input_file_contents.length
 
       current_row = input_file_contents[x]
@@ -815,6 +817,8 @@ def compile(input_file_path, *output_file_name)
     line_by_line_contents = line_by_line_contents.collect { |element| element.gsub("equalequal", "==") }
 
     line_by_line_contents = line_by_line_contents.collect { |element| element.gsub("notequal", "!=") }
+
+    line_by_line_contents = line_by_line_contents.collect { |element| element.gsub("matchequal", "=~") }
 
     return variables.uniq, line_by_line_contents
 
@@ -1135,6 +1139,108 @@ def compile(input_file_path, *output_file_name)
 
     return input_file_contents
 
+
+  end
+
+  def compile_hashes(input_file_contents,temporary_nila_file)
+
+    def compile_multiline_hashes(input_file_contents,temporary_nila_file)
+
+      possible_hashes = input_file_contents.reject { |element| !element.include?("{") }
+
+      possible_multiline_hashes = possible_hashes.reject { |element| element.include?("}") }
+
+      multiline_hashes = []
+
+      possible_multiline_hashes.each do |starting_line|
+
+        index = input_file_contents.index(starting_line)
+
+        line = starting_line
+
+        until line.include?("}")
+
+          index += 1
+
+          line = input_file_contents[index]
+
+        end
+
+        multiline_hashes << input_file_contents[input_file_contents.index(starting_line)..index]
+
+      end
+
+      joined_file_contents = input_file_contents.join
+
+      multiline_hashes.each do |hash|
+
+        modified_hash = hash.join
+
+        hash_extract = modified_hash[modified_hash.index("{")..modified_hash.index("}")]
+
+        hash_contents = hash_extract.split("{")[1].split("}")[0].lstrip.rstrip.split(",").collect { |element| element.lstrip.rstrip }
+
+        hash_contents = "{" + hash_contents.join(",") + "}"
+
+        joined_file_contents = joined_file_contents.sub(hash_extract, hash_contents)
+
+      end
+
+      file_id = open(temporary_nila_file, 'w')
+
+      file_id.write(joined_file_contents)
+
+      file_id.close()
+
+      line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+      return line_by_line_contents
+
+    end
+
+    def compile_inline_hashes(input_file_contents)
+
+      modified_file_contents = input_file_contents.clone.collect {|element| element.gsub(/(#|%)\w?\{/,"innerrii0opol115")}
+
+      possible_inline_hashes = modified_file_contents.reject {|element| !element.include?("{")}
+
+      possible_inline_hashes.each do |hash|
+
+        hash_extract = hash[hash.index("{")..hash.index("}")]
+
+        contents = hash_extract[1...-1].split(",")
+
+        hash_contents = []
+
+        contents.each do |items|
+
+          items = items.lstrip.sub(":","") if items.lstrip[0] == ":"
+
+          key, value = items.split("=>").collect {|element| element.lstrip.rstrip} if items.include?("=>")
+
+          key, value = items.split(":").collect {|element| element.lstrip.rstrip} if items.include?(":")
+
+          key = key.gsub("'","").gsub("\"","")
+
+          hash_contents << "  #{key}: #{value},"
+
+        end
+
+        replacement_string = "{\n" + hash_contents.join("\n") + "\n};\n"
+
+        input_file_contents[input_file_contents.index(hash)] = input_file_contents[input_file_contents.index(hash)].sub(hash_extract,replacement_string)
+
+      end
+
+      return input_file_contents
+
+    end
+
+    file_contents = compile_multiline_hashes(input_file_contents,temporary_nila_file)
+
+    file_contents = compile_inline_hashes(file_contents)
+
+    return file_contents
 
   end
 
@@ -1839,6 +1945,8 @@ def compile(input_file_path, *output_file_name)
 
         junk, condition = command.split("unless ")
 
+        condition = condition.gsub(" and "," && ").gsub(" or "," || ").gsub(" not "," !")
+
         replacement_string = "if !(#{condition.lstrip.rstrip})\n"
 
         modified_file_contents[modified_file_contents.index(command)] = replacement_string
@@ -1852,6 +1960,8 @@ def compile(input_file_path, *output_file_name)
       until_commands.each do |command|
 
         junk, condition = command.split("until ")
+
+        condition = condition.gsub(" and "," && ").gsub(" or "," || ").gsub(" not "," !")
 
         replacement_string = "while !(#{condition.lstrip.rstrip})\n"
 
@@ -1881,21 +1991,25 @@ def compile(input_file_path, *output_file_name)
 
           line_split = line.split(plain_conditionals[index])
 
+          condition = line_split[1]
+
+          condition = condition.gsub(" and "," && ").gsub(" or "," || ").gsub(" not "," !")
+
           if index == 0
 
-            output_statement = "if (#{line_split[1].lstrip.rstrip.gsub("?", "")}) {\n\n#{line_split[0]}\n}\n"
+            output_statement = "if (#{condition.lstrip.rstrip.gsub("?", "")}) {\n\n#{line_split[0]}\n}\n"
 
           elsif index == 1
 
-            output_statement = "while (#{line_split[1].lstrip.rstrip.gsub("?", "")}) {\n\n#{line_split[0]}\n}\n"
+            output_statement = "while (#{condition.lstrip.rstrip.gsub("?", "")}) {\n\n#{line_split[0]}\n}\n"
 
           elsif index == 2
 
-            output_statement = "if (!(#{line_split[1].lstrip.rstrip.gsub("?", "")})) {\n\n#{line_split[0]}\n}\n"
+            output_statement = "if (!(#{condition.lstrip.rstrip.gsub("?", "")})) {\n\n#{line_split[0]}\n}\n"
 
           elsif index == 3
 
-            output_statement = "while (!(#{line_split[1].lstrip.rstrip.gsub("?", "")})) {\n\n#{line_split[0]}\n}\n"
+            output_statement = "while (!(#{condition.lstrip.rstrip.gsub("?", "")})) {\n\n#{line_split[0]}\n}\n"
 
           end
 
@@ -2061,6 +2175,8 @@ def compile(input_file_path, *output_file_name)
 
         junk, condition = starting_line.split("if")
 
+        condition = condition.gsub(" and "," && ").gsub(" or "," || ").gsub(" not "," !")
+
         input_block[0] = "Euuf (#{condition.lstrip.rstrip.gsub("?", "")}) {\n"
 
         input_block[-1] = input_block[-1].lstrip.sub("end", "}")
@@ -2070,6 +2186,8 @@ def compile(input_file_path, *output_file_name)
         elsif_statements.each do |statement|
 
           junk, condition = statement.split("elsuf")
+
+          condition = condition.gsub(" and "," && ").gsub(" or "," || ").gsub(" not "," !")
 
           input_block[input_block.index(statement)] = "} elsuf (#{condition.lstrip.rstrip.gsub("?", "")}) {\n"
 
@@ -2481,6 +2599,274 @@ def compile(input_file_path, *output_file_name)
 
     end
 
+    def compile_loop_keyword(input_file_contents,temporary_nila_file)
+
+      def convert_string_to_array(input_string, temporary_nila_file)
+
+        file_id = open(temporary_nila_file, 'w')
+
+        file_id.write(input_string)
+
+        file_id.close()
+
+        line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+        return line_by_line_contents
+
+      end
+
+      def extract_loop_blocks(loop_statement_indexes, input_file_contents)
+
+        possible_loop_blocks = []
+
+        loop_block_counter = 0
+
+        extracted_blocks = []
+
+        controlregexp = /(if |while |def |loop )/
+
+        rejectionregexp = /( if | while )/
+
+        for x in 0...loop_statement_indexes.length-1
+
+          possible_loop_blocks << input_file_contents[loop_statement_indexes[x]..loop_statement_indexes[x+1]]
+
+        end
+
+        end_counter = 0
+
+        end_index = []
+
+        current_block = []
+
+        possible_loop_blocks.each_with_index do |block|
+
+          current_block += block
+
+          current_block.each_with_index do |line, index|
+
+            if line.strip.eql? "end"
+
+              end_counter += 1
+
+              end_index << index
+
+            end
+
+          end
+
+          if end_counter > 0
+
+            until end_index.empty?
+
+              array_extract = current_block[0..end_index[0]].reverse
+
+              index_counter = 0
+
+              array_extract.each_with_index do |line|
+
+                break if (line.lstrip.index(controlregexp) != nil and line.lstrip.index(rejectionregexp).nil?)
+
+                index_counter += 1
+
+              end
+
+              block_extract = array_extract[0..index_counter].reverse
+
+              extracted_blocks << block_extract
+
+              block_start = current_block.index(block_extract[0])
+
+              block_end = current_block.index(block_extract[-1])
+
+              current_block[block_start..block_end] = "--loopblock#{loop_block_counter}"
+
+              loop_block_counter += 1
+
+              end_counter = 0
+
+              end_index = []
+
+              current_block.each_with_index do |line, index|
+
+                if line.strip.eql? "end"
+
+                  end_counter += 1
+
+                  end_index << index
+
+                end
+
+              end
+
+            end
+
+          end
+
+        end
+
+        return current_block, extracted_blocks
+
+      end
+
+      def compile_loop_syntax(input_block)
+
+        modified_input_block = input_block.dup
+
+        strings = []
+
+        string_counter = 0
+
+        input_block.each_with_index do |line, index|
+
+          if line.include?("\"")
+
+            opening_quotes = line.index("\"")
+
+            string_extract = line[opening_quotes..line.index("\"", opening_quotes+1)]
+
+            strings << string_extract
+
+            modified_input_block[index] = modified_input_block[index].sub(string_extract, "--string{#{string_counter}}")
+
+            string_counter += 1
+
+          end
+
+        end
+
+        input_block = modified_input_block
+
+        starting_line = input_block[0]
+
+        starting_line = starting_line + "\n" if starting_line.lstrip == starting_line
+
+        input_block[0] = "whaaleskey (true) {\n"
+
+        input_block[-1] = input_block[-1].lstrip.sub("end", "}")
+
+        modified_input_block = input_block.dup
+
+        input_block.each_with_index do |line, index|
+
+          if line.include?("--string{")
+
+            junk, remains = line.split("--string{")
+
+            string_index, junk = remains.split("}")
+
+            modified_input_block[index] = modified_input_block[index].sub("--string{#{string_index.strip}}", strings[string_index.strip.to_i])
+
+          end
+
+        end
+
+        return modified_input_block
+
+      end
+
+      possible_loop_statements = input_file_contents.reject { |element| !element.include?("loop") }
+
+      if !possible_loop_statements.empty?
+
+        loop_statement_indexes = []
+
+        possible_loop_statements.each do |statement|
+
+          loop_statement_indexes << input_file_contents.dup.each_index.select { |index| input_file_contents[index] == statement }
+
+        end
+
+        loop_statement_indexes = [0] + loop_statement_indexes.flatten + [-1]
+
+        controlregexp = /(if |def )/
+
+        modified_input_contents, extracted_statements = extract_loop_blocks(loop_statement_indexes, input_file_contents.clone)
+
+        joined_blocks = extracted_statements.collect { |element| element.join }
+
+        loop_statements = joined_blocks.reject { |element| element.index(controlregexp) != nil }
+
+        rejected_elements = joined_blocks - loop_statements
+
+        rejected_elements_index = []
+
+        rejected_elements.each do |element|
+
+          rejected_elements_index << joined_blocks.each_index.select { |index| joined_blocks[index] == element }
+
+        end
+
+        loop_blocks_index = (0...extracted_statements.length).to_a
+
+        rejected_elements_index = rejected_elements_index.flatten
+
+        loop_blocks_index -= rejected_elements_index
+
+        modified_loop_statements = loop_statements.collect { |string| convert_string_to_array(string, temporary_nila_file) }
+
+        modified_loop_statements = modified_loop_statements.collect { |block| compile_loop_syntax(block) }.reverse
+
+        loop_blocks_index = loop_blocks_index.collect { |element| "--loopblock#{element}" }.reverse
+
+        rejected_elements_index = rejected_elements_index.collect { |element| "--loopblock#{element}" }.reverse
+
+        rejected_elements = rejected_elements.reverse
+
+        joined_file_contents = modified_input_contents.join
+
+        until loop_blocks_index.empty? and rejected_elements_index.empty?
+
+          if !loop_blocks_index.empty?
+
+            if joined_file_contents.include?(loop_blocks_index[0])
+
+              joined_file_contents = joined_file_contents.sub(loop_blocks_index[0], modified_loop_statements[0].join)
+
+              loop_blocks_index.delete_at(0)
+
+              modified_loop_statements.delete_at(0)
+
+            else
+
+              joined_file_contents = joined_file_contents.sub(rejected_elements_index[0], rejected_elements[0].join)
+
+              rejected_elements_index.delete_at(0)
+
+              rejected_elements.delete_at(0)
+
+            end
+
+          else
+
+            joined_file_contents = joined_file_contents.sub(rejected_elements_index[0], rejected_elements[0].join)
+
+            rejected_elements_index.delete_at(0)
+
+            rejected_elements.delete_at(0)
+
+          end
+
+        end
+
+      else
+
+        joined_file_contents = input_file_contents.join
+
+      end
+
+      file_id = open(temporary_nila_file, 'w')
+
+      file_id.write(joined_file_contents)
+
+      file_id.close()
+
+      line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+      return line_by_line_contents
+
+    end
+
     def ignore_statement_modifiers(input_block)
 
       modified_input_block = input_block.dup
@@ -2557,6 +2943,8 @@ def compile(input_file_path, *output_file_name)
 
     file_contents = compile_regular_while(file_contents, temporary_nila_file)
 
+    file_contents = compile_loop_keyword(file_contents,temporary_nila_file)
+
     file_contents = replace_statement_modifiers(file_contents, rejected_lines)
 
     file_contents = compile_inline_conditionals(file_contents, temporary_nila_file)
@@ -2587,9 +2975,9 @@ def compile(input_file_path, *output_file_name)
 
     reject_regexp = /(function |Euuf |if |else|elsuf|switch |case|while |whaaleskey |for )/
 
-    modified_file_contents = []
+    modified_file_contents = input_file_contents.dup
 
-    input_file_contents.each do |line|
+    input_file_contents.each_with_index do |line,index|
 
       if line.index(reject_regexp) == nil
 
@@ -2601,35 +2989,19 @@ def compile(input_file_path, *output_file_name)
 
               if !line.lstrip.eql?("}\n\n")
 
-                modified_file_contents << line.rstrip + ";\n\n"
+                if line.rstrip[-1] != "[" and line.rstrip[-1] != "{" and line.rstrip[-1] != "," and line.rstrip[-1] != ";"
 
-              else
+                  modified_file_contents[index] = line.rstrip + ";\n\n"
 
-                modified_file_contents << line
+                end
 
               end
 
-            else
-
-              modified_file_contents << line
-
             end
-
-          else
-
-            modified_file_contents << line
 
           end
 
-        else
-
-          modified_file_contents << line
-
         end
-
-      else
-
-        modified_file_contents << line
 
       end
 
@@ -2781,7 +3153,7 @@ def compile(input_file_path, *output_file_name)
 
       def extract_blocks(file_contents)
 
-        javascript_regexp = /(if |while |function |function\()/
+        javascript_regexp = /(if |while |function |function\(|((=|:)\s+\{))/
 
         block_starting_lines = file_contents.dup.reject { |element| element.index(javascript_regexp).nil? }[1..-1]
 
@@ -2797,7 +3169,7 @@ def compile(input_file_path, *output_file_name)
 
         end
 
-        block_ending_lines = file_contents.dup.each_index.select { |index| file_contents[index].eql? "  }\n" }
+        block_ending_lines = file_contents.dup.each_index.select { |index| (file_contents[index].eql? "  }\n" or file_contents[index].eql? "  };\n")}
 
         modified_file_contents = file_contents.dup
 
@@ -2827,7 +3199,7 @@ def compile(input_file_path, *output_file_name)
 
             end
 
-            block_ending_lines = modified_file_contents.dup.each_index.select { |index| modified_file_contents[index].eql? "  }\n" }
+            block_ending_lines = modified_file_contents.dup.each_index.select { |index| (modified_file_contents[index].eql? "  }\n" or modified_file_contents[index].eql? "  };\n") }
 
             starting_index = starting_line_indices[0]
 
@@ -2882,7 +3254,7 @@ def compile(input_file_path, *output_file_name)
 
       if !code_block_starting_locations.empty?
 
-        controlregexp = /(if |while |function |function\()/
+        controlregexp = /(if |while |function |function\(|((=|:)\s+\{))/
 
         code_block_starting_locations = [0, code_block_starting_locations, -1].flatten
 
@@ -2910,7 +3282,7 @@ def compile(input_file_path, *output_file_name)
 
           current_block.each_with_index do |line, index|
 
-            if line.lstrip.eql? "}\n"
+            if line.lstrip.eql? "}\n" or line.lstrip.eql?("};\n")
 
               end_counter += 1
 
@@ -3012,7 +3384,7 @@ def compile(input_file_path, *output_file_name)
 
     end
 
-    javascript_regexp = /(if |while |function |function\()/
+    javascript_regexp = /(if |while |function |function\(|((=|:)\s+\{))/
 
     javascript_file_contents = javascript_file_contents.collect { |element| element.sub("Euuf", "if") }
 
@@ -3178,9 +3550,49 @@ def compile(input_file_path, *output_file_name)
 
     end
 
-    input_file_contents = input_file_contents.collect { |element| element.sub(" and ", " && ") }
+    def compile_match_operator(input_string)
 
-    input_file_contents = input_file_contents.collect { |element| element.sub(" or ", " || ") }
+      rejection_exp = /( aannddy | orriioo |nnoottyy )/
+
+      if input_string.include?("=~")
+
+        input_string = input_string.gsub(" && "," aannddy ").gsub(" || "," orriioo ").gsub("!","nnoottyy")
+
+        left, right = input_string.split("=~")
+
+        if left.index(rejection_exp) != nil
+
+          left = left[left.index(rejection_exp)..-1]
+
+        elsif left.index(/\(/)
+
+          left = left[left.index(/\(/)+1..-1]
+
+        end
+
+        if right.index(rejection_exp) != nil
+
+          right = right[0...right.index(rejection_exp)]
+
+        elsif right.index(/\)/)
+
+          right = right[0...right.index(/\)/)]
+
+        end
+
+        original_string = "#{left}=~#{right}"
+
+        replacement_string = "#{left.rstrip} = #{left.rstrip}.match(#{right.lstrip.rstrip})"
+
+        input_string = input_string.sub(original_string,replacement_string)
+
+        input_string = input_string.gsub(" aannddy "," && ").gsub(" orriioo "," || ").gsub("nnoottyy","!")
+
+      end
+
+      return input_string
+
+    end
 
     input_file_contents = input_file_contents.collect { |element| element.sub("==", "===") }
 
@@ -3189,6 +3601,8 @@ def compile(input_file_path, *output_file_name)
     input_file_contents = input_file_contents.collect { |element| element.sub("elsuf", "else if") }
 
     input_file_contents = input_file_contents.collect { |element| compile_power_operator(element) }
+
+    input_file_contents = input_file_contents.collect {|element| compile_match_operator(element)}
 
     return input_file_contents
 
@@ -3228,6 +3642,8 @@ def compile(input_file_path, *output_file_name)
     file_contents = compile_heredocs(file_contents, temp_file)
 
     file_contents = compile_interpolated_strings(file_contents)
+
+    file_contents = compile_hashes(file_contents,temp_file)
 
     file_contents = compile_conditional_structures(file_contents, temp_file)
 
@@ -3329,7 +3745,7 @@ def find_file_path(input_path, file_extension)
 
 end
 
-nilac_version = "0.0.4.2.0"
+nilac_version = "0.0.4.2.2"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
@@ -3381,6 +3797,24 @@ opts = Slop.parse do
     FileUtils.mv("#{file_path[0...-3]}", "#{Dir.pwd}/bin/nilac")
 
     puts "Build Successful!"
+
+  end
+
+  on :release, 'Build and Release Nilac for Rubygems' do
+
+    file_path = Dir.pwd + "/src/nilac.rb"
+
+    create_mac_executable(file_path)
+
+    FileUtils.mv("#{file_path[0...-3]}", "#{Dir.pwd}/bin/nilac")
+
+    `git commit -am "Updated Executable to #{nilac_version}"`
+
+    output = `rake release`
+
+    puts "Build Successful!"
+
+    puts output
 
   end
 
