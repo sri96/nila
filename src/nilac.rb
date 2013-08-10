@@ -3743,7 +3743,7 @@ def find_file_path(input_path, file_extension)
 
 end
 
-nilac_version = "0.0.4.2.4"
+nilac_version = "0.0.4.2.5"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
@@ -3955,6 +3955,8 @@ elsif opts[:release] != nil
   puts "Your build was successful!\n"
 
   commit_message = opts[:release][0]
+
+  puts commit_message
 
   `git commit -am "#{commit_message}"`
 
