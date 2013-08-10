@@ -3743,7 +3743,7 @@ def find_file_path(input_path, file_extension)
 
 end
 
-nilac_version = "0.0.4.2.1"
+nilac_version = "0.0.4.2.2"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
@@ -3795,6 +3795,22 @@ opts = Slop.parse do
     FileUtils.mv("#{file_path[0...-3]}", "#{Dir.pwd}/bin/nilac")
 
     puts "Build Successful!"
+
+  end
+
+  on :release, 'Build and Release Nilac for Rubygems' do
+
+    file_path = Dir.pwd + "/src/nilac.rb"
+
+    create_mac_executable(file_path)
+
+    FileUtils.mv("#{file_path[0...-3]}", "#{Dir.pwd}/bin/nilac")
+
+    output = `rake release`
+
+    puts "Build Successful!"
+
+    puts output
 
   end
 
