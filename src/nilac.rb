@@ -3956,8 +3956,6 @@ elsif opts[:release] != nil
 
   commit_message = opts[:release][0]
 
-  puts commit_message
-
   `git commit -am "#{commit_message}"`
 
   puts `rake release`
