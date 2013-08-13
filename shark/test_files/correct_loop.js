@@ -6,7 +6,7 @@
 
   while (true) {
     i+=1;
-    process.stdout.write("" + i + " ");
+    process.stdout.write("" + (i) + " ");
     if (i===10) {
       break;
     }

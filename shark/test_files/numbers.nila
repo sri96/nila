@@ -1,0 +1,3 @@
+million = 1_000_000 + 7_000_000
+
+puts million

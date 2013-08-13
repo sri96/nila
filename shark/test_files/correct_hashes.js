@@ -1,8 +1,10 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
 (function() {
-  var inst_section, student_ages;
+  var inst_section, student_ages, variable;
 
   // This file demonstrates several Hash features in Nila
+
+  variable = 5;
 
   inst_section = {
     cello: 'string',

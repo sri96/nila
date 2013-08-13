@@ -11,7 +11,7 @@
   line = "My favorite language is Ruby!";
 
   if (line = line.match(/Ruby|Python/)) {
-    console.log("Scripting language mentioned: " + line);
+    console.log("Scripting language mentioned: " + (line));
   }
 
 }).call(this);

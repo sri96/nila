@@ -19,7 +19,7 @@
   i=1;
 
   while (!(i > 10)) {
-    process.stdout.write("" + i + " ");
+    process.stdout.write("" + (i) + " ");
     i+=1;
     if (i === 9) {
       break;

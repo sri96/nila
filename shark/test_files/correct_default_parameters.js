@@ -11,7 +11,7 @@
     if (liquid == null) {
       liquid = "coffee";
     }
-    return console.log("Filling " + container + " with " + liquid);
+    return console.log("Filling " + (container) + " with " + (liquid));
   };
 
   fill();

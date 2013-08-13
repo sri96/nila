@@ -1,5 +1,7 @@
 # This file demonstrates several Hash features in Nila
 
+variable = 5
+
 inst_section = {
   'cello' => 'string',
   'clarinet' => 'woodwind',

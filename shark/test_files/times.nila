@@ -1,0 +1,5 @@
+a = 5
+
+10.times { |n| puts "The number is #{a+n}" }
+
+10.times {puts "Hello"}

@@ -6,7 +6,7 @@
 
   msg = "nila";
 
-  message = "Welcome to " + msg;
+  message = "Welcome to " + (msg);
 
   goal_reached = 72;
 
