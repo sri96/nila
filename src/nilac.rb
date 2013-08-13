@@ -684,7 +684,7 @@ def compile(input_file_path, *output_file_name)
 
         replacement_parameters << param.lstrip.rstrip
 
-        replacement_string = replacement_string + "\n" + "if (#{param.lstrip.rstrip} == null) {\n  #{paramvalue.lstrip.rstrip}\n}\n" +"\n"
+        replacement_string = replacement_string + "\n" + "if (#{param.lstrip.rstrip} equequ null) {\n  #{paramvalue.lstrip.rstrip}\n}\n" +"\n"
 
       end
 
@@ -1401,7 +1401,7 @@ def compile(input_file_path, *output_file_name)
 
     #The above function will compile to
 
-    #function square(input_number) {
+    #square = function(input_number) {
     #
     #  return input_number*input_number;
     #
@@ -1656,6 +1656,16 @@ def compile(input_file_path, *output_file_name)
 
     end
 
+    def coffee_type_function(input_array)
+
+      function_name = input_array[0].split("function ")[1].split("(")[0].lstrip
+
+      input_array[0] = "#{function_name} = function(" + input_array[0].split("function ")[1].split("(")[1].lstrip
+
+      return input_array
+
+    end
+
     def compile_function(input_array, temporary_nila_file)
 
       modified_input_array = input_array.dup
@@ -1716,7 +1726,7 @@ def compile(input_file_path, *output_file_name)
 
       end
 
-      modified_input_array[-1] = input_array[-1].sub "end", "}\n"
+      modified_input_array[-1] = input_array[-1].sub "end", "};\n"
 
       modified_input_array = compile_parallel_assignment(modified_input_array, temporary_nila_file)
 
@@ -1735,6 +1745,8 @@ def compile(input_file_path, *output_file_name)
       modified_input_array = add_auto_return_statement(modified_input_array)
 
       modified_input_array = compile_multiple_return(modified_input_array)
+
+      modified_input_array = coffee_type_function(modified_input_array)
 
       return modified_input_array
 
@@ -1873,7 +1885,13 @@ def compile(input_file_path, *output_file_name)
 
         extracted_string = input_string[location..-1]
 
-        pattern << extracted_string[0..extracted_string.index(pattern_end)]
+        string_extract = extracted_string[0..extracted_string.index(pattern_end)]
+
+        if !string_extract.include?(" = function(")
+
+          pattern << string_extract
+
+        end
 
       end
 
@@ -3280,7 +3298,7 @@ def compile(input_file_path, *output_file_name)
 
       if !code_block_starting_locations.empty?
 
-        controlregexp = /(if |while |function |function\(|((=|:)\s+\{))/
+        controlregexp = /(if |while |= function\(|((=|:)\s+\{))/
 
         code_block_starting_locations = [0, code_block_starting_locations, -1].flatten
 
@@ -3294,6 +3312,12 @@ def compile(input_file_path, *output_file_name)
 
           possible_blocks << input_file_contents[code_block_starting_locations[x]..code_block_starting_locations[x+1]]
 
+          if possible_blocks.length > 1
+
+            possible_blocks[-1] = possible_blocks[-1][1..-1]
+
+          end
+
         end
 
         end_counter = 0
@@ -3304,7 +3328,15 @@ def compile(input_file_path, *output_file_name)
 
         possible_blocks.each_with_index do |block|
 
-          current_block += block
+          if !block[0].eql?(current_block[-1])
+
+            current_block += block
+
+          else
+
+            current_block += block[1..-1]
+
+          end
 
           current_block.each_with_index do |line, index|
 
@@ -3352,7 +3384,7 @@ def compile(input_file_path, *output_file_name)
 
               current_block.each_with_index do |line, index|
 
-                if line.lstrip.eql? "}\n"
+                if line.lstrip.eql? "}\n" or line.lstrip.eql?("};\n")
 
                   end_counter += 1
 
@@ -3410,7 +3442,7 @@ def compile(input_file_path, *output_file_name)
 
     end
 
-    javascript_regexp = /(if |while |function |function\(|((=|:)\s+\{))/
+    javascript_regexp = /(if |while |= function\(|((=|:)\s+\{))/
 
     javascript_file_contents = javascript_file_contents.collect { |element| element.sub("Euuf", "if") }
 
@@ -3624,6 +3656,8 @@ def compile(input_file_path, *output_file_name)
 
     input_file_contents = input_file_contents.collect { |element| element.sub("!=", "!==") }
 
+    input_file_contents = input_file_contents.collect { |element| element.sub("equequ", "==") }
+
     input_file_contents = input_file_contents.collect { |element| element.sub("elsuf", "else if") }
 
     input_file_contents = input_file_contents.collect { |element| compile_power_operator(element) }
@@ -3685,9 +3719,9 @@ def compile(input_file_path, *output_file_name)
 
     file_contents = compile_parallel_assignment(file_contents, temp_file)
 
-    list_of_variables, file_contents = get_variables(file_contents, temp_file)
-
     file_contents, function_names = compile_named_functions(file_contents, named_functions, nested_functions, temp_file)
+
+    list_of_variables, file_contents = get_variables(file_contents, temp_file)
 
     file_contents, ruby_functions = compile_custom_function_map(file_contents)
 

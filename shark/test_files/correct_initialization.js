@@ -1,14 +1,14 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
 (function() {
-  var _ref1, first_name, last_name;
+  var _ref1, first_name, last_name, name_split, parse_name;
 
   // This file demonstrates multiple variable initialization
 
-  function parse_name(input_name) {
+  parse_name = function(input_name) {
     var name_split;
     name_split = input_name.split(" ");
     return [name_split[0],name_split[1]];
-  }
+  };
 
   _ref1 = parse_name("Adhithya Rajasekaran");
 

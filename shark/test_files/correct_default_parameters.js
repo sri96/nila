@@ -1,16 +1,18 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
 (function() {
+  var container, fill, liquid;
+
   // This is a demo of default parameters
 
-  function fill(container,liquid) {
-    if (container === null) {
+  fill = function(container,liquid) {
+    if (container == null) {
       container = "cup";
     }
-    if (liquid === null) {
+    if (liquid == null) {
       liquid = "coffee";
     }
     return console.log("Filling " + container + " with " + liquid);
-  }
+  };
 
   fill();
 

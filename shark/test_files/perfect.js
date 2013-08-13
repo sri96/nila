@@ -1,6 +1,6 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
 (function() {
-  var goal_reached, hello, message, msg;
+  var goal_reached, hello, message, msg, square;
 
   hello = "world";
 
@@ -10,8 +10,8 @@
 
   goal_reached = 72;
 
-  function square(inputnumber) {
+  square = function(inputnumber) {
     return inputnumber*inputnumber;
-  }
+  };
 
 }).call(this);
