@@ -5,19 +5,13 @@
   a = 5;
 
   for (_i = 0, _j = 10; _i < _j; _i += 1) {
-
     (function(n) {
-
       console.log("The number is " + (a+n) + "");
-
     }(_i));
-
   }
 
   for (_i = 0, _j = 10; _i < _j; _i += 1) {
-
     console.log("Hello");
-
   }
 
 }).call(this);

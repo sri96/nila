@@ -3371,7 +3371,7 @@ def compile(input_file_path, *output_file_name)
 
       def extract_blocks(file_contents)
 
-        javascript_regexp = /(if |while |function |function\(|((=|:)\s+\{))/
+        javascript_regexp = /(if |while |for |function\(|((=|:)\s+\{))/
 
         block_starting_lines = file_contents.dup.reject { |element| element.index(javascript_regexp).nil? }[1..-1]
 
@@ -3987,7 +3987,7 @@ def find_file_path(input_path, file_extension)
 
 end
 
-nilac_version = "0.0.4.2.8"
+nilac_version = "0.0.4.2.9"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
