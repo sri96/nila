@@ -3075,23 +3075,123 @@ def compile(input_file_path, *output_file_name)
 
         block_parameters, block_contents = input_block[1...-1].split("|",2)[1].split("|",2)
 
-        compiled_block = "(function(#{block_parameters.lstrip.rstrip}) {\n\n  #{block_contents} \n\n}(_i))_!;\n"
+        compiled_block = "(function(#{block_parameters.lstrip.rstrip}) {\n\n  #{block_contents.strip} \n\n}(_i))_!;\n"
 
         return compiled_block
 
       end
 
-      modified_file_contents = input_file_contents.clone
+      def extract_variable_names(input_file_contents, temporary_nila_file)
+
+        variables = []
+
+        input_file_contents = input_file_contents.collect { |element| element.gsub("==", "equalequal") }
+
+        input_file_contents = input_file_contents.collect { |element| element.gsub("!=", "notequal") }
+
+        input_file_contents = input_file_contents.collect { |element| element.gsub("+=", "plusequal") }
+
+        input_file_contents = input_file_contents.collect { |element| element.gsub("-=", "minusequal") }
+
+        input_file_contents = input_file_contents.collect { |element| element.gsub("*=", "multiequal") }
+
+        input_file_contents = input_file_contents.collect { |element| element.gsub("/=", "divequal") }
+
+        input_file_contents = input_file_contents.collect { |element| element.gsub("%=", "modequal") }
+
+        input_file_contents = input_file_contents.collect { |element| element.gsub("=~", "matchequal") }
+
+        javascript_regexp = /(if |while |for )/
+
+        for x in 0...input_file_contents.length
+
+          current_row = input_file_contents[x]
+
+          if current_row.include?("=") and current_row.index(javascript_regexp) == nil
+
+            current_row = current_row.rstrip + "\n"
+
+            current_row_split = current_row.split("=")
+
+            for y in 0...current_row_split.length
+
+              current_row_split[y] = current_row_split[y].strip
+
+
+            end
+
+            if current_row_split[0].include?("[") or current_row_split[0].include?("(")
+
+              current_row_split[0] = current_row_split[0][0...current_row_split[0].index("[")]
+
+            end
+
+            variables << current_row_split[0]
+
+
+          end
+
+          input_file_contents[x] = current_row
+
+        end
+
+        variables += ["_i","_j"]
+
+        variables = variables.flatten
+
+        return variables.uniq
+
+      end
+
+      possible_times_loop = input_file_contents.reject{ |element| !element.include?(".times")}
+
+      multiline_times_loop = possible_times_loop.reject {|element| !element.include?(" do ")}
+
+      unless multiline_times_loop.empty?
+
+        multiline_times_loop.each do |starting_line|
+
+          index_counter = starting_counter = input_file_contents.index(starting_line)
+
+          line = starting_line
+
+          until line.strip.eql?("end")
+
+            index_counter += 1
+
+            line = input_file_contents[index_counter]
+
+          end
+
+          loop_extract = input_file_contents[starting_counter..index_counter]
+
+          file_extract = input_file_contents[0..index_counter]
+
+          file_variables = extract_variable_names(file_extract,temporary_nila_file)
+
+          block_variables = extract_variable_names(loop_extract,temporary_nila_file)
+
+          var_need_of_declaration = file_variables-block_variables-["_i","_j"]
+
+          loop_condition, block = loop_extract.join.split(" do ")
+
+          block = block.split("end")[0]
+
+          replacement_string = "#{loop_condition.rstrip} {#{block.strip}}"
+
+          input_file_contents[starting_counter..index_counter] = replacement_string
+
+        end
+
+      end
 
       possible_times_loop = input_file_contents.reject{ |element| !element.include?(".times")}
 
       oneliner_times_loop = possible_times_loop.reject {|element| !element.include?("{") and !element.include?("}")}
 
-      #multiline_times_loop = possible_times_loop-oneliner_times_loop
-
-      #multiline_times_loop = multiline_times_loop.reject {|element| !element.include?(" do ")}
-
       loop_variables = []
+
+      modified_file_contents = input_file_contents.clone
 
       unless oneliner_times_loop.empty?
 
@@ -3987,7 +4087,7 @@ def find_file_path(input_path, file_extension)
 
 end
 
-nilac_version = "0.0.4.2.9"
+nilac_version = "0.0.4.3.0"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"

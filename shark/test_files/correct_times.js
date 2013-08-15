@@ -14,4 +14,11 @@
     console.log("Hello");
   }
 
+  for (_i = 0, _j = 10; _i < _j; _i += 1) {
+    (function(n) {
+      console.log("The number is " + (n));
+      console.log("Twice the number is " + (2*n) + "");
+    }(_i));
+  }
+
 }).call(this);
