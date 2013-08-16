@@ -604,6 +604,46 @@ def compile(input_file_path, *output_file_name)
 
   def compile_parallel_assignment(input_file_contents, temporary_nila_file)
 
+    def arrayify_right_side(input_string)
+
+      if input_string.include?("=")
+
+        right_side = input_string.split("=")[1]
+
+        if right_side.include?(",")
+
+          splits = right_side.split(",")
+
+          replacement_string = []
+
+          splits.each do |str|
+
+            unless str.include?(")") and !str.include?("(")
+
+              replacement_string << str
+
+            else
+
+              replacement_string[-1] = replacement_string[-1]+ "," +str
+
+            end
+
+          end
+
+          replacement_string = " [#{replacement_string.join(",").strip}]\n"
+
+          input_string = input_string.sub(right_side,replacement_string)
+
+        end
+
+      end
+
+      return input_string
+
+    end
+
+    input_file_contents = input_file_contents.collect {|element| arrayify_right_side(element)}
+
     possible_variable_lines = input_file_contents.reject { |element| !element.include? "=" }
 
     possible_parallel_assignment = possible_variable_lines.reject { |element| !element.split("=")[0].include? "," }
@@ -1898,7 +1938,8 @@ def compile(input_file_path, *output_file_name)
 
         "p" => "console.log",
 
-        "print" => "process.stdout.write"
+        "print" => "process.stdout.write",
+
     }
 
     function_map = function_map_replacements.keys
@@ -1922,6 +1963,46 @@ def compile(input_file_path, *output_file_name)
     return modified_file_contents, function_map_replacements.values
 
   end
+
+  #def compile_ruby_methods(input_file_contents)
+  #
+  #  # These are some interesting methods that we really miss in Javascript.
+  #  # So we have made these methods available
+  #
+  #  method_map_replacement = {
+  #
+  #      ".split" => ".split(\" \")",
+  #
+  #      ".strip" => ".replace(/^\s+|\s+$/g,'')",
+  #
+  #      ".lstrip" => ".replace(/^\s+/g,\"\")",
+  #
+  #      ".rstrip" => ".replace(/\s+$/g,\"\")"
+  #  }
+  #
+  #  method_map = method_map_replacement.keys
+  #
+  #  method_map_regex = method_map.collect {|name| name.gsub(".","\\.")}
+  #
+  #  method_map_regex = Regexp.new(method_map_regex.join("|"))
+  #
+  #  modified_file_contents = input_file_contents.clone
+  #
+  #  input_file_contents.each_with_index do |line, index|
+  #
+  #    if line.match(method_map_regex)
+  #
+  #      unless method_match.include?(line+"(")
+  #
+  #        puts line
+  #
+  #      end
+  #
+  #    end
+  #
+  #  end
+  #
+  #end
 
   def compile_whitespace_delimited_functions(input_file_contents, function_names, temporary_nila_file)
 
@@ -4005,6 +4086,8 @@ def compile(input_file_path, *output_file_name)
 
     file_contents, ruby_functions = compile_custom_function_map(file_contents)
 
+    #compile_ruby_methods(file_contents)
+
     function_names << ruby_functions
 
     list_of_variables += loop_vars
@@ -4087,7 +4170,7 @@ def find_file_path(input_path, file_extension)
 
 end
 
-nilac_version = "0.0.4.3.0"
+nilac_version = "0.0.4.3.1"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
