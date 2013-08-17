@@ -1966,45 +1966,45 @@ def compile(input_file_path, *output_file_name)
 
   end
 
-  #def compile_ruby_methods(input_file_contents)
-  #
-  #  # These are some interesting methods that we really miss in Javascript.
-  #  # So we have made these methods available
-  #
-  #  method_map_replacement = {
-  #
-  #      ".split" => ".split(\" \")",
-  #
-  #      ".strip" => ".replace(/^\s+|\s+$/g,'')",
-  #
-  #      ".lstrip" => ".replace(/^\s+/g,\"\")",
-  #
-  #      ".rstrip" => ".replace(/\s+$/g,\"\")"
-  #  }
-  #
-  #  method_map = method_map_replacement.keys
-  #
-  #  method_map_regex = method_map.collect {|name| name.gsub(".","\\.")}
-  #
-  #  method_map_regex = Regexp.new(method_map_regex.join("|"))
-  #
-  #  modified_file_contents = input_file_contents.clone
-  #
-  #  input_file_contents.each_with_index do |line, index|
-  #
-  #    if line.match(method_map_regex)
-  #
-  #      unless method_match.include?(line+"(")
-  #
-  #        puts line
-  #
-  #      end
-  #
-  #    end
-  #
-  #  end
-  #
-  #end
+  def compile_ruby_methods(input_file_contents)
+
+    # These are some interesting methods that we really miss in Javascript.
+    # So we have made these methods available
+
+    method_map_replacement = {
+
+        ".split" => ".split(\" \")",
+
+        ".strip" => ".replace(/^\s+|\s+$/g,'')",
+
+        ".lstrip" => ".replace(/^\s+/g,\"\")",
+
+        ".rstrip" => ".replace(/\s+$/g,\"\")"
+    }
+
+    method_map = method_map_replacement.keys
+
+    method_map_regex = method_map.collect {|name| name.gsub(".","\\.")}
+
+    method_map_regex = Regexp.new(method_map_regex.join("|"))
+
+    modified_file_contents = input_file_contents.clone
+
+    input_file_contents.each_with_index do |line, index|
+
+      if line.match(method_map_regex)
+
+        unless method_match.include?(line+"(")
+
+          puts line
+
+        end
+
+      end
+
+    end
+
+  end
 
   def compile_whitespace_delimited_functions(input_file_contents, function_names, temporary_nila_file)
 
