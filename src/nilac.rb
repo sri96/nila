@@ -331,6 +331,8 @@ def compile(input_file_path, *output_file_name)
 
             test_string = string_extract[0..closed_curly_brace_index[0]]
 
+            puts test_string
+
             original_string = test_string.dup
 
             if test_string.include?("{")
@@ -606,7 +608,11 @@ def compile(input_file_path, *output_file_name)
 
     def arrayify_right_side(input_string)
 
-      if input_string.include?("=")
+      javascript_regexp = /(if |while |for |function |function\()/
+
+      if input_string.include?("=") and input_string.index(javascript_regexp) == nil and input_string.strip[0..3] != "_ref" and !input_string.split("=")[1].include?("[")
+
+        modified_input_string = input_string.dup
 
         right_side = input_string.split("=")[1]
 
@@ -836,7 +842,23 @@ def compile(input_file_path, *output_file_name)
 
     line_by_line_contents = read_file_line_by_line(temporary_nila_file)
 
+    for_loop_variables = []
+
+    for_loop_statements = line_by_line_contents.reject {|line| !line.include?("for")}
+
+    for_loop_statements.each do |statement|
+
+      varis = statement.split("for (")[1].split(";",2)[0].split(",")
+
+      for_loop_variables << varis.collect {|vari| vari.strip.split("=")[0].strip}
+
+      for_loop_variables = for_loop_variables.flatten
+
+    end
+
     variables += loop_variables
+
+    variables += for_loop_variables
 
     variables = variables.flatten
 
@@ -2792,6 +2814,322 @@ def compile(input_file_path, *output_file_name)
 
     end
 
+    def compile_regular_for(input_file_contents, temporary_nila_file)
+
+      def convert_string_to_array(input_string, temporary_nila_file)
+
+        file_id = open(temporary_nila_file, 'w')
+
+        file_id.write(input_string)
+
+        file_id.close()
+
+        line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+        return line_by_line_contents
+
+      end
+
+      def extract_for_blocks(for_statement_indexes, input_file_contents)
+
+        possible_for_blocks = []
+
+        for_block_counter = 0
+
+        extracted_blocks = []
+
+        controlregexp = /(if |while |def |for )/
+
+        rejectionregexp = /( if | while )/
+
+        for x in 0...for_statement_indexes.length-1
+
+          possible_for_blocks << input_file_contents[for_statement_indexes[x]..for_statement_indexes[x+1]]
+
+        end
+
+        end_counter = 0
+
+        end_index = []
+
+        current_block = []
+
+        possible_for_blocks.each_with_index do |block|
+
+          current_block += block
+
+          current_block.each_with_index do |line, index|
+
+            if line.strip.eql? "end"
+
+              end_counter += 1
+
+              end_index << index
+
+            end
+
+          end
+
+          if end_counter > 0
+
+            until end_index.empty?
+
+              array_extract = current_block[0..end_index[0]].reverse
+
+              index_counter = 0
+
+              array_extract.each_with_index do |line|
+
+                break if (line.lstrip.index(controlregexp) != nil and line.lstrip.index(rejectionregexp).nil?)
+
+                index_counter += 1
+
+              end
+
+              block_extract = array_extract[0..index_counter].reverse
+
+              extracted_blocks << block_extract
+
+              block_start = current_block.index(block_extract[0])
+
+              block_end = current_block.index(block_extract[-1])
+
+              current_block[block_start..block_end] = "--forblock#{for_block_counter}"
+
+              for_block_counter += 1
+
+              end_counter = 0
+
+              end_index = []
+
+              current_block.each_with_index do |line, index|
+
+                if line.strip.eql? "end"
+
+                  end_counter += 1
+
+                  end_index << index
+
+                end
+
+              end
+
+            end
+
+          end
+
+        end
+
+        return current_block, extracted_blocks
+
+      end
+
+      def compile_for_syntax(input_block)
+
+        def compile_condition(input_condition, input_block)
+
+          variable,array_name = input_condition.split("in")
+
+          if array_name.strip.include?("[") and array_name.strip.include?("]")
+
+            replacement_array = "_ref1 = #{array_name.strip}\n\n"
+
+            replacement_string = "#{variable.strip} = _ref1[_i];\n\n"
+
+            input_block = [replacement_array] + input_block.insert(1,replacement_string)
+
+            input_block[1] = "for (_i = 0, _j = _ref1.length; _i < _j; _i += 1) {\n\n"
+
+          elsif array_name.strip.include?("..")
+
+            array_type = if array_name.strip.include?("...") then 0 else 1 end
+
+            if array_type == 0
+
+              num1,num2 = array_name.strip.split("...")
+
+              input_block[0] = "for (#{variable.strip} = #{num1}, _j = #{num2}; #{variable.strip} <= _j; #{variable.strip} += 1) {\n\n"
+
+            else
+
+              num1,num2 = array_name.strip.split("..")
+
+              input_block[0] = "for (#{variable.strip} = #{num1}, _j = #{num2}; #{variable.strip} < _j; #{variable.strip} += 1) {\n\n"
+
+            end
+
+          else
+
+            input_block[0] = "for (_i = 0, _j = #{array_name.strip}.length; _i < _j; _i += 1) {\n\n"
+
+            input_block = input_block.insert(1,"#{variable.strip} = #{array_name.strip}[_i];\n\n")
+
+          end
+
+          return input_block
+
+        end
+
+        modified_input_block = input_block.dup
+
+        strings = []
+
+        string_counter = 0
+
+        input_block.each_with_index do |line, index|
+
+          if line.include?("\"")
+
+            opening_quotes = line.index("\"")
+
+            string_extract = line[opening_quotes..line.index("\"", opening_quotes+1)]
+
+            strings << string_extract
+
+            modified_input_block[index] = modified_input_block[index].sub(string_extract, "--string{#{string_counter}}")
+
+            string_counter += 1
+
+          end
+
+        end
+
+        input_block = modified_input_block
+
+        starting_line = input_block[0]
+
+        starting_line = starting_line + "\n" if starting_line.lstrip == starting_line
+
+        junk, condition = starting_line.split("for")
+
+        input_block[-1] = input_block[-1].lstrip.sub("end", "}")
+
+        input_block = compile_condition(condition,input_block)
+
+        modified_input_block = input_block.dup
+
+        input_block.each_with_index do |line, index|
+
+          if line.include?("--string{")
+
+            junk, remains = line.split("--string{")
+
+            string_index, junk = remains.split("}")
+
+            modified_input_block[index] = modified_input_block[index].sub("--string{#{string_index.strip}}", strings[string_index.strip.to_i])
+
+          end
+
+        end
+
+        return modified_input_block
+
+      end
+
+      possible_for_statements = input_file_contents.reject { |element| !element.include?("for") }
+
+      possible_for_statements = possible_for_statements.reject {|element| element.include?("for (")}
+
+      if !possible_for_statements.empty?
+
+        for_statement_indexes = []
+
+        possible_for_statements.each do |statement|
+
+          for_statement_indexes << input_file_contents.dup.each_index.select { |index| input_file_contents[index] == statement }
+
+        end
+
+        for_statement_indexes = [0] + for_statement_indexes.flatten + [-1]
+
+        controlregexp = /(if |def |while )/
+
+        modified_input_contents, extracted_statements = extract_for_blocks(for_statement_indexes, input_file_contents.clone)
+
+        joined_blocks = extracted_statements.collect { |element| element.join }
+
+        for_statements = joined_blocks.reject { |element| element.index(controlregexp) != nil }
+
+        rejected_elements = joined_blocks - for_statements
+
+        rejected_elements_index = []
+
+        rejected_elements.each do |element|
+
+          rejected_elements_index << joined_blocks.each_index.select { |index| joined_blocks[index] == element }
+
+        end
+
+        for_blocks_index = (0...extracted_statements.length).to_a
+
+        rejected_elements_index = rejected_elements_index.flatten
+
+        for_blocks_index -= rejected_elements_index
+
+        modified_for_statements = for_statements.collect { |string| convert_string_to_array(string, temporary_nila_file) }
+
+        modified_for_statements = modified_for_statements.collect { |block| compile_for_syntax(block) }.reverse
+
+        for_blocks_index = for_blocks_index.collect { |element| "--forblock#{element}" }.reverse
+
+        rejected_elements_index = rejected_elements_index.collect { |element| "--forblock#{element}" }.reverse
+
+        rejected_elements = rejected_elements.reverse
+
+        joined_file_contents = modified_input_contents.join
+
+        until for_blocks_index.empty? and rejected_elements_index.empty?
+
+          if !for_blocks_index.empty?
+
+            if joined_file_contents.include?(for_blocks_index[0])
+
+              joined_file_contents = joined_file_contents.sub(for_blocks_index[0], modified_for_statements[0].join)
+
+              for_blocks_index.delete_at(0)
+
+              modified_for_statements.delete_at(0)
+
+            else
+
+              joined_file_contents = joined_file_contents.sub(rejected_elements_index[0], rejected_elements[0].join)
+
+              rejected_elements_index.delete_at(0)
+
+              rejected_elements.delete_at(0)
+
+            end
+
+          else
+
+            joined_file_contents = joined_file_contents.sub(rejected_elements_index[0], rejected_elements[0].join)
+
+            rejected_elements_index.delete_at(0)
+
+            rejected_elements.delete_at(0)
+
+          end
+
+        end
+
+      else
+
+        joined_file_contents = input_file_contents.join
+
+      end
+
+      file_id = open(temporary_nila_file, 'w')
+
+      file_id.write(joined_file_contents)
+
+      file_id.close()
+
+      line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+      return line_by_line_contents
+
+    end
+
     def compile_loop_keyword(input_file_contents,temporary_nila_file)
 
       def convert_string_to_array(input_string, temporary_nila_file)
@@ -3130,11 +3468,15 @@ def compile(input_file_path, *output_file_name)
 
     file_contents = compile_ternary_if(input_file_contents)
 
+    puts file_contents
+
     file_contents, rejected_lines = ignore_statement_modifiers(file_contents)
 
     file_contents = replace_unless_until(file_contents)
 
     file_contents = compile_regular_if(file_contents, temporary_nila_file)
+
+    file_contents = compile_regular_for(file_contents, temporary_nila_file)
 
     file_contents = compile_regular_while(file_contents, temporary_nila_file)
 
@@ -3162,7 +3504,7 @@ def compile(input_file_path, *output_file_name)
 
       end
 
-      def extract_variable_names(input_file_contents, temporary_nila_file)
+      def extract_variable_names(input_file_contents)
 
         variables = []
 
@@ -3248,9 +3590,9 @@ def compile(input_file_path, *output_file_name)
 
           file_extract = input_file_contents[0..index_counter]
 
-          file_variables = extract_variable_names(file_extract,temporary_nila_file)
+          file_variables = extract_variable_names(file_extract)
 
-          block_variables = extract_variable_names(loop_extract,temporary_nila_file)
+          block_variables = extract_variable_names(loop_extract)
 
           var_need_of_declaration = file_variables-block_variables-["_i","_j"]
 
@@ -4066,10 +4408,6 @@ def compile(input_file_path, *output_file_name)
 
     file_contents = compile_conditional_structures(file_contents, temp_file)
 
-    file_contents = compile_arrays(file_contents, temp_file)
-
-    file_contents = compile_strings(file_contents)
-
     file_contents = compile_integers(file_contents)
 
     file_contents = compile_default_values(file_contents, temp_file)
@@ -4079,6 +4417,10 @@ def compile(input_file_path, *output_file_name)
     comments = [singleline_comments, multiline_comments]
 
     file_contents = compile_parallel_assignment(file_contents, temp_file)
+
+    file_contents = compile_arrays(file_contents, temp_file)
+
+    file_contents = compile_strings(file_contents)
 
     file_contents, function_names = compile_named_functions(file_contents, named_functions, nested_functions, temp_file)
 

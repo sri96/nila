@@ -1,0 +1,17 @@
+for x in [1,2,3,4]
+  puts x
+end
+
+for x in 0...5
+  puts x
+end
+
+for x in 0..5
+  puts x
+end
+
+fruits = ['Apple','Banana', 'Mango']
+
+for fruit in fruits
+  puts fruit
+end
