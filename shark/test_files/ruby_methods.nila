@@ -1,0 +1,24 @@
+
+name = "Adhithya Rajasekaran      ".rstrip
+
+puts name
+
+name = "    Adhithya Rajasekaran".lstrip
+
+puts name
+
+name = "Adhithya Rajasekaran".split
+
+puts name
+
+name = "   Adhithya Rajasekaran  ".strip
+
+puts name
+
+name = "Adhithya,Rajasekaran".split(",") 
+
+puts name
+
+name = ["Adhithya","Rajasekaran"].join
+
+puts name

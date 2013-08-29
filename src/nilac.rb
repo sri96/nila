@@ -331,8 +331,6 @@ def compile(input_file_path, *output_file_name)
 
             test_string = string_extract[0..closed_curly_brace_index[0]]
 
-            puts test_string
-
             original_string = test_string.dup
 
             if test_string.include?("{")
@@ -608,11 +606,41 @@ def compile(input_file_path, *output_file_name)
 
     def arrayify_right_side(input_string)
 
+      def replace_strings(input_string)
+
+        string_counter = 0
+
+        while input_string.include?("\"")
+
+          string_extract = input_string[input_string.index("\"")..input_string.index("\"",input_string.index("\"")+1)]
+
+          input_string = input_string.sub(string_extract,"--repstring#{string_counter}")
+
+          string_counter += 1
+
+        end
+
+        while input_string.include?("'")
+
+          string_extract = input_string[input_string.index("'")..input_string.index("'",input_string.index("'")+1)]
+
+          input_string = input_string.sub(string_extract,"--repstring#{string_counter}")
+
+          string_counter += 1
+
+        end
+
+        return input_string
+
+      end
+
+      modified_input_string = input_string.dup
+
+      input_string = replace_strings(input_string)
+
       javascript_regexp = /(if |while |for |function |function\()/
 
       if input_string.include?("=") and input_string.index(javascript_regexp) == nil and input_string.strip[0..3] != "_ref" and !input_string.split("=")[1].include?("[")
-
-        modified_input_string = input_string.dup
 
         right_side = input_string.split("=")[1]
 
@@ -638,13 +666,13 @@ def compile(input_file_path, *output_file_name)
 
           replacement_string = " [#{replacement_string.join(",").strip}]\n"
 
-          input_string = input_string.sub(right_side,replacement_string)
+          modified_input_string = modified_input_string.sub(right_side,replacement_string)
 
         end
 
       end
 
-      return input_string
+      return modified_input_string
 
     end
 
@@ -1995,11 +2023,13 @@ def compile(input_file_path, *output_file_name)
 
         ".split" => ".split(\" \")",
 
-        ".strip" => ".replace(/^\s+|\s+$/g,'')",
+        ".join" => ".join()",
 
-        ".lstrip" => ".replace(/^\s+/g,\"\")",
+        ".strip" => ".replace(/^\\s+|\\s+$/g,'')",
 
-        ".rstrip" => ".replace(/\s+$/g,\"\")"
+        ".lstrip" => ".replace(/^\\s+/g,\"\")",
+
+        ".rstrip" => ".replace(/\\s+$/g,\"\")"
     }
 
     method_map = method_map_replacement.keys
@@ -2014,15 +2044,21 @@ def compile(input_file_path, *output_file_name)
 
       if line.match(method_map_regex)
 
-        unless method_match.include?(line+"(")
+        method_match = line.match(method_map_regex).to_a[0]
 
-          puts line
+        unless line.include?(method_match + "(")
+
+          line = line.sub(method_match,method_map_replacement[method_match])
 
         end
 
       end
 
+      modified_file_contents[index] = line
+
     end
+
+    return modified_file_contents
 
   end
 
@@ -3468,8 +3504,6 @@ def compile(input_file_path, *output_file_name)
 
     file_contents = compile_ternary_if(input_file_contents)
 
-    puts file_contents
-
     file_contents, rejected_lines = ignore_statement_modifiers(file_contents)
 
     file_contents = replace_unless_until(file_contents)
@@ -4428,7 +4462,7 @@ def compile(input_file_path, *output_file_name)
 
     file_contents, ruby_functions = compile_custom_function_map(file_contents)
 
-    #compile_ruby_methods(file_contents)
+    file_contents = compile_ruby_methods(file_contents)
 
     function_names << ruby_functions
 
@@ -4512,7 +4546,7 @@ def find_file_path(input_path, file_extension)
 
 end
 
-nilac_version = "0.0.4.3.3"
+nilac_version = "0.0.4.3.4"
 
 opts = Slop.parse do
   on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
