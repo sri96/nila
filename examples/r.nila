@@ -1,0 +1,44 @@
+# This is a test implementation of R programming language
+# in Javascript. Currently the following libraries are used
+
+# 1. D3.js
+# 2. jQuery
+
+def histogram(input_data)
+
+  # This function implements hist() function in R project
+
+end
+
+def reval(input_string)
+
+  return input_string  
+
+end
+
+consolearea = $('#area')
+
+consolearea.append("R.js is an implementation of R project in Javascript. The current version is 0.0.0.1. It is nicknamed Paddlefoot.\n\n> ");
+
+linenum = null
+
+contents = null
+
+output = null
+
+readline = null
+
+consolearea.keydown do |e|
+
+if e.keyCode == 13
+ 
+ contents = consolearea.val().split("\n")
+ linenum = contents.length - 1
+ readline = contents[linenum]
+ output = reval readline
+ alert(output)
+ consolearea.append(output)
+ 
+end
+
+end

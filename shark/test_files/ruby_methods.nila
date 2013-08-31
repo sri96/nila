@@ -22,3 +22,25 @@ puts name
 name = ["Adhithya","Rajasekaran"].join
 
 puts name
+
+def jsonprint(inputjson)
+
+  puts inputjson
+
+end
+
+def jsonp(inputjson)
+
+  puts inputjson
+
+end
+
+def parsejson(inputtext)
+
+  inputtext.split("{")
+
+end
+
+parsejson jsonprint "{message:Hello World!}"
+
+jsonprint "{message:Hello World!}"
