@@ -2,8 +2,6 @@
 (function() {
   var counter;
 
-  // This file will demonstrate Nila's while loops
-
   counter = 1;
 
   while (counter < 11) {

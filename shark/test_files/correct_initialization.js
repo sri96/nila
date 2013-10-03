@@ -1,6 +1,6 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
 (function() {
-  var _ref1, count, current_val, first_name, last_name, name_split, name_split1, name_split2, next_val, parse_name;
+  var _ref1, count, current_val, first_name, last_name, name_split, next_val, parse_name;
 
   // This file demonstrates multiple variable initialization
 
@@ -25,11 +25,5 @@
   next_val = _ref1[1];
 
   count = _ref1[2];
-
-  _ref1 = ["Adhithya Rajasekaran".split((" "),1),"Adhithya Rajasekaran".split(" ",2)];
-
-  name_split1 = _ref1[0];
-
-  name_split2 = _ref1[1];
 
 }).call(this);

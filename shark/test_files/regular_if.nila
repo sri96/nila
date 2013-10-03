@@ -1,7 +1,5 @@
 if visitor_present?
 
-#This file is for demonstration purpose. It doesn't really achieve anything
-
   if active? or happy?
 
     puts "Hello Wonderful Visitor!"

@@ -13,5 +13,3 @@ first_name,last_name = parse_name("Adhithya Rajasekaran")
 puts first_name + " " + last_name
 
 current_val, next_val, count = 0, 1, 1
-
-name_split1,name_split2 = "Adhithya Rajasekaran".split((" "),1),"Adhithya Rajasekaran".split(" ",2)
