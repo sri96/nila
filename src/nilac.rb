@@ -419,7 +419,9 @@ def compile(input_file_path, *output_file_name)
 
       string_counter = 0
 
-      while input_string.include?("\"")
+      if input_string.count("\"") % 2 == 0
+
+        while input_string.include?("\"")
 
         string_extract = input_string[input_string.index("\"")..input_string.index("\"",input_string.index("\"")+1)]
 
@@ -427,15 +429,21 @@ def compile(input_file_path, *output_file_name)
 
         string_counter += 1
 
+        end
+
       end
 
-      while input_string.include?("'")
+      if input_string.count("'") % 2 == 0
 
-        string_extract = input_string[input_string.index("'")..input_string.index("'",input_string.index("'")+1)]
+        while input_string.include?("'")
 
-        input_string = input_string.sub(string_extract,"--repstring#{string_counter}")
+          string_extract = input_string[input_string.index("'")..input_string.index("'",input_string.index("'")+1)]
 
-        string_counter += 1
+          input_string = input_string.sub(string_extract,"--repstring#{string_counter}")
+
+          string_counter += 1
+
+        end
 
       end
 
@@ -820,6 +828,10 @@ def compile(input_file_path, *output_file_name)
 
     input_file_contents = input_file_contents.collect { |element| element.gsub("=~", "matchequal") }
 
+    input_file_contents = input_file_contents.collect { |element| element.gsub(">=", "greatequal") }
+
+    input_file_contents = input_file_contents.collect { |element| element.gsub("<=", "lessyequal") }
+
     possible_default_values = input_file_contents.dup.reject { |element| (!element.include?("def")) }
 
     possible_default_values = possible_default_values.reject { |element| !element.include?("=") }
@@ -874,6 +886,10 @@ def compile(input_file_path, *output_file_name)
 
     line_by_line_contents = line_by_line_contents.collect { |element| element.gsub("matchequal", "=~") }
 
+    line_by_line_contents = line_by_line_contents.collect { |element| element.gsub("greatequal", ">=") }
+
+    line_by_line_contents = line_by_line_contents.collect { |element| element.gsub("lessyequal", "<=") }
+
     return line_by_line_contents
 
   end
@@ -926,6 +942,10 @@ def compile(input_file_path, *output_file_name)
 
     input_file_contents = input_file_contents.collect { |element| element.gsub("=~", "matchequal") }
 
+    input_file_contents = input_file_contents.collect { |element| element.gsub(">=", "greatequal") }
+
+    input_file_contents = input_file_contents.collect { |element| element.gsub("<=", "lessyequal") }
+
     modified_file_contents = input_file_contents.clone
 
     input_file_contents = input_file_contents.collect {|element| replace_strings(element)}
@@ -958,6 +978,7 @@ def compile(input_file_path, *output_file_name)
         current_row_split[0] = current_row_split[0].split(".",2)[0].strip if current_row_split[0].include?(".")
 
         variables << current_row_split[0]
+
 
       end
 
@@ -995,14 +1016,6 @@ def compile(input_file_path, *output_file_name)
 
     variables = variables.flatten
 
-    if variables.length > 0
-
-      variable_declaration_string = "var " + variables.uniq.sort.join(", ") + "\n\n"
-
-      line_by_line_contents = [variable_declaration_string, line_by_line_contents].flatten
-
-    end
-
     line_by_line_contents = line_by_line_contents.collect { |element| element.gsub("plusequal", "+=") }
 
     line_by_line_contents = line_by_line_contents.collect { |element| element.gsub("minusequal", "-=") }
@@ -1018,6 +1031,10 @@ def compile(input_file_path, *output_file_name)
     line_by_line_contents = line_by_line_contents.collect { |element| element.gsub("notequal", "!=") }
 
     line_by_line_contents = line_by_line_contents.collect { |element| element.gsub("matchequal", "=~") }
+
+    line_by_line_contents = line_by_line_contents.collect { |element| element.gsub("greatequal", ">=") }
+
+    line_by_line_contents = line_by_line_contents.collect { |element| element.gsub("lessyequal", "<=") }
 
     return variables.uniq, line_by_line_contents
 
@@ -1170,7 +1187,7 @@ def compile(input_file_path, *output_file_name)
 
         replacement_string = nil
 
-        if index_end.strip == "end"
+        if index_end.strip == "last"
 
           replacement_string = split1 + ".slice(#{index_start},#{split}.length)\n"
 
@@ -1214,9 +1231,9 @@ def compile(input_file_path, *output_file_name)
 
         replacement_string = nil
 
-        if index_end.strip == "end"
+        if index_end.strip == "last"
 
-          replacement_string = split1 + ".slice(#{index_start})\n"
+          replacement_string = split1 + ".slice(#{index_start})" + split3.strip + "\n\n"
 
         elsif index_end.strip == "" and index_start.strip == ""
 
@@ -1735,6 +1752,26 @@ def compile(input_file_path, *output_file_name)
 
       def replace_strings(input_string)
 
+        element = input_string.gsub("==", "equalequal")
+
+        element = element.gsub("!=", "notequal")
+
+        element = element.gsub("+=", "plusequal")
+
+        element = element.gsub("-=", "minusequal")
+
+        element = element.gsub("*=", "multiequal")
+
+        element = element.gsub("/=", "divequal")
+
+        element = element.gsub("%=", "modequal")
+
+        element = element.gsub("=~", "matchequal")
+
+        element = element.gsub(">=", "greatequal")
+
+        input_string = element.gsub("<=", "lessyequal")
+
         string_counter = 0
 
         while input_string.include?("\"")
@@ -1763,7 +1800,7 @@ def compile(input_file_path, *output_file_name)
 
       input_function_block = input_function_block.collect {|element| replace_strings(element)}
 
-      controlregexp = /(if |Euuf |while |def |function |function\()/
+      controlregexp = /(if |Euuf |for |while |def |function |function\()/
 
       variables = []
 
@@ -2218,7 +2255,13 @@ def compile(input_file_path, *output_file_name)
 
         ".lstrip" => ".replace(/^\\s+/g,\"\")",
 
-        ".rstrip" => ".replace(/\\s+$/g,\"\")"
+        ".rstrip" => ".replace(/\\s+$/g,\"\")",
+
+        ".to_s" => ".toString()",
+
+        ".reverse" => ".reverse()",
+
+        ".empty?" => ".length == 0",
 
     }
 
@@ -2239,6 +2282,85 @@ def compile(input_file_path, *output_file_name)
         unless line.include?(method_match + "(")
 
           line = line.sub(method_match,method_map_replacement[method_match])
+
+        end
+
+      end
+
+      modified_file_contents[index] = line
+
+    end
+
+    return modified_file_contents
+
+  end
+
+  def compile_special_keywords(input_file_contents)
+
+    # This method compiles some Ruby specific keywords to Javascript to make it easy to port
+    # Ruby code into Javascript
+
+    def replace_strings(input_string)
+
+      string_counter = 0
+
+      if input_string.count("\"") % 2 == 0
+
+        while input_string.include?("\"")
+
+          string_extract = input_string[input_string.index("\"")..input_string.index("\"",input_string.index("\"")+1)]
+
+          input_string = input_string.sub(string_extract,"--repstring#{string_counter}")
+
+          string_counter += 1
+
+        end
+
+      end
+
+      if input_string.count("'") % 2 == 0
+
+        while input_string.include?("'")
+
+          string_extract = input_string[input_string.index("'")..input_string.index("'",input_string.index("'")+1)]
+
+          input_string = input_string.sub(string_extract,"--repstring#{string_counter}")
+
+          string_counter += 1
+
+        end
+
+      end
+
+      return input_string
+
+    end
+
+    keyword_replacement_map = {
+
+        "nil" => "null",
+
+        "Array.new" => "Array()"
+
+    }
+
+    special_keywords = keyword_replacement_map.keys
+
+    keyword_map_regex = special_keywords.collect {|name| name.gsub(".","\\.")}
+
+    keyword_map_regex = Regexp.new(keyword_map_regex.join("|"))
+
+    modified_file_contents = input_file_contents.clone
+
+    input_file_contents.each_with_index do |line, index|
+
+      if replace_strings(line).match(keyword_map_regex)
+
+        method_match = line.match(keyword_map_regex).to_a[0]
+
+        if line.split(keyword_map_regex)[0].include?("=")
+
+          line = line.sub(method_match,keyword_replacement_map[method_match])
 
         end
 
@@ -3757,6 +3879,10 @@ def compile(input_file_path, *output_file_name)
 
         input_file_contents = input_file_contents.collect { |element| element.gsub("=~", "matchequal") }
 
+        input_file_contents = input_file_contents.collect { |element| element.gsub(">=", "greatequal") }
+
+        input_file_contents = input_file_contents.collect { |element| element.gsub("<=", "lessyequal") }
+
         javascript_regexp = /(if |while |for )/
 
         for x in 0...input_file_contents.length
@@ -3899,6 +4025,8 @@ def compile(input_file_path, *output_file_name)
 
           times_counter = loop.split(".times")[0].lstrip
 
+          times_counter = times_counter[1...-1] if times_counter.include?("(") and times_counter.include?(")")
+
           replacement_string = "for (_i = 0, _j = #{times_counter}; _i < _j; _i += 1) {\n\n#{compiled_block}\n\n}"
 
           modified_file_contents[input_file_contents.index(original_loop)] = replacement_string
@@ -3951,7 +4079,7 @@ def compile(input_file_path, *output_file_name)
 
         line = starting_line
 
-        until line.strip.eql?("end")
+        until line.strip.eql?("end") or line.strip.eql?("end)")
 
           index_counter += 1
 
@@ -4029,7 +4157,19 @@ def compile(input_file_path, *output_file_name)
 
         caller_func = loop.split(" blockky ")[0]
 
-        replacement_string = "#{caller_func.rstrip}(#{compiled_block.lstrip})"
+        unless caller_func.rstrip[-1] == ","
+
+          replacement_string = "#{caller_func.rstrip}(#{compiled_block.lstrip})"
+
+        else
+
+          caller_func_split = caller_func.split("(") if caller_func.include?("(")
+
+          caller_func_split = caller_func.split(" ",2) if caller_func.include?(" ")
+
+          replacement_string = "#{caller_func_split[0]}(#{caller_func_split[1].strip + compiled_block.lstrip})"
+
+        end
 
         modified_file_contents[input_file_contents.index(original_loop)] = replacement_string
 
@@ -4187,7 +4327,7 @@ def compile(input_file_path, *output_file_name)
 
   end
 
-  def pretty_print_javascript(javascript_file_contents, temporary_nila_file)
+  def pretty_print_javascript(javascript_file_contents, temporary_nila_file,declarable_variables)
 
     def reset_tabs(input_file_contents)
 
@@ -4351,7 +4491,7 @@ def compile(input_file_path, *output_file_name)
 
       if !code_block_starting_locations.empty?
 
-        controlregexp = /(if |for |while |\(function\(|= function\(|((=|:)\s+\{))/
+        controlregexp = /(if |for |while |,function\(|\(function\(|= function\(|((=|:)\s+\{))/
 
         code_block_starting_locations = [0, code_block_starting_locations, -1].flatten
 
@@ -4481,7 +4621,7 @@ def compile(input_file_path, *output_file_name)
 
     def replace_ignored_words(input_string)
 
-      ignorable_keywords = [/if/, /while/, /function/]
+      ignorable_keywords = [/if/, /while/, /function/,/function/]
 
       dummy_replacement_words = ["eeuuff", "whaalesskkey", "conffoolotion"]
 
@@ -4496,6 +4636,14 @@ def compile(input_file_path, *output_file_name)
     end
 
     javascript_regexp = /(if |for |while |\(function\(|= function\(|((=|:)\s+\{))/
+
+    if declarable_variables.length > 0
+
+      declaration_string = "var " + declarable_variables.flatten.uniq.sort.join(", ") + ";\n\n"
+
+      javascript_file_contents = [declaration_string,javascript_file_contents].flatten
+
+    end
 
     javascript_file_contents = javascript_file_contents.collect { |element| element.sub("Euuf", "if") }
 
@@ -4780,13 +4928,17 @@ def compile(input_file_path, *output_file_name)
 
     file_contents = compile_strings(file_contents)
 
+    list_of_variables, file_contents = get_variables(file_contents, temp_file,loop_vars)
+
     file_contents, function_names = compile_named_functions(file_contents, named_functions, nested_functions, temp_file)
 
-    list_of_variables, file_contents = get_variables(file_contents, temp_file,loop_vars+function_names)
+    func_names = function_names.dup
 
     file_contents, ruby_functions = compile_custom_function_map(file_contents)
 
     file_contents = compile_ruby_methods(file_contents)
+
+    file_contents = compile_special_keywords(file_contents)
 
     function_names << ruby_functions
 
@@ -4800,7 +4952,7 @@ def compile(input_file_path, *output_file_name)
 
     file_contents = compile_comments(file_contents, comments, temp_file)
 
-    file_contents = pretty_print_javascript(file_contents, temp_file)
+    file_contents = pretty_print_javascript(file_contents, temp_file,list_of_variables+func_names)
 
     file_contents = compile_operators(file_contents)
 

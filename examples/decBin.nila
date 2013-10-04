@@ -1,0 +1,65 @@
+#This is Nila's decimal to Binary converter. It's awesome
+
+def decimalToBinary(input_num)
+ 
+ remainder = ""
+ 
+ storage = []
+ 
+ unless (input_num.indexOf(".") == -1)
+  
+  numsplit = input_num.split(".")
+  
+  inputnum = Number(numsplit[0])
+  
+  decimalplaces = parseFloat("0." + numsplit[1])
+  
+ else
+ 
+  inputnum = Number(input_num)
+  
+  decimalplaces = []
+ 
+ end
+ 
+ while inputnum >= 1
+  puts "2 | #{inputnum} #{remainder}"
+  remainder = inputnum%2
+  inputnum = (inputnum-remainder)/2
+  storage << remainder
+ end
+ 
+ storage.reverse
+ 
+ if decimalplaces.to_s.length > 0
+ 	
+  storage << "."
+
+ end
+ 
+ calc = nil
+ 
+ decans = nil
+ 
+ (decimalplaces.to_s.length-2).times do 
+ 
+  calc = decimalplaces * 2
+  
+  decans = calc.to_s[0];
+  
+  decimalplaces = parseFloat("0.#{calc.to_s[2..last]}")
+  
+  storage << Number(decans)
+ 
+ end
+ 
+ return storage
+
+end
+
+process.stdin.resume();
+process.stdin.setEncoding('utf8');
+process.stdin.on 'data', do |chunk|
+ print "Answer: #{decimalToBinary(chunk).join("")} \n\n"
+end
+

@@ -4,7 +4,7 @@ start = numbers[0..2]
 
 middle = numbers[3...6]
 
-last = numbers[6..end]
+last = numbers[6..last]
 
 copy = numbers.dup
 
@@ -14,7 +14,7 @@ name = "Adhithya Rajasekaran"
 
 first_name = name[0..7]
 
-second_name = name[9..end]
+second_name = name[9..last]
 
 name_copy = name.dup
 

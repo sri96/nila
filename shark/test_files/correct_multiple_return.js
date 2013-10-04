@@ -1,6 +1,6 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
 (function() {
-  var _ref1, first_name, last_name, parse_name, parsed_name, test_method;
+  var parse_name, parsed_name, test_method;
 
   // This method demonstrates multiple return values
 
