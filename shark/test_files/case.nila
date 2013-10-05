@@ -1,0 +1,23 @@
+grades = %w{A B A C D F}
+
+for grade in grades
+
+case grade
+when "A", "B"
+  puts 'You are pretty smart!'
+when "C"
+  puts 'You are intelligent!'
+end
+
+end
+
+num = 5
+
+case num
+when 1
+  puts 'Your input was 1'
+when 2
+  puts 'Your input was 2'
+else
+puts "Your input was greater than 2"
+end
