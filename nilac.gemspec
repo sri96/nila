@@ -15,5 +15,5 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = Nilac::VERSION
   gem.add_dependency("shark")
-  gem.add_dependency("slop")
+  gem.add_dependency("slop","~> 0.0.0.5.4")
 end
