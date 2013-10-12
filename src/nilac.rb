@@ -6,6 +6,20 @@
 require 'slop'
 require 'fileutils'
 
+# The following are error classes used by Nilac to give you detailed error information
+
+class ParseError < RuntimeError
+
+  def initialize(message)
+
+    puts "ParseError: " + message
+
+    abort
+
+  end
+
+end
+
 
 def compile(input_file_path, *output_file_name)
 
@@ -782,6 +796,39 @@ def compile(input_file_path, *output_file_name)
     #   puts "Filling the #{container} with #{liquid}"
     # end
 
+    def errorFree(function_params)
+
+      # This method checks for use cases in complex arguments where a default argument is used
+      # after an optional argument. This will result in erroneous output. So this method will
+      # stop it from happening.
+
+      # Example:
+      # def method_name(a,b,*c,d = 1,c,e)
+
+      optional_param = function_params.reject {|element| !replace_strings(element).include?("*")}[0]
+
+      unless optional_param.nil?
+
+        after_splat = function_params[function_params.index(optional_param)+1..-1]
+
+        if after_splat.reject {|element| !element.include?("=")}.empty?
+
+          true
+
+        else
+
+          ParseError.new("You cannot have default argument after an optional argument! Change the following usage!\n#{function_params.join(",")}")
+
+        end
+
+      else
+
+        true
+
+      end
+
+    end
+
     def parse_default_values(input_function_definition)
 
       split1, split2 = input_function_definition.split("(")
@@ -790,23 +837,27 @@ def compile(input_file_path, *output_file_name)
 
       function_parameters = split2.split(",")
 
-      default_value_parameters = function_parameters.reject { |element| !element.include? "=" }
+      if errorFree(function_parameters)
 
-      replacement_parameters = []
+        default_value_parameters = function_parameters.reject { |element| !element.include? "=" }
 
-      replacement_string = ""
+        replacement_parameters = []
 
-      default_value_parameters.each do |paramvalue|
+        replacement_string = ""
 
-        param, value = paramvalue.split("=")
+        default_value_parameters.each do |paramvalue|
 
-        replacement_parameters << param.lstrip.rstrip
+          param, value = paramvalue.split("=")
 
-        replacement_string = replacement_string + "\n" + "if (#{param.lstrip.rstrip} equequ null) {\n  #{paramvalue.lstrip.rstrip}\n}\n" +"\n"
+          replacement_parameters << param.lstrip.rstrip
+
+          replacement_string = replacement_string + "\n" + "if (#{param.lstrip.rstrip} equequ null) {\n  #{paramvalue.lstrip.rstrip}\n}\n" +"\n"
+
+        end
+
+        return replacement_string, default_value_parameters, replacement_parameters
 
       end
-
-      return replacement_string, default_value_parameters, replacement_parameters
 
     end
 
@@ -856,7 +907,7 @@ def compile(input_file_path, *output_file_name)
 
         input_file_contents[current_line_index] = modified_line
 
-        input_file_contents[current_line_index + 1] = replacement_string
+        input_file_contents.insert(current_line_index+1,replacement_string)
 
       end
 
@@ -1838,7 +1889,7 @@ def compile(input_file_path, *output_file_name)
 
       else
 
-        return variables.uniq
+        return variables.uniq.sort
 
       end
 
@@ -1879,6 +1930,8 @@ def compile(input_file_path, *output_file_name)
       if !joined_array.include?("return ")
 
         rejected_array = reversed_input_array.reject { |content| content.lstrip.eql?("") }
+
+        rejected_array = rejected_array.reject {|content| content.strip.eql?("")}
 
         rejected_array = rejected_array[1..-1]
 
@@ -2104,6 +2157,16 @@ def compile(input_file_path, *output_file_name)
 
       modified_input_array = compile_parallel_assignment(modified_input_array, temporary_nila_file)
 
+      modified_input_array = compile_multiple_ruby_func_calls(modified_input_array)
+
+      modified_input_array = add_auto_return_statement(modified_input_array)
+
+      modified_input_array = compile_multiple_return(modified_input_array)
+
+      modified_input_array = coffee_type_function(modified_input_array)
+
+      modified_input_array = compile_splats(modified_input_array)
+
       variables = lexical_scoped_variables(modified_input_array)
 
       if !variables.empty?
@@ -2115,12 +2178,6 @@ def compile(input_file_path, *output_file_name)
       end
 
       modified_input_array = remove_question_marks(modified_input_array, variables, temporary_nila_file)
-
-      modified_input_array = add_auto_return_statement(modified_input_array)
-
-      modified_input_array = compile_multiple_return(modified_input_array)
-
-      modified_input_array = coffee_type_function(modified_input_array)
 
       return modified_input_array
 
@@ -2143,6 +2200,237 @@ def compile(input_file_path, *output_file_name)
       end
 
       return function_name
+
+    end
+
+    def compile_splats(input_function_block)
+
+      def strToArray(input_string)
+
+        file_id = File.new('hello.nila','w')
+
+        file_id.write(input_string)
+
+        file_id.close()
+
+        line_by_line_contents = read_file_line_by_line('hello.nila')
+
+        File.delete(file_id)
+
+        return line_by_line_contents
+
+      end
+
+      def errorFree(function_params,optional_param)
+
+        # This method checks for use cases in complex arguments where a default argument is used
+        # after an optional argument. This will result in erroneous output. So this method will
+        # stop it from happening.
+
+        # Example:
+        # def method_name(a,b,*c,d = 1,c,e)
+
+        after_splat = function_params[function_params.index(optional_param)+1..-1]
+
+        if after_splat.reject {|element| !element.include?("=")}.empty?
+
+          true
+
+        else
+
+          raise "You cannot have a default argument after an optional argument!"
+
+          false
+
+        end
+
+      end
+
+      function_params = input_function_block[0].split("function(")[1].split(")")[0].split(",")
+
+      unless function_params.reject{|element| !replace_strings(element).include?("*")}.empty?
+
+        mod_function_params = function_params.reject {|element| replace_strings(element).include?("*")}
+
+        opt_index = 0
+
+        # If there are multiple optional params declared by mistake, only the first optional param is used.
+
+        optional_param = function_params.reject {|element| !replace_strings(element).include?("*")}[0]
+
+        if function_params.index(optional_param).eql?(function_params.length-1)
+
+          mod_function_params.each_with_index do |param,index|
+
+            input_function_block.insert(index+1,"#{param} = arguments[#{index}]\n\n")
+
+            opt_index = index + 1
+
+          end
+
+          replacement_string = "#{optional_param.gsub("*","")} = []\n\n"
+
+          replacement_string += "for (var i=#{opt_index};i<arguments.length;i++) {\n #{optional_param.gsub("*","")}.push(arguments[i]); \n}\n\n"
+
+          input_function_block.insert(opt_index+1,replacement_string)
+
+          input_function_block[0] = input_function_block[0].sub(function_params.join(","),"")
+
+        else
+
+          before_splat = function_params[0...function_params.index(optional_param)]
+
+          after_splat = function_params[function_params.index(optional_param)+1..-1]
+
+          cont_index = 0
+
+          if errorFree(function_params,optional_param)
+
+            before_splat.each_with_index do |param,index|
+
+              input_function_block.insert(index+1,"#{param} = arguments[#{index}]\n\n")
+
+              cont_index = index + 1
+
+            end
+
+            after_splat.each_with_index do |param,index|
+
+              input_function_block.insert(cont_index+1,"#{param} = arguments[arguments.length-#{after_splat.length - index}]\n\n")
+
+              cont_index = cont_index + 1
+
+            end
+
+            replacement_string = "#{optional_param.gsub("*","")} = []\n\n"
+
+            replacement_string += "for (var i=#{function_params.index(optional_param)};i < arguments.length-#{after_splat.length};i++) {\n #{optional_param.gsub("*","")}.push(arguments[i]); \n}\n\n"
+
+            input_function_block.insert(cont_index+1,replacement_string)
+
+            input_function_block[0] = input_function_block[0].sub(function_params.join(","),"")
+
+          end
+
+        end
+
+      end
+
+      return strToArray(input_function_block.join)
+
+    end
+
+    def compile_multiple_ruby_func_calls(input_file_contents)
+
+      def strToArray(input_string)
+
+        file_id = File.new('hello.nila','w')
+
+        file_id.write(input_string)
+
+        file_id.close()
+
+        line_by_line_contents = read_file_line_by_line('hello.nila')
+
+        File.delete(file_id)
+
+        return line_by_line_contents
+
+      end
+
+      def replace_strings(input_string)
+
+        string_counter = 0
+
+        if input_string.count("\"") % 2 == 0
+
+          while input_string.include?("\"")
+
+            string_extract = input_string[input_string.index("\"")..input_string.index("\"",input_string.index("\"")+1)]
+
+            input_string = input_string.sub(string_extract,"--repstring#{string_counter}")
+
+            string_counter += 1
+
+          end
+
+        end
+
+        if input_string.count("'") % 2 == 0
+
+          while input_string.include?("'")
+
+            string_extract = input_string[input_string.index("'")..input_string.index("'",input_string.index("'")+1)]
+
+            input_string = input_string.sub(string_extract,"--repstring#{string_counter}")
+
+            string_counter += 1
+
+          end
+
+        end
+
+        input_string = input_string.gsub(/\((\w{0,},)*\w{0,}\)/,"--$k$")
+
+        return input_string
+
+      end
+
+      function_calls = []
+
+      replacement_calls = []
+
+      function_map = %w{puts p print}
+
+      javascript_regexp = /(if |for |while |\(function\(|= function\(|((=|:)\s+\{))/
+
+      stringified_input = input_file_contents.collect {|element| replace_strings(element)}
+
+      function_map.each do |func|
+
+        func_calls = input_file_contents.reject {|line| !(line.include?(func+"(") or line.include?(func+" ") and line.index(javascript_regexp) == nil)}
+
+        modified_func_calls = func_calls.collect {|element| replace_strings(element)}
+
+        modified_func_calls = modified_func_calls.reject {|element| !element.include?(",")}
+
+        call_collector = []
+
+        modified_func_calls.each_with_index do |ele|
+
+          call_collector << input_file_contents[stringified_input.index(ele)]
+
+        end
+
+        function_calls << modified_func_calls
+
+        rep_calls = []
+
+        call_collector.each do |fcall|
+
+          multiple_call = fcall.split(func)[1].split(",")
+
+          multiple_call = multiple_call.collect {|element| "\n#{func} " + element.strip + "\n\n"}
+
+          rep_calls << multiple_call.join
+
+        end
+
+        replacement_calls << rep_calls
+
+      end
+
+      replacement_calls = replacement_calls.flatten
+
+      function_calls = function_calls.flatten
+
+      function_calls.each_with_index do |fcall,index|
+
+        input_file_contents[stringified_input.index(fcall)] = replacement_calls[index]
+
+      end
+
+      return strToArray(input_file_contents.join)
 
     end
 
@@ -2188,7 +2476,7 @@ def compile(input_file_path, *output_file_name)
 
     file_id.close()
 
-    line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+    line_by_line_contents = compile_multiple_ruby_func_calls(read_file_line_by_line(temporary_nila_file))
 
     return line_by_line_contents, function_names
 
@@ -2443,6 +2731,8 @@ def compile(input_file_path, *output_file_name)
             modified_string = modified_string.rstrip + modified_string.split(modified_string.rstrip)[1].gsub(" ", "")
 
             modified_string = modified_string.sub(function+" ", function+"(")
+
+            modified_string = modified_string.split("#{function}(")[0] + "#{function}(" + modified_string.split("#{function}(")[1].lstrip
 
             modified_string = modified_string.sub("\n", ")\n")
 

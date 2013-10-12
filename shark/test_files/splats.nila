@@ -1,0 +1,36 @@
+# These example were taken from The Well Grounded Rubyist by Manning
+# Copyright: Manning Publications
+
+def two_or_more(a,b,*c)
+  puts "I require two or more arguments!"
+  puts "And sure enough, I got: "
+  puts a, b, c
+end
+
+two_or_more 1,2,3,4,5
+
+def default_args(a,b,c = 1)
+  puts "Values of variables: ",a,b,c
+end
+
+default_args 3,2
+
+default_args 4,5,6
+
+def mixed_args(a,b,c,*d,e,f)
+  puts "Arguments:"
+  puts a,b,c,d,e,f
+end
+
+mixed_args(0,1,2,3,4,5,6,7,8)
+
+def args_unleashed(a,b=1,*c,d,e)
+  puts "Arguments:"
+  p a,b,c,d,e
+end
+
+args_unleashed(1,2,3,4,5)
+
+args_unleashed(1,2,3,4)
+
+args_unleashed(1,2,3,4,5,6,7,8)

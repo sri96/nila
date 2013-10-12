@@ -14,7 +14,7 @@
         console.log('You are pretty smart!');
         break;
       case "C":
-        console.log('You are intelligent!');
+        console.log('You are reasonably intelligent!');
         break;
     }
   }

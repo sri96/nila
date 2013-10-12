@@ -6,7 +6,7 @@ case grade
 when "A", "B"
   puts 'You are pretty smart!'
 when "C"
-  puts 'You are intelligent!'
+  puts 'You are reasonably intelligent!'
 end
 
 end
