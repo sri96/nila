@@ -3,16 +3,15 @@
 
 #Nila and Nilac are being crafted by Adhithya Rajasekaran and Sri Madhavi Rajasekaran
 
-require 'slop'
 require 'fileutils'
 
 # The following are error classes used by Nilac to give you detailed error information
 
-class ParseError < RuntimeError
+class NilaSyntaxError < RuntimeError
 
   def initialize(message)
 
-    puts "ParseError: " + message
+    puts "SyntaxError: " + message
 
     abort
 
@@ -817,7 +816,7 @@ def compile(input_file_path, *output_file_name)
 
         else
 
-          ParseError.new("You cannot have default argument after an optional argument! Change the following usage!\n#{function_params.join(",")}")
+          NilaSyntaxError.new("You cannot have default argument after an optional argument! Change the following usage!\n#{function_params.join(",")}")
 
         end
 
@@ -5624,7 +5623,7 @@ elsif opts[:compile] != nil
       output_file_path = output_file
       compile(input_file_path, output_file_path)
 
-    elsif input[-1].eql? "/" and output[-1].eql? "/"
+    elsif File.directory?(input)
         
       input_folder_path = input
       output_folder_path = output
@@ -5638,7 +5637,7 @@ elsif opts[:compile] != nil
         
       files.each do |file|
         input_file_path = file
-        output_file_path = output_folder_path + find_file_name(file, ".nila") + ".js"
+        output_file_path = output_folder_path + "/" + find_file_name(file, ".nila") + ".js"
         compile(input_file_path, output_file_path)
       end
 
@@ -5656,9 +5655,9 @@ elsif opts[:help] != nil
   puts "    nilac [command] [file_options]\n\n"
   puts "  Available Commands:\n\n"
   puts "    nilac -c [nila_file] => Compile Nila File\n\n"
-  puts "    nilac -c [nila_file]:[output_js_file] => Compile nila_file and saves it as\n    output_js_file\n\n"
+  puts "    nilac -c [nila_file] [output_js_file] => Compile nila_file and saves it as\n    output_js_file\n\n"
   puts "    nilac -c [nila_file_folder] => Compiles each .nila file in the nila_folder\n\n"
-  puts "    nilac -c [nila_file_folder]:[output_js_file_folder] => Compiles each .nila\n    file in the nila_folder and saves it in the output_js_file_folder\n\n"
+  puts "    nilac -c [nila_file_folder] [output_js_file_folder] => Compiles each .nila\n    file in the nila_folder and saves it in the output_js_file_folder\n\n"
   puts "    nilac -r [nila_file] => Compile and Run nila_file\n\n"
   puts "  Further Information:\n\n"
   puts "    Visit http://adhithyan15.github.io/nila to know more about the project.\n\n"
@@ -5667,10 +5666,11 @@ elsif opts[:run] != nil
                 
   current_directory = Dir.pwd
   file = opts[:run][0]
+  commandline_args = opts[:run][1..-1]
   file_path = current_directory + "/" + file
   compile(file_path)
   js_file_name = find_file_path(file_path, ".nila") + find_file_name(file_path, ".nila") + ".js"
-  node_output = `node #{js_file_name}`
+  node_output = `node #{js_file_name} #{commandline_args.join(" ")}`
   puts node_output
 
 elsif opts[:release] != nil
@@ -5684,7 +5684,8 @@ elsif opts[:release] != nil
   puts `rake release`
                 
 elsif opts[:update] != nil
-                
+
+  puts "Checking for updates......"
   outdated_gems = `gem outdated`
   outdated_gems = outdated_gems.split("\n")
   outdated = false
