@@ -1,0 +1,23 @@
+# Marky is a simple markdown parser written in Nila and runs on Nodejs. 
+# This will demonstrate the power and expressiveness of Nila. We will also 
+# provide the Ruby version of the parser so that you can see how easy it
+# is to port code from Ruby to Javascript using Nila
+
+# This parser was written by Sri Madhavi Rajasekaran and is released under
+# the MIT License.
+
+# If you want to learn more about Nila, please visit http://adhithyan15.github.io/nila
+
+def parse_markdown
+
+end
+
+commandline_args = []
+
+process.argv.forEach do |val,index,array|
+
+  commandline_args << val
+
+end
+
+puts commandline_args[2..last]

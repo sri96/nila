@@ -1050,6 +1050,8 @@ def compile(input_file_path, *output_file_name)
     for_loop_variables = []
 
     for_loop_statements = line_by_line_contents.reject {|line| !line.include?("for")}
+      
+    for_loop_statements = for_loop_statements.reject {|line| line.include?("forEach")}
 
     for_loop_statements.each do |statement|
 
@@ -1267,7 +1269,7 @@ def compile(input_file_path, *output_file_name)
       end
 
       double_range_indexes = double_range_indexes.flatten
-
+      
       double_range_indexing.each_with_index do |line, index|
 
         split1, split2 = line.split("[")
@@ -1279,6 +1281,8 @@ def compile(input_file_path, *output_file_name)
         index_start = "" if index_start.nil?
 
         index_end = "" if index_end.nil?
+          
+        split3 = "" if split3.nil?
 
         replacement_string = nil
 
@@ -5532,222 +5536,181 @@ def find_file_path(input_path, file_extension)
   return remaining_string[0...remaining_string.length-path_finder]
 
 end
+            
+def parse_arguments(input_argv)
+    
+  argument_map = {
+      
+    %w{c compile} => "compile",
+      
+    %w{r run} => "run",
+      
+    %w{h help} => "help",
+      
+    %w{v version} => "version",
+      
+    %w{b build} => "build",
+      
+    %w{u update} => "update",
+      
+    %w{re release} => "release",
+      
+  }
+    
+  output_hash = {}
 
-nilac_version = "0.0.4.3.8"
-
-opts = Slop.parse do
-  on :c, :compile=, 'Compile Nila File', as:Array, delimiter:":"
-  on :h, :help, 'Help With Nilac' do
-
-    puts "Nilac is the official compiler for the Nila language.This is a basic help\nmessage with pointers to more information.\n\n"
-
-    puts "  Basic Usage:\n\n"
-
-    puts "    nilac -h/--help\n"
-
-    puts "    nilac -v/--version\n"
-
-    puts "    nilac -u/--update => Update Checker\n"
-
-    puts "    nilac [command] [file_options]\n\n"
-
-    puts "  Available Commands:\n\n"
-
-    puts "    nilac -c [nila_file] => Compile Nila File\n\n"
-
-    puts "    nilac -c [nila_file]:[output_js_file] => Compile nila_file and saves it as\n    output_js_file\n\n"
-
-    puts "    nilac -c [nila_file_folder] => Compiles each .nila file in the nila_folder\n\n"
-
-    puts "    nilac -c [nila_file_folder]:[output_js_file_folder] => Compiles each .nila\n    file in the nila_folder and saves it in the output_js_file_folder\n\n"
-
-    puts "    nilac -r [nila_file] => Compile and Run nila_file\n\n"
-
-    puts "  Further Information:\n\n"
-
-    puts "    Visit http://adhithyan15.github.io/nila to know more about the project.\n\n"
-
-  end
-  on :v, :version, 'Output Nilac Version No' do
-
-    puts nilac_version
-
-  end
-
-  on :r, :run=, 'Run Nila File', as:Array
-
-  on :b, :build, 'Build Nilac for Linux/Mac/Rubygems' do
-
-    file_path = Dir.pwd + "/src/nilac.rb"
-
-    create_mac_executable(file_path)
-
-    FileUtils.mv("#{file_path[0...-3]}", "#{Dir.pwd}/bin/nilac")
-
-    puts "Build Successful!"
-
-  end
-
-  on :release=, 'Build and Release Nilac for Rubygems', as:Array
-
-  on :u, :update, 'Check if Nilac is up to date.' do
-
-    outdated_gems = `gem outdated`
-
-    outdated_gems = outdated_gems.split("\n")
-
-    outdated = false
-
-    old_version = ""
-
-    new_version = ""
-
-    outdated_gems.each do |gem_name|
-
-      if gem_name.include?("nilac")
-
-        outdated = true
-
-        old_version = gem_name.split("(")[1].split(")")[0].split("<")[0].lstrip
-
-        new_version = gem_name.split("(")[1].split(")")[0].split("<")[1].lstrip.rstrip
-
-        break
-
-      end
-
-    end
-
-    if outdated
-
-      exec = `gem update nilac`
-
-      puts "Your version of Nilac (#{old_version}) was outdated! We have automatically updated you to the latest version (#{new_version})."
-
-
+  argument_map.each do |key,val|
+  
+    if input_argv.include?("-#{key[0]}") or input_argv.include?("--#{key[1]}")
+    
+       output_hash[val.to_sym] = input_argv.reject {|element| element.include?("-#{key[0]}")} if input_argv.include?("-#{key[0]}")
+            
+       output_hash[val.to_sym] = input_argv.reject {|element| element.include?("--#{key[1]}")} if input_argv.include?("--#{key[1]}")
+        
     else
-
-      puts "Your version of Nilac is up to date!"
-
+        
+       output_hash[val.to_sym] = nil
+        
     end
-
+      
   end
+
+  return output_hash
+    
 end
 
-opts = opts.to_hash
+nilac_version = "0.0.4.3.8"
+            
+opts =  parse_arguments(ARGV)
+                
+if opts[:build] != nil
+                
+  file_path = Dir.pwd + "/src/nilac.rb" 
+  create_mac_executable(file_path)
+  FileUtils.mv("#{file_path[0...-3]}", "#{Dir.pwd}/bin/nilac")
+  puts "Build Successful!"
 
-if opts[:compile] != nil
+elsif opts[:compile] != nil
 
   if opts[:compile].length == 1
-
+    
     input = opts[:compile][0]
-
+      
     if input.include? ".nila"
-
       current_directory = Dir.pwd
-
       input_file = input
-
       file_path = current_directory + "/" + input_file
-
       compile(file_path)
-
     elsif input.include? "/"
-
       folder_path = input
-
       files = Dir.glob(File.join(folder_path, "*"))
-
       files = files.reject { |path| !path.include? ".nila" }
-
       files.each do |file|
-
         file_path = Dir.pwd + "/" + file
-
         compile(file_path)
-
       end
-
     end
 
   elsif opts[:compile].length == 2
 
     input = opts[:compile][0]
-
     output = opts[:compile][1]
-
+      
     if input.include? ".nila" and output.include? ".js"
-
+        
       input_file = input
-
       output_file = output
-
       input_file_path = input_file
-
       output_file_path = output_file
-
       compile(input_file_path, output_file_path)
 
     elsif input[-1].eql? "/" and output[-1].eql? "/"
-
+        
       input_folder_path = input
-
       output_folder_path = output
-
+        
       if !File.directory?(output_folder_path)
-
         FileUtils.mkdir_p(output_folder_path)
-
       end
 
       files = Dir.glob(File.join(input_folder_path, "*"))
-
       files = files.reject { |path| !path.include? ".nila" }
-
+        
       files.each do |file|
-
         input_file_path = file
-
         output_file_path = output_folder_path + find_file_name(file, ".nila") + ".js"
-
         compile(input_file_path, output_file_path)
-
       end
 
     end
 
   end
 
+elsif opts[:help] != nil
+                
+  puts "Nilac is the official compiler for the Nila language.This is a basic help\nmessage with pointers to more information.\n\n"
+  puts "  Basic Usage:\n\n"
+  puts "    nilac -h/--help\n"
+  puts "    nilac -v/--version\n"
+  puts "    nilac -u/--update => Update Checker\n"
+  puts "    nilac [command] [file_options]\n\n"
+  puts "  Available Commands:\n\n"
+  puts "    nilac -c [nila_file] => Compile Nila File\n\n"
+  puts "    nilac -c [nila_file]:[output_js_file] => Compile nila_file and saves it as\n    output_js_file\n\n"
+  puts "    nilac -c [nila_file_folder] => Compiles each .nila file in the nila_folder\n\n"
+  puts "    nilac -c [nila_file_folder]:[output_js_file_folder] => Compiles each .nila\n    file in the nila_folder and saves it in the output_js_file_folder\n\n"
+  puts "    nilac -r [nila_file] => Compile and Run nila_file\n\n"
+  puts "  Further Information:\n\n"
+  puts "    Visit http://adhithyan15.github.io/nila to know more about the project.\n\n"
+                
 elsif opts[:run] != nil
-
+                
   current_directory = Dir.pwd
-
   file = opts[:run][0]
-
   file_path = current_directory + "/" + file
-
   compile(file_path)
-
   js_file_name = find_file_path(file_path, ".nila") + find_file_name(file_path, ".nila") + ".js"
-
   node_output = `node #{js_file_name}`
-
   puts node_output
 
 elsif opts[:release] != nil
 
   file_path = Dir.pwd + "/src/nilac.rb"
-
   create_mac_executable(file_path)
-
   FileUtils.mv("#{file_path[0...-3]}", "#{Dir.pwd}/bin/nilac")
-
   puts "Your build was successful!\n"
-
   commit_message = opts[:release][0]
-
   `git commit -am "#{commit_message}"`
-
   puts `rake release`
+                
+elsif opts[:update] != nil
+                
+  outdated_gems = `gem outdated`
+  outdated_gems = outdated_gems.split("\n")
+  outdated = false
+  old_version = ""
+  new_version = ""
+                
+  outdated_gems.each do |gem_name|
+      
+    if gem_name.include?("nilac")
+      outdated = true
+      old_version = gem_name.split("(")[1].split(")")[0].split("<")[0].lstrip
+      new_version = gem_name.split("(")[1].split(")")[0].split("<")[1].lstrip.rstrip
+      break
+    end
+      
+  end
+
+  if outdated
+    exec = `gem update nilac`
+    puts "Your version of Nilac (#{old_version}) was outdated! We have automatically updated you to the latest version (#{new_version})."
+  else
+    puts "Your version of Nilac is up to date!"
+  end
+                
+elsif opts[:version] != nil
+                
+  puts nilac_version
 
 end
