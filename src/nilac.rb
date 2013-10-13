@@ -5578,7 +5578,7 @@ def parse_arguments(input_argv)
     
 end
 
-nilac_version = "0.0.4.3.8"
+nilac_version = "0.0.4.3.9.3"
             
 opts =  parse_arguments(ARGV)
                 
