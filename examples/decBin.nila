@@ -45,7 +45,7 @@ def decimalToBinary(input_num)
  
   calc = decimalplaces * 2
   
-  decans = calc.to_s[0];
+  decans = calc.to_s[0]
   
   decimalplaces = parseFloat("0.#{calc.to_s[2..last]}")
   
@@ -57,8 +57,8 @@ def decimalToBinary(input_num)
 
 end
 
-process.stdin.resume();
-process.stdin.setEncoding('utf8');
+process.stdin.resume()
+process.stdin.setEncoding('utf8')
 process.stdin.on 'data', do |chunk|
  print "Answer: #{decimalToBinary(chunk).join("")} \n\n"
 end

@@ -7,5 +7,5 @@ Feature: This feature bring Ruby's indexing capabililty to Javascript.
 
 Configurations:
 
-~compiler => src/nilac.rb
+~compiler => lib/nilac.rb
 :v $cliusage => ruby :v --compile $file

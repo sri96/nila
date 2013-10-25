@@ -7,5 +7,5 @@ Feature: This feature brings loop keyword to Nila
 
 Configurations:
 
-~compiler => src/nilac.rb
+~compiler => lib/nilac.rb
 :v $cliusage => ruby :v --compile $file

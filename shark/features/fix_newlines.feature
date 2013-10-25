@@ -9,5 +9,5 @@ which will make it fail in a JSLint test.
 
 Configurations:
 
-~compiler => src/nilac.rb
+~compiler => lib/nilac.rb
 :v $cliusage => ruby :v --compile $file

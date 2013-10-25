@@ -7,5 +7,5 @@ Feature: Compiling a single line nila program
 
 Configurations:
 
-~compiler => src/nilac.rb
+~compiler => lib/nilac.rb
 :v $cliusage => ruby :v --compile $file

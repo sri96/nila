@@ -7,5 +7,5 @@ Feature: This feature brings Ruby's native String and Array methods to Nila.
 
 Configurations:
 
-~compiler => src/nilac.rb
+~compiler => lib/nilac.rb
 :v $cliusage => ruby :v --compile $file
