@@ -14,5 +14,5 @@ in a function. It is a rubyesque feature imported into Nila.
 
 Configurations:
 
-~compiler => src/nilac.rb
+~compiler => 
 :v $cliusage => ruby :v --compile $file
