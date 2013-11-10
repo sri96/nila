@@ -1,6 +1,6 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
 (function() {
-  var commandline_args, parse_markdown;
+  var commandline_args, file_name, fs, parse_markdown, parsed_args;
 
   // Marky is a simple markdown parser written in Nila and runs on Nodejs. 
 
@@ -16,7 +16,15 @@
 
   // If you want to learn more about Nila, please visit http://adhithyan15.github.io/nila
 
-  parse_markdown = function() {
+  fs = require('fs');
+
+  parse_markdown = function(input_file) {
+    fs.readFile(input_file, 'utf8',function(err,data) {
+      if (err) {
+        console.log(err);
+      }
+      console.log(data);
+    });
   };
 
   commandline_args = [];
@@ -25,6 +33,17 @@
     commandline_args.push(val);
   });
 
-  console.log(commandline_args.slice(2));
+  parsed_args = commandline_args.slice(2);
+
+  if (!(parsed_args.length === 0)) {
+    if (parsed_args[0].indexOf("-c") !== -1){    
+      file_name = parsed_args[1];
+      if (!((typeof file_name === "undefined"))) {
+        parse_markdown(file_name);
+      } else {
+        console.log("No file has been specified!");
+      }
+    }
+  }
 
 }).call(this);

@@ -8,7 +8,14 @@
 
 # If you want to learn more about Nila, please visit http://adhithyan15.github.io/nila
 
-def parse_markdown
+require 'fs'
+
+def parse_markdown(input_file)
+
+  fs.readFile input_file, 'utf8', do |err,data| 
+      puts err if err
+      puts data
+  end
 
 end
 
@@ -20,4 +27,24 @@ process.argv.forEach do |val,index,array|
 
 end
 
-puts commandline_args[2..last]
+parsed_args = commandline_args[2..last]
+
+unless parsed_args.empty?
+
+    if parsed_args[0].include?("-c")
+    
+      file_name = parsed_args[1]
+    
+      unless file_name.undefined?
+       
+        parse_markdown file_name 
+        
+      else
+      
+        puts "No file has been specified!"
+      
+      end
+    
+    end
+
+end

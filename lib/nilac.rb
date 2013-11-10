@@ -19,6 +19,8 @@ module Nilac
 
   require 'nilac/extract_parsable_file'
 
+  require 'nilac/compile_require_statements'
+
   require 'nilac/replace_multiline_comments'
 
   require 'nilac/split_semicolon_seperated_expressions'
@@ -80,6 +82,8 @@ module Nilac
   require 'nilac/create_mac_executable'
 
   require 'nilac/parse_arguments'
+
+  require 'nilac/compile_classes'
   
   class NilaCompiler
 
@@ -97,11 +101,15 @@ module Nilac
 
         file_contents = extract_parsable_file(file_contents)
 
+        file_contents = compile_require_statements(file_contents)
+
         file_contents, multiline_comments, temp_file, output_js_file = replace_multiline_comments(file_contents, input_file_path, *output_file_name)
 
         file_contents, singleline_comments = replace_singleline_comments(file_contents)
 
         file_contents = split_semicolon_seperated_expressions(file_contents)
+
+        compile_classes(file_contents)
 
         file_contents = compile_heredocs(file_contents, temp_file)
 
@@ -274,16 +282,6 @@ module Nilac
         node_output = `node #{js_file_name} #{commandline_args.join(" ")}`
         puts node_output
 
-      elsif opts[:release] != nil
-
-        file_path = Dir.pwd + "/src/nilac.rb"
-        create_mac_executable(file_path)
-        FileUtils.mv("#{file_path[0...-3]}", "#{Dir.pwd}/bin/nilac")
-        puts "Your build was successful!\n"
-        commit_message = opts[:release][0]
-        `git commit -am "#{commit_message}"`
-        puts `rake release`
-
       elsif opts[:update] != nil
 
         puts "Checking for updates......"
@@ -320,9 +318,15 @@ module Nilac
     end
 
   end
-  
+
 end
 
-compiler = Nilac::NilaCompiler.new(ARGV)
+if ARGV.include?("--test")
 
-compiler.start_compile()
+  ARGV.delete("--test")
+
+  compiler = Nilac::NilaCompiler.new(ARGV)
+
+  compiler.start_compile()
+
+end

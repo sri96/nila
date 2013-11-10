@@ -46,7 +46,7 @@ require_relative 'read_file_line_by_line'
 
       def extract_blocks(file_contents)
 
-        javascript_regexp = /(if |while |for |case |default:|switch\(|function\(|((=|:)\s+\{))/
+        javascript_regexp = /(if |for |while |case |default:|switch\(|\(function\(|= function\(|function\(|((=|:)\s+\{))/
 
         block_starting_lines = file_contents.dup.reject { |element| element.index(javascript_regexp).nil? }[1..-1]
 
@@ -62,7 +62,7 @@ require_relative 'read_file_line_by_line'
 
         end
 
-        block_ending_lines = file_contents.dup.each_index.select { |index| (file_contents[index].eql? "  }\n" or file_contents[index].eql? "  };\n" or file_contents[index].lstrip.eql?("});\n"))}
+        block_ending_lines = file_contents.dup.each_index.select { |index| (file_contents[index].eql? "  }\n" or file_contents[index].eql? "  };\n" or file_contents[index].strip.eql?("});\n"))}
 
         modified_file_contents = file_contents.dup
 

@@ -2,6 +2,36 @@ require_relative 'find_all_matching_indices'
   
   def compile_interpolated_strings(input_file_contents)
 
+    def replace_string_arrays(input_string)
+
+      def extract(input_string, pattern_start, pattern_end)
+
+        all_start_locations = find_all_matching_indices(input_string, pattern_start)
+
+        all_end_locations = find_all_matching_indices(input_string, pattern_end)
+
+        pattern = []
+
+        all_start_locations.each_with_index do |location, index|
+
+          pattern << input_string[location..all_end_locations[index]]
+
+        end
+
+        return pattern
+
+      end
+
+      if input_string.include?("%W")
+
+        input_string = input_string.sub(extract(input_string,"%W{","}\n")[0],"--stringarray")
+
+      end
+
+      return input_string
+
+    end
+
     modified_file_contents = input_file_contents.dup
 
     single_quoted_strings = input_file_contents.reject { |element| !(element.count("'") >= 2) }
@@ -26,7 +56,7 @@ require_relative 'find_all_matching_indices'
 
     input_file_contents.each_with_index do |line, index|
 
-      if line.include?("\#{")
+      if replace_string_arrays(line+"\n").include?("\#{")
 
         modified_line = line.dup
 

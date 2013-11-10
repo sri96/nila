@@ -1,4 +1,6 @@
-  def compile_custom_function_map(input_file_contents)
+require_relative 'replace_strings'
+
+def compile_custom_function_map(input_file_contents)
 
     function_map_replacements = {
 
@@ -7,6 +9,8 @@
         "p" => "console.log",
 
         "print" => "process.stdout.write",
+
+        "require" => "require",
 
     }
 
@@ -20,7 +24,9 @@
 
       function_map.each do |function|
 
-        if line.include?(function+"(") or line.include?(function+" ") and line.index(javascript_regexp) == nil
+        test_line = replace_strings(line)
+
+        if test_line.include?(function+"(") or test_line.include?(function+" ") and test_line.index(javascript_regexp) == nil
 
           testsplit =  line.split(function)
 

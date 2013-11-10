@@ -8,4 +8,4 @@ Feature: This feature bring Ruby's case when structure to Nila
 Configurations:
 
 ~compiler => lib/nilac.rb
-:v $cliusage => ruby :v --compile $file
+:v $cliusage => ruby :v --test --compile $file

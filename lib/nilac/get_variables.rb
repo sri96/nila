@@ -76,11 +76,15 @@ require_relative 'read_file_line_by_line'
 
     line_by_line_contents = read_file_line_by_line(temporary_nila_file)
 
+    test_contents = line_by_line_contents.collect {|element| replace_strings(element)}
+
     for_loop_variables = []
 
-    for_loop_statements = line_by_line_contents.reject {|line| !line.include?("for")}
+    for_loop_statements = test_contents.reject {|line| !line.include?("for")}
       
     for_loop_statements = for_loop_statements.reject {|line| line.include?("forEach")}
+
+    puts for_loop_statements
 
     for_loop_statements.each do |statement|
 

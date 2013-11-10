@@ -9,4 +9,4 @@ Feature: Javascript doesn't allow multiple variable initializations from a metho
 Configurations:
 
 ~compiler => lib/nilac.rb
-:v $cliusage => ruby :v --compile $file
+:v $cliusage => ruby :v --test --compile $file

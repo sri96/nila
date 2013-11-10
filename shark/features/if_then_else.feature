@@ -8,4 +8,4 @@ Feature: This feature brings single line if-then-else statement to Nila
 Configurations:
 
 ~compiler => lib/nilac.rb
-:v $cliusage => ruby :v --compile $file
+:v $cliusage => ruby :v --test --compile $file

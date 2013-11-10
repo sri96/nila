@@ -2,6 +2,8 @@ require_relative 'find_all_matching_indices'
 
 require_relative 'read_file_line_by_line'
 
+require_relative 'compile_interpolated_strings'
+
   def compile_arrays(input_file_contents, named_functions, temporary_nila_file)
 
     def compile_w_arrays(input_file_contents)
@@ -45,6 +47,78 @@ require_relative 'read_file_line_by_line'
           string_arrays.each do |array|
 
             modified_file_contents[index] = modified_file_contents[index].sub(array, compile_w_syntax(array))
+
+          end
+
+        end
+
+      end
+
+      return modified_file_contents
+
+    end
+
+    def compile_capital_w_arrays(input_file_contents)
+
+      def extract(input_string, pattern_start, pattern_end)
+
+        all_start_locations = find_all_matching_indices(input_string, pattern_start)
+
+        all_end_locations = find_all_matching_indices(input_string, pattern_end)
+
+        pattern = []
+
+        all_start_locations.each_with_index do |location, index|
+
+          pattern << input_string[location..all_end_locations[index]]
+
+        end
+
+        return pattern
+
+      end
+
+      def compile_cap_w_syntax(input_string)
+
+        modified_input_string = input_string[3...-1]
+
+        processed_string = compile_interpolated_strings([modified_input_string])
+
+        interpolated_strings = processed_string[0].inspect.scan(/\\"[\w{1,}\s\W]*\\"/).to_a
+
+        interpolated_strings.each_with_index do |val,index|
+
+          processed_string[0] = processed_string[0].inspect.sub(val+"\"","stringgy#{index}")
+
+        end
+
+        string_split = processed_string[0].split(" ")
+
+        puts processed_string[0].inspect
+
+        interpolated_strings.each_with_index do |val,index|
+
+          string_split[string_split.index("stringgy#{index}")] = val[0..-2]
+
+        end
+
+        return string_split.to_s
+
+      end
+
+      modified_file_contents = input_file_contents.dup
+
+      input_file_contents.each_with_index do |line, index|
+
+        if line.include?("%W{")
+
+          line = line + "\n" unless  line[-1].eql?("\n")
+
+          string_arrays = extract(line, "%W{", "}\n")
+
+          string_arrays.each do |array|
+
+            modified_file_contents[index] = modified_file_contents[index].sub(array, compile_cap_w_syntax(array))
 
           end
 
@@ -245,6 +319,8 @@ require_relative 'read_file_line_by_line'
     end
 
     input_file_contents = compile_w_arrays(input_file_contents)
+
+    input_file_contents = compile_capital_w_arrays(input_file_contents)
 
     input_file_contents = compile_array_indexing(input_file_contents)
 

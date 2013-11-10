@@ -15,4 +15,4 @@ in a function. It is a rubyesque feature imported into Nila.
 Configurations:
 
 ~compiler => lib/nilac.rb
-:v $cliusage => ruby :v --compile $file
+:v $cliusage => ruby :v --test --compile $file

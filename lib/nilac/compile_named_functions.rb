@@ -174,7 +174,7 @@ def compile_named_functions(input_file_contents, named_code_blocks, nested_funct
 
       rejected_array = rejected_array[1..-1]
 
-      if !rejected_array[0].strip.eql?("}")
+      unless rejected_array[0].strip.eql?("}") or rejected_array[0].strip.eql?("})")
 
         if !rejected_array[0].strip.eql?("end") and !rejected_array[0].strip.include?("--single_line_comment")
 

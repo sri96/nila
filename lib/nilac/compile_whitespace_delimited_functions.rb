@@ -1,4 +1,5 @@
 require_relative 'read_file_line_by_line'
+require_relative 'replace_strings'
   
   def compile_whitespace_delimited_functions(input_file_contents, function_names, temporary_nila_file)
 
@@ -52,25 +53,31 @@ require_relative 'read_file_line_by_line'
 
       joined_file_contents = input_file_contents.join
 
+      test_contents = replace_strings(joined_file_contents)
+
       function_names.each do |list_of_functions|
 
         list_of_functions.each do |function|
 
-          matching_strings = extract(joined_file_contents, function+" ", "\n")
+          if test_contents.include?(function)
 
-          matching_strings.each do |string|
+            matching_strings = extract(joined_file_contents, function+" ", "\n")
 
-            modified_string = string.dup
+            matching_strings.each do |string|
 
-            modified_string = modified_string.rstrip + modified_string.split(modified_string.rstrip)[1].gsub(" ", "")
+              modified_string = string.dup
 
-            modified_string = modified_string.sub(function+" ", function+"(")
+              modified_string = modified_string.rstrip + modified_string.split(modified_string.rstrip)[1].gsub(" ", "")
 
-            modified_string = modified_string.split("#{function}(")[0] + "#{function}(" + modified_string.split("#{function}(")[1].lstrip
+              modified_string = modified_string.sub(function+" ", function+"(")
 
-            modified_string = modified_string.sub("\n", ")\n")
+              modified_string = modified_string.split("#{function}(")[0] + "#{function}(" + modified_string.split("#{function}(")[1].lstrip
 
-            joined_file_contents = joined_file_contents.sub(string, modified_string)
+              modified_string = modified_string.sub("\n", ")\n")
+
+              joined_file_contents = joined_file_contents.sub(string, modified_string)
+
+            end
 
           end
 

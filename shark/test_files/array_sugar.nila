@@ -1,0 +1,3 @@
+names = %w{joe kelly bill james smith}
+
+date_time = %W{The current date and time is #{new Date().to_s}}
