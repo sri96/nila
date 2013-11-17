@@ -1,0 +1,7 @@
+# This example was taken from http://alvinalexander.com/blog/post/ruby/examples-ruby-ternary-operator-true-false-syntax
+
+# set the speed
+speed = 90
+
+# somewhere later in the program ...
+speed > 55 ? (speed < 70 ? puts("Fine is $400") : puts("Fine is $800")) : puts("I'm a careful driver")

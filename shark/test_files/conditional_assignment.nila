@@ -1,0 +1,9 @@
+# This file demonstrates the conditional assignment operator in Nila
+
+a = nil
+b = 20
+a ||= b
+
+a = true
+b = 20
+a &&= b

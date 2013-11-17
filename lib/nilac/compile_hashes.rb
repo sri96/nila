@@ -68,7 +68,7 @@ require_relative 'read_file_line_by_line'
 
     def compile_inline_hashes(input_file_contents)
 
-      javascript_regexp = /(if |while |for |function |function\(|%[qQw]*\{)/
+      javascript_regexp = /(if |while |for |function |function\(|%[qQw]*\{|lambda\s*\{|\s*->\s*\{)/
 
       modified_file_contents = input_file_contents.clone.collect {|element| replace_strings(element)}
 

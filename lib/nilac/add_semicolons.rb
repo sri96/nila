@@ -18,6 +18,8 @@
 
     end
 
+    input_file_contents = input_file_contents.collect {|element| element.gsub("#iggggnnnore ","")}
+
     reject_regexp = /(function |Euuf |if |else|elsuf|switch |case|while |whaaleskey |for )/
 
     modified_file_contents = input_file_contents.dup

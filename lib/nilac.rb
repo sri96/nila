@@ -8,81 +8,44 @@ $LOAD_PATH << File.dirname(__FILE__)
 module Nilac
   
   require 'nilac/version'
-
   require 'fileutils'
-  
   require 'nilac/read_file_line_by_line'
-
   require 'nilac/find_file_name'
-
   require 'nilac/find_file_path'
-
   require 'nilac/extract_parsable_file'
-
   require 'nilac/compile_require_statements'
-
   require 'nilac/replace_multiline_comments'
-
   require 'nilac/split_semicolon_seperated_expressions'
-
   require 'nilac/compile_heredocs'
-
   require 'nilac/compile_interpolated_strings'
-
   require 'nilac/replace_singleline_comments'
-
   require 'nilac/replace_named_functions'
-
   require 'nilac/compile_parallel_assignment'
-
   require 'nilac/compile_default_values'
-
   require 'nilac/get_variables'
-
   require 'nilac/remove_question_marks'
-
   require 'nilac/compile_arrays'
-
   require 'nilac/compile_hashes'
-
   require 'nilac/compile_strings'
-
   require 'nilac/compile_integers'
-
   require 'nilac/compile_classes'
-
   require 'nilac/compile_named_functions'
-
   require 'nilac/compile_custom_function_map'
-
   require 'nilac/compile_ruby_methods'
-
   require 'nilac/compile_special_keywords'
-
   require 'nilac/compile_whitespace_delimited_functions'
-
   require 'nilac/compile_conditional_structures'
-
   require 'nilac/compile_case_statement'
-
   require 'nilac/compile_loops'
-
+  require 'nilac/compile_lambdas'
   require 'nilac/compile_blocks'
-
   require 'nilac/add_semicolons'
-
   require 'nilac/compile_comments'
-
   require 'nilac/pretty_print_javascript'
-
   require 'nilac/compile_operators'
-
   require 'nilac/output_javascript'
-
   require 'nilac/create_mac_executable'
-
   require 'nilac/parse_arguments'
-
   require 'nilac/compile_classes'
   
   class NilaCompiler
@@ -109,8 +72,6 @@ module Nilac
 
         file_contents = split_semicolon_seperated_expressions(file_contents)
 
-        compile_classes(file_contents)
-
         file_contents = compile_heredocs(file_contents, temp_file)
 
         file_contents,loop_vars = compile_loops(file_contents,temp_file)
@@ -122,6 +83,8 @@ module Nilac
         file_contents = compile_case_statement(file_contents,temp_file)
 
         file_contents = compile_conditional_structures(file_contents, temp_file)
+
+        file_contents,lambda_names = compile_lambdas(file_contents,temp_file)
 
         file_contents = compile_blocks(file_contents,temp_file)
 
@@ -152,6 +115,8 @@ module Nilac
         file_contents = compile_special_keywords(file_contents)
 
         function_names << ruby_functions
+
+        function_names << lambda_names
 
         list_of_variables += loop_vars
 
@@ -324,9 +289,7 @@ end
 if ARGV.include?("--test")
 
   ARGV.delete("--test")
-
   compiler = Nilac::NilaCompiler.new(ARGV)
-
   compiler.start_compile()
 
 end

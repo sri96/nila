@@ -1,5 +1,7 @@
 def extract_parsable_file(input_file_contents)
 
+  input_file_contents = input_file_contents.collect {|element| element.gsub(".?",".exist?")}
+
   reversed_file_contents = input_file_contents.reverse
 
   line_counter = 0

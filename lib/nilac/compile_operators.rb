@@ -66,6 +66,33 @@ def compile_operators(input_file_contents)
 
   end
 
+  def compile_conditional_assignment(input_string)
+
+    if input_string.include?("||=")
+
+      before,after = input_string.split("||=")
+
+      replacement_string = before + " = #{before.lstrip} || #{after}"
+
+      input_string = replacement_string
+
+    end
+
+    if input_string.include?("&&=")
+
+      before, after = input_string.split("&&=")
+
+      replacement_string = before + " = #{before.lstrip} && #{after}"
+
+      input_string = replacement_string
+
+    end
+
+    return input_string
+
+
+  end
+
   input_file_contents = input_file_contents.collect { |element| element.sub("==", "===") }
 
   input_file_contents = input_file_contents.collect { |element| element.sub("!=", "!==") }
@@ -74,9 +101,13 @@ def compile_operators(input_file_contents)
 
   input_file_contents = input_file_contents.collect { |element| element.sub("elsuf", "else if") }
 
+  input_file_contents = input_file_contents.collect {|element| compile_conditional_assignment(element)}
+
   input_file_contents = compile_existential_operators(input_file_contents)
 
   input_file_contents = compile_undefined_operator(input_file_contents)
+
+  input_file_contents = compile_nil_operator(input_file_contents)
 
   input_file_contents = input_file_contents.collect { |element| compile_power_operator(element) }
 

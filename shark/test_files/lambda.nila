@@ -1,0 +1,8 @@
+square = -> {|num| num*num }
+
+l = lambda do |a, b|
+      tmp = a * 7
+      tmp * b / 50
+    end
+    
+puts square 5

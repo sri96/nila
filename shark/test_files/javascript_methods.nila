@@ -1,0 +1,19 @@
+puts "You can use console.log" if console.exist?
+
+puts "You can use console.log" if console.?
+
+commandline_args = %w{-c}
+
+if commandline_args[1].undefined?
+
+  puts "Your second argument was empty!"
+
+end
+
+overspeed = nil
+
+if overspeed.nil?
+
+  puts "No overspeeding vehicles found!"
+
+end

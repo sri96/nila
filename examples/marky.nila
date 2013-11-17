@@ -13,7 +13,7 @@ require 'fs'
 def parse_markdown(input_file)
 
   fs.readFile input_file, 'utf8', do |err,data| 
-      puts err if err
+      
       puts data
   end
 

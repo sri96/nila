@@ -12,6 +12,8 @@ def compile_custom_function_map(input_file_contents)
 
         "require" => "require",
 
+        "alert" => "alert"
+
     }
 
     function_map = function_map_replacements.keys
@@ -28,7 +30,7 @@ def compile_custom_function_map(input_file_contents)
 
         if test_line.include?(function+"(") or test_line.include?(function+" ") and test_line.index(javascript_regexp) == nil
 
-          testsplit =  line.split(function)
+          testsplit =  line.gsub("#iggggnnnore","").split(function)
 
           testsplit = testsplit.collect {|element| element.strip}
 
@@ -36,7 +38,7 @@ def compile_custom_function_map(input_file_contents)
 
           if testsplit[0][-1].eql?(" ") or testsplit[0].eql?("return")
 
-            modified_file_contents[index] = line.sub(function, function_map_replacements[function])
+            modified_file_contents[index] = line.gsub(function, function_map_replacements[function])
 
           end
 

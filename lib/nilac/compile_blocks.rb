@@ -1,10 +1,18 @@
 require_relative 'read_file_line_by_line'
+require_relative 'strToArray'
+require_relative 'lexical_scoped_function_variables'
   
   def compile_blocks(input_file_contents,temporary_nila_file)
 
     def compile_one_line_blocks(input_block)
 
       block_parameters, block_contents = input_block[1...-1].split("|",2)[1].split("|",2)
+
+      if block_parameters.include?("err") and !block_contents.include?("err")
+
+        block_contents = "if (err) {\n puts err \n}\n" + block_contents
+
+      end
 
       compiled_block = "function(#{block_parameters.lstrip.rstrip}) {\n\n  #{block_contents.strip} \n\n}"
 
@@ -102,7 +110,7 @@ require_relative 'read_file_line_by_line'
 
         caller_func = loop.split(" blockky ")[0]
 
-        unless caller_func.rstrip[-1] == ","
+        unless caller_func.strip[-1] == ","
 
           replacement_string = "#{caller_func.rstrip}(#{compiled_block.lstrip})"
 
@@ -116,7 +124,21 @@ require_relative 'read_file_line_by_line'
 
         end
 
-        modified_file_contents[input_file_contents.index(original_loop)] = replacement_string
+        replacement_array = strToArray(replacement_string)
+
+        variables = lexical_scoped_variables(replacement_array)
+
+        if !variables.empty?
+
+          variable_string = "\nvar " + variables.join(", ") + "\n"
+
+          replacement_array.insert(1, variable_string)
+
+        end
+
+        replacement_array[1...-1] = replacement_array[1...-1].collect {|element| "#iggggnnnore #{element}"}
+
+        modified_file_contents[input_file_contents.index(original_loop)] = replacement_array.join
 
       end
 

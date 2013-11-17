@@ -30,13 +30,15 @@ require_relative 'read_file_line_by_line'
 
     input_file_contents = input_file_contents.collect {|element| replace_strings(element)}
 
-    javascript_regexp = /(if |while |for )/
+    javascript_regexp = /(if |while |for |\|\|=|&&=)/
 
     for x in 0...input_file_contents.length
 
       current_row = input_file_contents[x]
 
-      if current_row.include?("=") and current_row.index(javascript_regexp) == nil
+      original_row = current_row.clone
+
+      if current_row.include?("=") and current_row.index(javascript_regexp) == nil and !current_row.include?("#iggggnnnore")
 
         current_row = current_row.rstrip + "\n"
 
@@ -57,12 +59,24 @@ require_relative 'read_file_line_by_line'
 
         current_row_split[0] = current_row_split[0].split(".",2)[0].strip if current_row_split[0].include?(".")
 
-        variables << current_row_split[0]
+        if current_row_split[0].include?(" ")
+
+          variable_name = current_row_split[0].split
+
+          variable_name = variable_name.join("_")
+
+          modified_file_contents[modified_file_contents.index(original_row)] = modified_file_contents[modified_file_contents.index(original_row)].gsub(current_row_split[0],variable_name)
+
+        else
+
+          variable_name = current_row_split[0]
+
+        end
+
+        variables << variable_name
 
 
       end
-
-      input_file_contents[x] = current_row
 
     end
 
@@ -83,8 +97,6 @@ require_relative 'read_file_line_by_line'
     for_loop_statements = test_contents.reject {|line| !line.include?("for")}
       
     for_loop_statements = for_loop_statements.reject {|line| line.include?("forEach")}
-
-    puts for_loop_statements
 
     for_loop_statements.each do |statement|
 
