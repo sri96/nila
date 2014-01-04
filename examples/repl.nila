@@ -2,6 +2,18 @@
 
 require 'readline'
 
+require 'fs'
+
+stream = fs.createWriteStream("my_file.nila")
+
+stream.once 'open', do |fd|
+
+ stream.write("Testing!\n")
+ 
+ stream.end()
+
+end
+
 rl = readline.createInterface(process.stdin, process.stdout)
 
 rl.setPrompt('nila> ')
@@ -9,12 +21,7 @@ rl.setPrompt('nila> ')
 rl.prompt()
 
 read = rl.on 'line', do |line|
-  case line.trim()
-    when 'hello'
-      puts "world!"
-    else
-      puts "Say what? I might have heard #{line.trim()}"
-  end
+  
   rl.prompt()
 end
 

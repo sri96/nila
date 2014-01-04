@@ -22,7 +22,6 @@ module Nilac
   require 'nilac/replace_named_functions'
   require 'nilac/compile_parallel_assignment'
   require 'nilac/compile_default_values'
-  require 'nilac/compile_chained_comparison'
   require 'nilac/get_variables'
   require 'nilac/remove_question_marks'
   require 'nilac/compile_arrays'
@@ -48,8 +47,7 @@ module Nilac
   require 'nilac/parse_arguments'
   require 'nilac/friendly_errors'
   require 'nilac/compile_monkey_patching'
-  require 'nilac/line_number_encoding'
-  
+
   class NilaCompiler
 
     include FriendlyErrors

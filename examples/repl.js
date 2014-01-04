@@ -1,10 +1,19 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
 (function() {
-  var read, readline, rl;
+  var read, readline, rl, stream;
 
   // This is a small REPL for Nila to test out nila code and do bug fixes
 
   readline = require('readline');
+
+  require('fs');
+
+  stream = fs.createWriteStream("my_file.nila");
+
+  stream.once('open',function(fd) {
+    stream.write("Testing!\n");
+    stream.;
+  });
 
   rl = readline.createInterface(process.stdin, process.stdout);
 
@@ -13,13 +22,6 @@
   rl.prompt();
 
   read = rl.on('line',function(line) {
-    switch(line.trim()) {
-      case 'hello':
-        console.log("world!");
-        break;
-      default:
-        console.log("Say what? I might have heard " + (line.trim()));
-    }
     rl.prompt();
   });
 
