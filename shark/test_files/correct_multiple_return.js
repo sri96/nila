@@ -9,11 +9,11 @@
     _ref1 = input_name.split(" ");
     first_name = _ref1[0];
     last_name = _ref1[1];
-    return [first_name,last_name];
+    return [first_name, last_name];
   };
 
   test_method = function() {
-    return console.log("Hello, Adhithya");
+    return console.log("Hello World!");
   };
 
   parsed_name = parse_name("Adhithya Rajasekaran");

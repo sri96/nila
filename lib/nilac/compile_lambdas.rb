@@ -6,13 +6,23 @@ require_relative 'add_auto_return_statement'
 
 def compile_lambdas(input_file_contents,temporary_nila_file)
 
-  def compile_single_line_lambda(input_block)
+  def compile_single_line_lambda(input_block,parameterless = false)
 
     # This method compiles a single lambda into a Javascript function expression
 
-    block_parameters, block_contents = input_block[1...-1].split("|",2)[1].split("|",2)
+    if parameterless
 
-    compiled_lambda = "function(#{block_parameters.lstrip.rstrip}) {\n\n  #{block_contents.strip} \n\n}"
+      block_contents = input_block[3...-1]
+
+      compiled_lambda = "function() {\n\n  #{block_contents.strip} \n\n}"
+
+    else
+
+      block_parameters, block_contents = input_block[1...-1].split("|",2)[1].split("|",2)
+
+      compiled_lambda = "function(#{block_parameters.lstrip.rstrip}) {\n\n  #{block_contents.strip} \n\n}"
+
+    end
 
     return compiled_lambda
 
@@ -36,7 +46,7 @@ def compile_lambdas(input_file_contents,temporary_nila_file)
 
   end
 
-  input_file_contents = input_file_contents.collect {|element| element.gsub(" -> "," lambda ")}
+  input_file_contents = input_file_contents.collect {|element| (replace_strings(element).include?(" -> ") ? element.gsub(" -> "," lambda ") : element)}
 
   input_file_contents = input_file_contents.collect {|element| element.gsub("append","appand")}
 
@@ -126,7 +136,7 @@ def compile_lambdas(input_file_contents,temporary_nila_file)
 
       else
 
-        compiled_lambda = lambda_extract[1...-1].lstrip.rstrip
+        compiled_lambda = compile_single_line_lambda(lambda_extract,true)
 
         extracted_string.each_with_index do |string,index|
 
@@ -166,7 +176,13 @@ def compile_lambdas(input_file_contents,temporary_nila_file)
 
       replacement_array[1...-1] = replacement_array[1...-1].collect {|element| "#iggggnnnore #{element}"}
 
-      modified_file_contents[input_file_contents.index(original_loop)] = replacement_array.join
+      replacement_array[0] = replacement_array[0].sub("function","lambdef").sub("{\n","%--%\n")
+
+      replacement_array[-1] = replacement_array[-1].sub("}","\n-%%-")
+
+      replacement_string = replacement_array.join
+
+      modified_file_contents[input_file_contents.index(original_loop)] = replacement_string[-1].eql?(";") ? replacement_string : replacement_string + ";"
 
     end
 

@@ -1,6 +1,8 @@
 require_relative 'strToArray'
-
 require_relative 'read_file_line_by_line'
+require_relative 'paranthesis_compactor'
+require_relative 'replace_strings'
+require_relative 'rollblocks'
 
 def compile_named_functions(input_file_contents, named_code_blocks, nested_functions, temporary_nila_file)
 
@@ -40,54 +42,6 @@ def compile_named_functions(input_file_contents, named_code_blocks, nested_funct
     #This method will pickup and declare all the variables inside a function block. In future, this method will be
     #merged with the get variables method
 
-    def replace_strings(input_string)
-
-      element = input_string.gsub("==", "equalequal")
-
-      element = element.gsub("!=", "notequal")
-
-      element = element.gsub("+=", "plusequal")
-
-      element = element.gsub("-=", "minusequal")
-
-      element = element.gsub("*=", "multiequal")
-
-      element = element.gsub("/=", "divequal")
-
-      element = element.gsub("%=", "modequal")
-
-      element = element.gsub("=~", "matchequal")
-
-      element = element.gsub(">=", "greatequal")
-
-      input_string = element.gsub("<=", "lessyequal")
-
-      string_counter = 0
-
-      while input_string.include?("\"")
-
-        string_extract = input_string[input_string.index("\"")..input_string.index("\"",input_string.index("\"")+1)]
-
-        input_string = input_string.sub(string_extract,"--repstring#{string_counter}")
-
-        string_counter += 1
-
-      end
-
-      while input_string.include?("'")
-
-        string_extract = input_string[input_string.index("'")..input_string.index("'",input_string.index("'")+1)]
-
-        input_string = input_string.sub(string_extract,"--repstring#{string_counter}")
-
-        string_counter += 1
-
-      end
-
-      return input_string
-
-    end
-
     input_function_block = input_function_block.collect {|element| replace_strings(element)}
 
     controlregexp = /(if |Euuf |for |while |def |function |function\()/
@@ -105,6 +59,12 @@ def compile_named_functions(input_file_contents, named_code_blocks, nested_funct
       if line.include? "=" and line.index(controlregexp).nil?
 
         current_line_split = line.strip.split("=")
+
+        if current_line_split[0].include?("return")
+
+          current_line_split[0] = current_line_split[0].sub("return","").strip
+
+        end
 
         variables << current_line_split[0].rstrip
 
@@ -324,9 +284,13 @@ def compile_named_functions(input_file_contents, named_code_blocks, nested_funct
 
   def coffee_type_function(input_array)
 
+    input_array = input_array.collect {|element| element.gsub("(function","&F*^u$#N)(&C")}
+
     function_name = input_array[0].split("function ")[1].split("(")[0].lstrip
 
     input_array[0] = "#{function_name} = function(" + input_array[0].split("function ")[1].split("(")[1].lstrip
+
+    input_array = input_array.collect {|element| element.gsub("&F*^u$#N)(&C","(function")}
 
     return input_array
 
@@ -545,7 +509,7 @@ def compile_named_functions(input_file_contents, named_code_blocks, nested_funct
 
   def compile_multiple_ruby_func_calls(input_file_contents)
 
-    def replace_strings(input_string)
+    def replace_complex_strings(input_string)
 
       string_counter = 0
 
@@ -591,39 +555,45 @@ def compile_named_functions(input_file_contents, named_code_blocks, nested_funct
 
     javascript_regexp = /(if |for |while |\(function\(|= function\(|((=|:)\s+\{))/
 
-    stringified_input = input_file_contents.collect {|element| replace_strings(element)}
+    stringified_input = input_file_contents.collect {|element| replace_complex_strings(element)}
 
     function_map.each do |func|
 
       func_calls = input_file_contents.reject {|line| !(line.include?(func+"(") or line.include?(func+" ") and line.index(javascript_regexp) == nil)}
 
-      modified_func_calls = func_calls.collect {|element| replace_strings(element)}
+      unless func_calls.empty?
 
-      modified_func_calls = modified_func_calls.reject {|element| !element.include?(",")}
+        modified_func_calls = func_calls.collect {|element| replace_complex_strings(element)}
 
-      call_collector = []
+        modified_func_calls = modified_func_calls.reject {|element| !element.include?(",")}
 
-      modified_func_calls.each_with_index do |ele|
+        modified_func_calls = modified_func_calls.reject {|element| !compact_paranthesis(element).include?(",")}
 
-        call_collector << input_file_contents[stringified_input.index(ele)]
+        call_collector = []
+
+        modified_func_calls.each_with_index do |ele|
+
+          call_collector << input_file_contents[stringified_input.index(ele)]
+
+        end
+
+        function_calls << modified_func_calls
+
+        rep_calls = []
+
+        call_collector.each do |fcall|
+
+          multiple_call = fcall.split(func)[1].split(",")
+
+          multiple_call = multiple_call.collect {|element| "\n#{func} " + element.strip + "\n\n"}
+
+          rep_calls << multiple_call.join
+
+        end
+
+        replacement_calls << rep_calls
 
       end
-
-      function_calls << modified_func_calls
-
-      rep_calls = []
-
-      call_collector.each do |fcall|
-
-        multiple_call = fcall.split(func)[1].split(",")
-
-        multiple_call = multiple_call.collect {|element| "\n#{func} " + element.strip + "\n\n"}
-
-        rep_calls << multiple_call.join
-
-      end
-
-      replacement_calls << rep_calls
 
     end
 
@@ -657,15 +627,19 @@ def compile_named_functions(input_file_contents, named_code_blocks, nested_funct
 
       codeblock_counter += 1
 
-      current_nested_functions = nested_functions[codeblock_counter-2]
-
       function_names[codeblock_counter-2] << extract_function_name(codeblock)
 
-      current_nested_functions.each do |nested_function|
+      unless nested_functions.empty?
 
-        function_names[codeblock_counter-2] << extract_function_name(nested_function)
+        current_nested_functions = nested_functions[codeblock_counter-2]
 
-        joined_file_contents = joined_file_contents.sub(nested_function.join, compile_function(nested_function, temporary_nila_file).join)
+        current_nested_functions.each do |nested_function|
+
+          function_names[codeblock_counter-2] << extract_function_name(nested_function)
+
+          joined_file_contents = joined_file_contents.sub(nested_function.join, compile_function(nested_function, temporary_nila_file).join)
+
+        end
 
       end
 

@@ -32,7 +32,7 @@
 
           if !line.lstrip.eql?("")
 
-            if !line.lstrip.eql?("}\n")
+            if !line.lstrip.eql?("}\n") and !line.strip.eql?("}#@$")
 
               if !line.lstrip.eql?("}\n\n")
 

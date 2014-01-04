@@ -2,7 +2,7 @@ def compile_strings(input_file_contents)
 
   def compile_small_q_syntax(input_file_contents)
 
-    possible_syntax_usage = input_file_contents.reject { |element| !element.include?("%q") }
+    possible_syntax_usage = input_file_contents.reject { |element| !element.include?(" %q") }
 
     possible_syntax_usage.each do |line|
 
@@ -46,7 +46,7 @@ def compile_strings(input_file_contents)
 
   def compile_big_q_syntax(input_file_contents)
 
-    possible_syntax_usage = input_file_contents.reject { |element| !element.include?("%Q") }
+    possible_syntax_usage = input_file_contents.reject { |element| !element.include?(" %Q") }
 
     possible_syntax_usage.each do |line|
 
@@ -90,9 +90,9 @@ def compile_strings(input_file_contents)
 
   def compile_percentage_syntax(input_file_contents)
 
-    possible_syntax_usage = input_file_contents.reject { |element| !element.include?("%") }
+    possible_syntax_usage = input_file_contents.reject { |element| !element.include?(" %") }
 
-    possible_syntax_usage = possible_syntax_usage.reject { |element| element.index(/(\%(\W|\s)\w{1,})/).nil? }
+    possible_syntax_usage = possible_syntax_usage.reject { |element| element.index(/(%(\W|\s)\w{1,})/).nil? }
 
     possible_syntax_usage.each do |line|
 

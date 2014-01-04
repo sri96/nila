@@ -1,7 +1,5 @@
   require_relative "find_file_name"
-	
 	require_relative "find_file_path"
-	
 	require_relative "read_file_line_by_line"
 	
 	def replace_multiline_comments(input_file_contents, nila_file_path, *output_js_file_path)
@@ -62,6 +60,12 @@
     end
 
     temporary_nila_file = find_file_path(nila_file_path, ".nila") + "temp_nila.nila"
+
+    if File.exist?(temporary_nila_file)
+
+      File.delete(temporary_nila_file)
+
+    end
 
     if output_js_file_path.empty?
 

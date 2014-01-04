@@ -1,11 +1,11 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
 (function() {
-  var _i,_j,decimalToBinary;
+  var _i, _j, decimalToBinary;
 
   //This is Nila's decimal to Binary converter. It's awesome
 
   decimalToBinary = function(input_num) {
-    var remainder, storage, numsplit, inputnum, decimalplaces, calc, decans;
+    var calc, decans, decimalplaces, inputnum, numsplit, remainder, storage;
     remainder = "";
     storage = [];
     if (!((input_num.indexOf(".") === -1))) {

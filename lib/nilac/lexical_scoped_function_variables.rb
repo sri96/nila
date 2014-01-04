@@ -69,6 +69,12 @@ def lexical_scoped_variables(input_function_block)
 
       current_line_split = line.strip.split("=")
 
+      if current_line_split[0].include?("return")
+
+        current_line_split[0] = current_line_split[0].sub("return","").strip
+
+      end
+
       variables << current_line_split[0].rstrip
 
     end

@@ -182,7 +182,7 @@ require_relative 'read_file_line_by_line'
 
           times_counter = times_counter[1...-1] if times_counter.include?("(") and times_counter.include?(")")
 
-          replacement_string = "for (_i = 0, _j = #{times_counter}; _i < _j; _i += 1) {\n\n#{compiled_block}\n\n}"
+          replacement_string = "for (_i = 0, _j = #{times_counter}; _i < _j; _i += 1) {\n\n#{compiled_block}\n\n}\n\n\n"
 
           modified_file_contents[input_file_contents.index(original_loop)] = replacement_string
 

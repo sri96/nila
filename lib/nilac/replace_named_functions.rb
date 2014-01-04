@@ -1,108 +1,81 @@
 require_relative 'read_file_line_by_line'
+require_relative 'rollblocks'
+require_relative 'replace_strings'
+
   
   def replace_named_functions(nila_file_contents, temporary_nila_file)
 
-    def extract_array(input_array, start_index, end_index)
+    final_modified_file_contents = nila_file_contents.clone
 
-      return input_array[start_index..end_index]
+    joined_file_contents = final_modified_file_contents.join
 
-    end
+    modified_file_contents = []
 
-    end_locations = []
+    rand_number = []
 
-    key_word_locations = []
+    nila_file_contents.each do |content|
 
-    start_blocks = []
+      if replace_strings(content).include?("def ")
 
-    end_blocks = []
+        rand_num = rand(1..25)
 
-    nila_regexp = /(def )/
+        while rand_number.include?(rand_num)
 
-    named_code_blocks = []
-
-    for x in 0...nila_file_contents.length
-
-      current_row = nila_file_contents[x]
-
-      if current_row.index(nila_regexp) != nil
-
-        key_word_locations << x
-
-      elsif current_row.lstrip.eql?("end\n") || current_row.strip.eql?("end")
-
-        end_locations << x
-
-
-      end
-
-
-    end
-
-    unless key_word_locations.empty?
-
-      modified_file_contents = nila_file_contents.dup
-
-      for y in 0...end_locations.length
-
-        current_location = end_locations[y]
-
-        current_string = modified_file_contents[current_location]
-
-        finder_location = current_location
-
-        begin
-
-          while current_string.index(nila_regexp) == nil
-
-            finder_location -= 1
-
-            current_string = modified_file_contents[finder_location]
-
-          end
-
-          code_block_begin = finder_location
-
-          code_block_end = current_location
-
-          start_blocks << code_block_begin
-
-          end_blocks << code_block_end
-
-          code_block_begin_string_split = modified_file_contents[code_block_begin].split(" ")
-
-          code_block_begin_string_split[0] = code_block_begin_string_split[0].reverse
-
-          code_block_begin_string = code_block_begin_string_split.join(" ")
-
-          modified_file_contents[code_block_begin] = code_block_begin_string
-
-        rescue NoMethodError
-        
-          puts "Function compilation failed!"
+          rand_num = rand(1..10)
 
         end
 
-      end
+        modified_file_contents << content.sub("def ","#{" "*rand_num}def ")
 
-      final_modified_file_contents = nila_file_contents.dup
+        rand_number << rand_num
 
-      joined_file_contents = final_modified_file_contents.join
+      else
 
-      while start_blocks.length != 0
-
-        top_most_level = start_blocks.min
-
-        top_most_level_index = start_blocks.index(top_most_level)
-
-        matching_level = end_blocks[top_most_level_index]
-
-        named_code_blocks << extract_array(final_modified_file_contents, top_most_level, matching_level)
-
-        start_blocks.delete_at(top_most_level_index)
-
-        end_blocks.delete(matching_level)
+        modified_file_contents << content
 
       end
+
+    end
+
+    nila_file_contents = modified_file_contents.clone
+
+    possible_function_blocks = nila_file_contents.reject {|element| !replace_strings(element).include?("def ")}
+
+    function_block_locations = []
+
+    possible_function_blocks.each do |block_start|
+
+      function_block_locations << nila_file_contents.clone.each_index.select {|index| nila_file_contents[index] == block_start }
+
+    end
+
+    function_block_locations = function_block_locations.flatten
+
+    function_block_locations = [0,function_block_locations,-1].flatten.uniq
+
+    file_remains, code_blocks = extract_blocks(function_block_locations,final_modified_file_contents)
+
+    modified_code_blocks = []
+
+    code_blocks.each do |block|
+
+      modified_code_blocks << block.collect {|element| element.gsub("\n\t\nend\n\t\n","}#@$")}
+
+    end
+
+    code_blocks = modified_code_blocks.clone
+
+    named_code_blocks = code_blocks.clone.reject {|element| !replace_strings(element[0]).include?("def ")}
+
+    modified_code_blocks = []
+
+    code_blocks.each do |block|
+
+      modified_code_blocks << block.collect {|element| element.gsub("")}
+
+    end
+
+    unless named_code_blocks.empty?
 
       codeblock_counter = 1
 
@@ -148,7 +121,10 @@ require_relative 'read_file_line_by_line'
 
     line_by_line_contents = read_file_line_by_line(temporary_nila_file)
 
-    return line_by_line_contents, named_functions, nested_functions
+    named_functions = named_functions.reject {|element| element.empty?}
 
+    nested_functions = nested_functions.reject {|element| element.empty?}
+
+    return line_by_line_contents, named_functions, nested_functions
 
   end

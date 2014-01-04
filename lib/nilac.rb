@@ -22,13 +22,13 @@ module Nilac
   require 'nilac/replace_named_functions'
   require 'nilac/compile_parallel_assignment'
   require 'nilac/compile_default_values'
+  require 'nilac/compile_chained_comparison'
   require 'nilac/get_variables'
   require 'nilac/remove_question_marks'
   require 'nilac/compile_arrays'
   require 'nilac/compile_hashes'
   require 'nilac/compile_strings'
   require 'nilac/compile_integers'
-  require 'nilac/compile_classes'
   require 'nilac/compile_named_functions'
   require 'nilac/compile_custom_function_map'
   require 'nilac/compile_ruby_methods'
@@ -46,9 +46,13 @@ module Nilac
   require 'nilac/output_javascript'
   require 'nilac/create_mac_executable'
   require 'nilac/parse_arguments'
-  require 'nilac/compile_classes'
+  require 'nilac/friendly_errors'
+  require 'nilac/compile_monkey_patching'
+  require 'nilac/line_number_encoding'
   
   class NilaCompiler
+
+    include FriendlyErrors
 
     def initialize(args)
 
@@ -56,11 +60,15 @@ module Nilac
 
     end
 
-    def compile(input_file_path, *output_file_name)
+    def compile(input_file_path, options = [], *output_file_name)
 
-      if File.exist?(input_file_path)
+      message,proceed = file_exist?(input_file_path)
+
+      if proceed
 
         file_contents = read_file_line_by_line(input_file_path)
+
+        file_contents = file_contents.collect {|element| element.gsub("\r\n","\n")}
 
         file_contents = extract_parsable_file(file_contents)
 
@@ -74,6 +82,8 @@ module Nilac
 
         file_contents = compile_heredocs(file_contents, temp_file)
 
+        file_contents,lambda_names = compile_lambdas(file_contents,temp_file)
+
         file_contents,loop_vars = compile_loops(file_contents,temp_file)
 
         file_contents = compile_interpolated_strings(file_contents)
@@ -83,8 +93,6 @@ module Nilac
         file_contents = compile_case_statement(file_contents,temp_file)
 
         file_contents = compile_conditional_structures(file_contents, temp_file)
-
-        file_contents,lambda_names = compile_lambdas(file_contents,temp_file)
 
         file_contents = compile_blocks(file_contents,temp_file)
 
@@ -105,6 +113,8 @@ module Nilac
         list_of_variables, file_contents = get_variables(file_contents, temp_file,loop_vars)
 
         file_contents, function_names = compile_named_functions(file_contents, named_functions, nested_functions, temp_file)
+
+        file_contents = compile_monkey_patching(file_contents,temp_file)
 
         func_names = function_names.dup
 
@@ -138,9 +148,10 @@ module Nilac
 
       else
 
-        puts "File doesn't exist!"
+        puts message
 
       end
+
 
     end
 
@@ -165,6 +176,28 @@ module Nilac
 
       elsif opts[:compile] != nil
 
+        client_optimized = false
+
+        server_optimized = false
+
+        if opts[:compile].include?("--browser") or opts[:compile].include?("--client")
+
+          client_optimized = true
+
+          opts[:compile] = opts[:compile].delete("--browser")
+
+          opts[:compile] = opts[:compile].delete("--client")
+
+        elsif opts[:compile].include?("--server") or opts[:compile].include?("--node")
+
+          server_optimized = true
+
+          opts[:compile] = opts[:compile].delete("--server")
+
+          opts[:compile] = opts[:compile].delete("--node")
+
+        end
+
         if opts[:compile].length == 1
 
           input = opts[:compile][0]
@@ -173,14 +206,14 @@ module Nilac
             current_directory = Dir.pwd
             input_file = input
             file_path = current_directory + "/" + input_file
-            compile(file_path)
-          elsif input.include? "/"
+            compile(file_path,[client_optimized,server_optimized])
+          elsif File.directory?(input)
             folder_path = input
             files = Dir.glob(File.join(folder_path, "*"))
             files = files.reject { |path| !path.include? ".nila" }
             files.each do |file|
               file_path = Dir.pwd + "/" + file
-              compile(file_path)
+              compile(file_path,[client_optimized,server_optimized])
             end
           end
 
@@ -195,7 +228,7 @@ module Nilac
             output_file = output
             input_file_path = input_file
             output_file_path = output_file
-            compile(input_file_path, output_file_path)
+            compile(input_file_path, [client_optimized,server_optimized],output_file_path)
 
           elsif File.directory?(input)
 
@@ -212,7 +245,7 @@ module Nilac
             files.each do |file|
               input_file_path = file
               output_file_path = output_folder_path + "/" + find_file_name(file, ".nila") + ".js"
-              compile(input_file_path, output_file_path)
+              compile(input_file_path,[client_optimized,server_optimized],output_file_path)
             end
 
           end
@@ -226,7 +259,7 @@ module Nilac
         puts "    nilac -h/--help\n"
         puts "    nilac -v/--version\n"
         puts "    nilac -u/--update => Update Checker\n"
-        puts "    nilac [command] [file_options]\n\n"
+        puts "    nilac [command] [sub_commands] [file_options]\n\n"
         puts "  Available Commands:\n\n"
         puts "    nilac -c [nila_file] => Compile Nila File\n\n"
         puts "    nilac -c [nila_file] [output_js_file] => Compile nila_file and saves it as\n    output_js_file\n\n"

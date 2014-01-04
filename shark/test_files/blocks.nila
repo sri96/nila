@@ -1,0 +1,18 @@
+read = rl.on 'line', do |line|
+  case line.trim()
+    when 'hello'
+      puts "world!"
+    else
+      puts "Say what? I might have heard #{line.trim()}"
+  end
+  rl.prompt()
+end
+
+read.on 'close', do
+  puts "Have a great day!"
+  process.exit(0)
+end
+
+process.argv.forEach do |val,index,array|
+  commandline_args << val
+end

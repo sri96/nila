@@ -65,6 +65,8 @@
 
         ".downcase" => ".toLowerCase()",
 
+        ".zero?" => " === 0",
+
     }
 
     method_map = method_map_replacement.keys
@@ -83,7 +85,7 @@
 
         unless line.include?(method_match + "(")
 
-          line = line.sub(method_match,method_map_replacement[method_match])
+          line = line.gsub(method_match,method_map_replacement[method_match])
 
         end
 

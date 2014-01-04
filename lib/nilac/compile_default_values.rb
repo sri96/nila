@@ -65,7 +65,15 @@
 
           replacement_parameters << param.lstrip.rstrip
 
-          replacement_string = replacement_string + "\n" + "if (#{param.lstrip.rstrip} equequ null) {\n  #{paramvalue.lstrip.rstrip}\n}\n" +"\n"
+          if input_function_definition.include?("lambdef")
+
+            replacement_string = replacement_string + "\n" + "#iggggnnnore if (#{param.lstrip.rstrip} equequ null) {\n  #iggggnnnore #{paramvalue.lstrip.rstrip}\n}#@$\n" +"\n"
+
+          else
+
+            replacement_string = replacement_string + "\n" + "if (#{param.lstrip.rstrip} equequ null) {\n  #{paramvalue.lstrip.rstrip}\n}#@$\n" +"\n"
+
+          end
 
         end
 
@@ -96,6 +104,10 @@
     input_file_contents = input_file_contents.collect { |element| element.gsub(">=", "greatequal") }
 
     input_file_contents = input_file_contents.collect { |element| element.gsub("<=", "lessyequal") }
+
+    input_file_contents = input_file_contents.collect { |element| element.gsub("%--%", "{\n\n") }
+
+    input_file_contents = input_file_contents.collect { |element| element.gsub("-%%-", "\n\n}") }
 
     possible_default_values = input_file_contents.dup.reject { |element| (!element.include?("def")) }
 
@@ -154,6 +166,8 @@
     line_by_line_contents = line_by_line_contents.collect { |element| element.gsub("greatequal", ">=") }
 
     line_by_line_contents = line_by_line_contents.collect { |element| element.gsub("lessyequal", "<=") }
+
+    line_by_line_contents = line_by_line_contents.collect { |element| element.gsub("lambdef", "function") }
 
     return line_by_line_contents
 

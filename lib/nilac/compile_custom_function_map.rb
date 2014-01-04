@@ -12,7 +12,9 @@ def compile_custom_function_map(input_file_contents)
 
         "require" => "require",
 
-        "alert" => "alert"
+        "alert" => "alert",
+
+        "prompt" => "prompt"
 
     }
 

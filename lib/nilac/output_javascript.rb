@@ -1,13 +1,15 @@
-  def output_javascript(file_contents, output_file, temporary_nila_file)
+require_relative 'version'
 
-    file_id = open(output_file, 'w')
+def output_javascript(file_contents, output_file, temporary_nila_file)
 
-    File.delete(temporary_nila_file)
+  file_id = open(output_file, 'w')
 
-    file_id.write("//Written using Nila. Visit http://adhithyan15.github.io/nila\n")
+  File.delete(temporary_nila_file)
 
-    file_id.write(file_contents.join)
+  file_id.write("//Written using Nila. Visit http://adhithyan15.github.io/nila\n")
 
-    file_id.close()
+  file_id.write(file_contents.join)
 
-  end
+  file_id.close()
+
+end

@@ -1,6 +1,6 @@
 require_relative 'replace_strings'
-
 require_relative 'read_file_line_by_line'
+require_relative 'paranthesis_compactor'
   
   def get_variables(input_file_contents, temporary_nila_file, *loop_variables)
 
@@ -40,41 +40,52 @@ require_relative 'read_file_line_by_line'
 
       if current_row.include?("=") and current_row.index(javascript_regexp) == nil and !current_row.include?("#iggggnnnore")
 
-        current_row = current_row.rstrip + "\n"
+        if current_row.index(/,function\(/)
 
-        current_row_split = current_row.split("=")
-
-        for y in 0...current_row_split.length
-
-          current_row_split[y] = current_row_split[y].strip
-
+          current_row = current_row.strip + "$@#)\n\n"
 
         end
 
-        if current_row_split[0].include?("[") or current_row_split[0].include?("(")
+        if compact_paranthesis(current_row).include?("=")
 
-          current_row_split[0] = current_row_split[0][0...current_row_split[0].index("[")]
+          current_row = current_row.gsub("$@#)\n\n","\n")
+
+          current_row = current_row.rstrip + "\n"
+
+          current_row_split = current_row.split("=")
+
+          for y in 0...current_row_split.length
+
+            current_row_split[y] = current_row_split[y].strip
+
+
+          end
+
+          if current_row_split[0].include?("[") or current_row_split[0].include?("(")
+
+            current_row_split[0] = current_row_split[0][0...current_row_split[0].index("[")]
+
+          end
+
+          current_row_split[0] = current_row_split[0].split(".",2)[0].strip if current_row_split[0].include?(".")
+
+          if current_row_split[0].include?(" ")
+
+            variable_name = current_row_split[0].split
+
+            variable_name = variable_name.join("_")
+
+            modified_file_contents[modified_file_contents.index(original_row)] = modified_file_contents[modified_file_contents.index(original_row)].gsub(current_row_split[0],variable_name)
+
+          else
+
+            variable_name = current_row_split[0]
+
+          end
+
+          variables << variable_name
 
         end
-
-        current_row_split[0] = current_row_split[0].split(".",2)[0].strip if current_row_split[0].include?(".")
-
-        if current_row_split[0].include?(" ")
-
-          variable_name = current_row_split[0].split
-
-          variable_name = variable_name.join("_")
-
-          modified_file_contents[modified_file_contents.index(original_row)] = modified_file_contents[modified_file_contents.index(original_row)].gsub(current_row_split[0],variable_name)
-
-        else
-
-          variable_name = current_row_split[0]
-
-        end
-
-        variables << variable_name
-
 
       end
 

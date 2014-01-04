@@ -92,19 +92,19 @@ def compile_conditional_structures(input_file_contents, temporary_nila_file)
 
         if index == 0
 
-          output_statement = "if (#{condition.lstrip.rstrip.gsub("?", "")}) {\n\n#{line_split[0]}\n}\n"
+          output_statement = "if (#{condition.lstrip.rstrip.gsub("?", "")}) {\n\n#{line_split[0]}\n}#@$\n\t\t"
 
         elsif index == 1
 
-          output_statement = "while (#{condition.lstrip.rstrip.gsub("?", "")}) {\n\n#{line_split[0]}\n}\n"
+          output_statement = "while (#{condition.lstrip.rstrip.gsub("?", "")}) {\n\n#{line_split[0]}\n}#@$\n\n\t"
 
         elsif index == 2
 
-          output_statement = "if (!(#{condition.lstrip.rstrip.gsub("?", "")})) {\n\n#{line_split[0]}\n}\n"
+          output_statement = "if (!(#{condition.lstrip.rstrip.gsub("?", "")})) {\n\n#{line_split[0]}\n}#@$\n\t\t"
 
         elsif index == 3
 
-          output_statement = "while (!(#{condition.lstrip.rstrip.gsub("?", "")})) {\n\n#{line_split[0]}\n}\n"
+          output_statement = "while (!(#{condition.lstrip.rstrip.gsub("?", "")})) {\n\n#{line_split[0]}\n}#@$\n\n\t"
 
         end
 
@@ -320,6 +320,8 @@ def compile_conditional_structures(input_file_contents, temporary_nila_file)
         end
 
       end
+
+      modified_input_block[-1] = modified_input_block[-1].gsub("}","}#@$\n\t\t")
 
       return modified_input_block
 
@@ -597,6 +599,8 @@ def compile_conditional_structures(input_file_contents, temporary_nila_file)
 
       end
 
+      modified_input_block[-1] = modified_input_block[-1].gsub("}","}#@$\n\n\t")
+
       return modified_input_block
 
     end
@@ -727,7 +731,7 @@ def compile_conditional_structures(input_file_contents, temporary_nila_file)
 
       extracted_blocks = []
 
-      controlregexp = /(if |while |def |for | do )/
+      controlregexp = /(if |while |def |for | do |class )/
 
       rejectionregexp = /( if | while )/
 
@@ -783,7 +787,7 @@ def compile_conditional_structures(input_file_contents, temporary_nila_file)
 
             block_end = current_block.index(block_extract[-1])
 
-            current_block[block_start..block_end] = "--forblock#{for_block_counter}"
+            current_block[block_start..block_end] = "--forblock#{for_block_counter}\n\n"
 
             for_block_counter += 1
 
@@ -911,13 +915,19 @@ def compile_conditional_structures(input_file_contents, temporary_nila_file)
 
       end
 
+      modified_input_block[-1] = modified_input_block[-1].gsub("}","}#@$\n\n\n")
+
       return modified_input_block
 
     end
 
+    input_file_contents = input_file_contents.collect {|element| element.gsub("forEach","fuuuuurEEEEEach")}
+
     possible_for_statements = input_file_contents.reject { |element| !element.include?("for") }
 
     possible_for_statements = possible_for_statements.reject {|element| element.include?("for (")}
+
+    input_file_contents = input_file_contents.collect {|element| element.gsub("fuuuuurEEEEEach","forEach")}
 
     if !possible_for_statements.empty?
 
@@ -931,7 +941,7 @@ def compile_conditional_structures(input_file_contents, temporary_nila_file)
 
       for_statement_indexes = [0] + for_statement_indexes.flatten + [-1]
 
-      controlregexp = /(if |def |while | do )/
+      controlregexp = /(if |def |while | do |class )/
 
       modified_input_contents, extracted_statements = extract_for_blocks(for_statement_indexes, input_file_contents.clone)
 
@@ -981,7 +991,7 @@ def compile_conditional_structures(input_file_contents, temporary_nila_file)
 
           else
 
-            joined_file_contents = joined_file_contents.sub(rejected_elements_index[0], rejected_elements[0].join)
+            joined_file_contents = joined_file_contents.sub(rejected_elements_index[0], rejected_elements[0])
 
             rejected_elements_index.delete_at(0)
 
@@ -1180,6 +1190,8 @@ def compile_conditional_structures(input_file_contents, temporary_nila_file)
         end
 
       end
+
+      modified_input_block[-1] = modified_input_block[-1].gsub("}","}#@$\n\n\t")
 
       return modified_input_block
 

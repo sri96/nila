@@ -1,6 +1,6 @@
 require_relative 'replace_strings'
-
 require_relative 'read_file_line_by_line'
+require_relative 'paranthesis_compactor'
   
   def compile_parallel_assignment(input_file_contents, temporary_nila_file)
 
@@ -16,7 +16,7 @@ require_relative 'read_file_line_by_line'
 
         right_side = input_string.split("=")[1]
 
-        if right_side.include?(",")
+        if compact_paranthesis(right_side).include?(",")
 
           splits = right_side.split(",")
 

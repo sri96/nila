@@ -22,6 +22,8 @@ require_relative 'lexical_scoped_function_variables'
 
     input_file_contents = input_file_contents.collect {|element| element.gsub("append","appand")}
 
+    input_file_contents = input_file_contents.collect {|element| element.gsub(" do"," do ").gsub("do "," do ")}
+
     possible_blocks = input_file_contents.reject {|line| !line.include?(" do ")}
 
     unless possible_blocks.empty?
@@ -98,7 +100,7 @@ require_relative 'lexical_scoped_function_variables'
 
         else
 
-          compiled_block = block_extract[1...-1].lstrip.rstrip
+          compiled_block = "function() {\n\n" + block_extract[1...-1].lstrip.rstrip + "\n\n}"
 
           extracted_string.each_with_index do |string,index|
 
@@ -118,13 +120,29 @@ require_relative 'lexical_scoped_function_variables'
 
           caller_func_split = caller_func.split("(") if caller_func.include?("(")
 
-          caller_func_split = caller_func.split(" ",2) if caller_func.include?(" ")
+          if caller_func.include?("=")
+
+            first_split = caller_func.split("=")
+
+            caller_func_split = first_split[1].split(" ",2)
+
+            caller_func_split[0] = first_split[0].strip + " = " +  caller_func_split[0]
+
+          else
+
+            caller_func_split = caller_func.split(" ",2) if caller_func.include?(" ")
+
+          end
 
           replacement_string = "#{caller_func_split[0]}(#{caller_func_split[1].strip + compiled_block.lstrip})"
 
         end
 
         replacement_array = strToArray(replacement_string)
+
+        replacement_array[-1] = replacement_array[-1] + "\n\n"
+
+        replacement_array << "\n\n"
 
         variables = lexical_scoped_variables(replacement_array)
 

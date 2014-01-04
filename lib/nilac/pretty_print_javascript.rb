@@ -1,6 +1,6 @@
 require_relative 'find_all_matching_indices'
-
 require_relative 'read_file_line_by_line'
+require_relative 'replace_strings'
   
   def pretty_print_javascript(javascript_file_contents, temporary_nila_file,declarable_variables)
 
@@ -42,105 +42,93 @@ require_relative 'read_file_line_by_line'
 
     end
 
-    def fix_newlines(file_contents)
+    def fix_newlines(file_contents,main_block_numbers)
 
-      def extract_blocks(file_contents)
+      def block_compactor(input_block)
 
-        javascript_regexp = /(if |for |while |case |default:|switch\(|\(function\(|= function\(|,\s*function\(|((=|:)\s+\{))/
+        modified_block = input_block.reject {|element| element.strip.eql?("")}
 
-        block_starting_lines = file_contents.dup.reject { |element| element.index(javascript_regexp).nil? }[1..-1]
+        modified_block = modified_block.collect {|element| element.rstrip + "\n"}
 
-        block_starting_lines = block_starting_lines.reject { |element| element.include?("    ") }
+        return modified_block
 
-        initial_starting_lines = block_starting_lines.dup
+      end
 
-        starting_line_indices = []
+      main_block_numbers = [ ] if main_block_numbers.nil?
 
-        block_starting_lines.each do |line|
+      unless main_block_numbers.empty?
 
-          starting_line_indices << file_contents.index(line)
+        javascript_regexp = /(if |for |while |case |default:|switch\(|,function\(|\(function\(|= function\(|((=|:)\s+\{))/
 
-        end
+        starting_locations = []
 
-        block_ending_lines = file_contents.dup.each_index.select { |index| (file_contents[index].eql? "  }\n" or file_contents[index].eql? "  };\n" or file_contents[index].lstrip.eql?("});\n"))}
+        file_contents.each_with_index do |line, index|
 
-        block_ending_lines = block_ending_lines.reject {|index| file_contents[index].include?("    ")}
+          if line.index(javascript_regexp) != nil
 
-        modified_file_contents = file_contents.dup
-
-        code_blocks = []
-
-        starting_index = starting_line_indices[0]
-
-        begin
-
-          for x in 0...initial_starting_lines.length
-
-            code_blocks << modified_file_contents[starting_index..block_ending_lines[0]]
-
-            modified_file_contents[starting_index..block_ending_lines[0]] = []
-
-            modified_file_contents.insert(starting_index, "  *****")
-
-            block_starting_lines = modified_file_contents.dup.reject { |element| element.index(javascript_regexp).nil? }[1..-1]
-
-            block_starting_lines = block_starting_lines.reject { |element| element.include?("    ") }
-
-            starting_line_indices = []
-
-            block_starting_lines.each do |line|
-
-              starting_line_indices << modified_file_contents.index(line)
-
-            end
-
-            block_ending_lines = modified_file_contents.dup.each_index.select { |index| (modified_file_contents[index].eql? "  }\n" or modified_file_contents[index].eql? "  };\n" or modified_file_contents[index].lstrip.eql?("});\n")) }
-
-            starting_index = starting_line_indices[0]
+            starting_locations << index
 
           end
 
-        #rescue TypeError
-        ##
-        #  puts "Whitespace was left unfixed!"
-        ##
-        #rescue ArgumentError
-        ##
-        #  puts "Whitespace was left unfixed!"
+        end
+
+        remaining_contents, blocks = roll_blocks(file_contents,starting_locations)
+
+        modified_block = []
+
+        blocks.each do |block|
+
+          while block.join.include?("--block")
+
+            nested_blocks = block.reject {|element| !replace_strings(element).include?("--block")}
+
+            block_numbers = nested_blocks.collect {|element| element.strip.split("--block")[1].to_i}
+
+            block_numbers.each_with_index do |number,index|
+
+              location = block.index(nested_blocks[index])
+
+              block[location] = blocks[number]
+
+            end
+
+            block = block.flatten
+
+          end
+
+          modified_block << block
 
         end
 
-        return modified_file_contents, code_blocks
+        main_block_numbers = main_block_numbers.collect {|element| element.strip.to_i}
+
+        remaining_contents = remaining_contents.reject {|element| element.strip.eql?("")}
+
+        remaining_contents = [remaining_contents[0]] + remaining_contents[1...-1].collect {|element| element + "\n"} + [remaining_contents[-1]]
+
+        main_block_numbers.each do |number|
+
+          correct_block = block_compactor(modified_block[number])
+
+          correct_block << "\n"
+
+          remaining_contents[remaining_contents.index("--block#{number}\n\n")] = correct_block
+
+        end
+
+        remaining_contents = remaining_contents.flatten
+
+      else
+
+        remaining_contents = block_compactor(file_contents)
+
+        remaining_contents = [remaining_contents[0]] + remaining_contents[1...-1].collect {|element| element + "\n"} + [remaining_contents[-1]]
 
       end
 
-      compact_contents = file_contents.reject { |element| element.lstrip.eql? "" }
+      remaining_contents[-1] = remaining_contents[-1].rstrip
 
-      compact_contents, code_blocks = extract_blocks(compact_contents)
-
-      processed_contents = compact_contents[1...-1].collect { |line| line+"\n" }
-
-      compact_contents = [compact_contents[0]] + processed_contents + [compact_contents[-1]]
-
-      code_block_locations = compact_contents.each_index.select { |index| compact_contents[index].eql? "  *****\n" }
-
-      initial_locations = code_block_locations.dup
-
-      starting_index = code_block_locations[0]
-
-      for x in 0...initial_locations.length
-
-        code_blocks[x][-1] = code_blocks[x][-1] + "\n"
-
-        compact_contents = compact_contents[0...starting_index] + code_blocks[x] + compact_contents[starting_index+1..-1]
-
-        code_block_locations = compact_contents.each_index.select { |index| compact_contents[index].eql? "  *****\n" }
-
-        starting_index = code_block_locations[0]
-
-      end
-
-      return compact_contents
+      return remaining_contents
 
     end
 
@@ -176,7 +164,7 @@ require_relative 'read_file_line_by_line'
 
         current_block = []
 
-        possible_blocks.each_with_index do |block|
+        possible_blocks.each do |block|
 
           if !block[0].eql?(current_block[-1])
 
@@ -190,7 +178,7 @@ require_relative 'read_file_line_by_line'
 
           current_block.each_with_index do |line, index|
 
-            if line.lstrip.eql? "}\n" or line.lstrip.eql?("};\n") or line.lstrip.include?("_!;\n") or line.lstrip.include?("});\n")
+            if line.strip.eql? "}" or line.strip.eql?("};") or line.strip.include?("_!;") or line.strip.eql?("});")
 
               end_counter += 1
 
@@ -234,7 +222,7 @@ require_relative 'read_file_line_by_line'
 
               current_block.each_with_index do |line, index|
 
-                if line.lstrip.eql? "}\n" or line.lstrip.eql?("};\n") or line.lstrip.include?("_!;\n") or line.lstrip.include?("});\n")
+                if line.strip.eql? "}" or line.strip.eql?("};") or line.strip.include?("_!;") or line.strip.eql?("});")
 
                   end_counter += 1
 
@@ -305,6 +293,8 @@ require_relative 'read_file_line_by_line'
     javascript_file_contents = javascript_file_contents.collect { |element| element.sub("Euuf", "if") }
 
     javascript_file_contents = javascript_file_contents.collect { |element| element.sub("whaaleskey", "while") }
+
+    javascript_file_contents = javascript_file_contents.collect { |element| element.sub("}#@$", "}") }
 
     javascript_file_contents = reset_tabs(javascript_file_contents)
 
@@ -408,13 +398,15 @@ require_relative 'read_file_line_by_line'
 
       remaining_file_contents = ["(function() {\n", remaining_file_contents, "\n}).call(this);"].flatten
 
-      joined_file_contents = remaining_file_contents.join
-
       main_blocks.each_with_index do |block_id, index|
 
-        joined_file_contents = joined_file_contents.sub(block_id, modified_blocks[index])
+        remaining_file_contents[remaining_file_contents.index(block_id)] = modified_blocks[index]
 
       end
+
+      remaining_file_contents = remaining_file_contents.reject {|element| element.eql?("  ")}
+
+      joined_file_contents = remaining_file_contents.join
 
     else
 
@@ -436,7 +428,7 @@ require_relative 'read_file_line_by_line'
 
     line_by_line_contents = line_by_line_contents.collect {|element| element.gsub("%$%$ {","")}
 
-    line_by_line_contents = fix_newlines(line_by_line_contents)
+    line_by_line_contents = fix_newlines(line_by_line_contents,main_block_numbers)
 
     removable_indices = line_by_line_contents.each_index.select {|index| line_by_line_contents[index].strip == "%$%$;" }
 

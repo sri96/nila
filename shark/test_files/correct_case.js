@@ -28,7 +28,7 @@
     case 2:
       console.log('Your input was 2');
       break;
-    default: 
+    default:
       console.log("Your input was greater than 2");
   }
 

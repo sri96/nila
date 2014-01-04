@@ -91,7 +91,7 @@ require_relative 'read_file_line_by_line'
 
       when_statements_index = when_statements_index.flatten
 
-      if replace_strings(statement_block.join).include?("else\n")
+      if replace_strings(statement_block.join).include?("else\n") or replace_strings(statement_block.join).include?("else\r\n")
 
         else_statement = statement_block.reject {|element| !replace_strings(element).strip.eql?("else")}
 
