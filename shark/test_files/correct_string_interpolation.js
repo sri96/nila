@@ -14,4 +14,6 @@
 
   console.log('Hello');
 
+  console.log("We're #" + (number) + "!");
+
 }).call(this);

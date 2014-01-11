@@ -16,3 +16,13 @@ end
 process.argv.forEach do |val,index,array|
   commandline_args << val
 end
+
+read.on 'close', do 
+  stream.end()
+  fs.unlink file_name, do |err|
+    puts "REPL Session Successfully concluded!"
+  end
+  puts "\n\nThanks for trying out Nila!\n"
+  puts "You can learn more about Nila at http://adhithyan15.github.io/nila\n"
+  process.exit(0)
+end

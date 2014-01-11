@@ -18,6 +18,8 @@ def extract_blocks(statement_indexes, input_file_contents,options = [])
 
   controlregexp = /(if |while |def | do |class )/ if options.length.eql?(2)
 
+  controlregexp = /(if |Euuf |while |for |def | do )/ if options.length.eql?(4)
+
   controlregexp = /(Euuf |while |for | do |function )/ if options.length.eql?(5)
 
   endexpr = "end" if options.empty?
@@ -25,6 +27,8 @@ def extract_blocks(statement_indexes, input_file_contents,options = [])
   endexpr = "};" if options.length.eql?(1)
 
   endexpr = "end" if options.length.eql?(2)
+
+  endexpr = "end" if options.length.eql?(4)
 
   endexpr = "}" if options.length.eql?(5)
 
@@ -54,7 +58,7 @@ def extract_blocks(statement_indexes, input_file_contents,options = [])
 
     current_block.each_with_index do |line, index|
 
-      if line.strip.eql? endexpr
+      if replace_strings(line).strip.eql? endexpr
 
         end_counter += 1
 
@@ -74,7 +78,7 @@ def extract_blocks(statement_indexes, input_file_contents,options = [])
 
         array_extract.each_with_index do |line|
 
-          break if (line.lstrip.index(controlregexp) != nil)
+          break if (replace_strings(line).lstrip.index(controlregexp) != nil)
 
           index_counter += 1
 
@@ -98,7 +102,7 @@ def extract_blocks(statement_indexes, input_file_contents,options = [])
 
         current_block.each_with_index do |line, index|
 
-          if line.strip.eql? endexpr
+          if replace_strings(line).strip.eql? endexpr
 
             end_counter += 1
 

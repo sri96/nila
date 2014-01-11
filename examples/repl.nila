@@ -4,14 +4,14 @@ require 'readline'
 
 require 'fs'
 
-stream = fs.createWriteStream("my_file.nila")
+file_name = "#{__dirname}/my_file.nila"
+
+stream = fs.createWriteStream(file_name)
 
 stream.once 'open', do |fd|
 
- stream.write("Testing!\n")
+ stream.write("# REPL Session #{new Date().to_s}")
  
- stream.end()
-
 end
 
 rl = readline.createInterface(process.stdin, process.stdout)
@@ -21,11 +21,16 @@ rl.setPrompt('nila> ')
 rl.prompt()
 
 read = rl.on 'line', do |line|
-  
+  stream.write(line)
   rl.prompt()
 end
 
-read.on 'close', do
-  puts "Have a great day!"
+read.on 'close', do 
+  stream.end()
+  fs.unlink file_name, do |err|
+    puts "REPL Session Successfully concluded!"
+  end
+  puts "\n\nThanks for trying out Nila!\n"
+  puts "You can learn more about Nila at http://adhithyan15.github.io/nila\n"
   process.exit(0)
 end

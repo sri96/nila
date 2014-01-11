@@ -1,6 +1,8 @@
 require_relative 'read_file_line_by_line'
 require_relative 'strToArray'
 require_relative 'lexical_scoped_function_variables'
+require_relative 'rollblocks'
+require_relative 'replace_strings'
   
   def compile_blocks(input_file_contents,temporary_nila_file)
 
@@ -24,49 +26,69 @@ require_relative 'lexical_scoped_function_variables'
 
     input_file_contents = input_file_contents.collect {|element| element.gsub(" do"," do ").gsub("do "," do ")}
 
-    possible_blocks = input_file_contents.reject {|line| !line.include?(" do ")}
+    modified_file_contents = input_file_contents.clone.collect {|element| element.gsub("end","end"+"   "*rand(1..10))}
 
-    unless possible_blocks.empty?
+    possible_blocks = modified_file_contents.clone.reject {|line| !line.include?(" do ")}
 
-      possible_blocks.each do |starting_line|
+    extract_expr = /(if |Euuf |while |for |def | do )/
 
-        index_counter = starting_counter = input_file_contents.index(starting_line)
+    starting_locations = []
 
-        line = starting_line
+    input_file_contents.each_with_index do |line, index|
 
-        until line.strip.eql?("end") or line.strip.eql?("end)")
+      if replace_strings(line).index(extract_expr) != nil
 
-          index_counter += 1
-
-          line = input_file_contents[index_counter]
-
-        end
-
-        loop_extract = input_file_contents[starting_counter..index_counter]
-
-        loop_condition, block = loop_extract.join.split(" do ")
-
-        block = block.split("end")[0]
-
-        replacement_string = "#{loop_condition.rstrip} blockky {#{block.strip}}_!"
-
-        input_file_contents[starting_counter..index_counter] = replacement_string
+        starting_locations << index
 
       end
 
     end
 
-    possible_blocks = input_file_contents.reject{ |element| !element.include?(" blockky ")}
+    starting_locations = [0,starting_locations,-1].flatten.uniq
 
-    possible_blocks = possible_blocks.reject {|element| !element.include?("{") and !element.include?("}")}
+    remaining_contents, extracted_blocks = extract_blocks(starting_locations,modified_file_contents,["if","for","while","def and do"])
 
-    modified_file_contents = input_file_contents.clone
+    possible_blocks = extracted_blocks.reject {|element| !element[0].index(/( do )/)}
+
+    replaced_blocks = []
 
     unless possible_blocks.empty?
 
-      possible_blocks.each do |loop|
+      possible_blocks.each do |element|
 
-        original_loop = loop.clone
+        starting_counter = modified_file_contents.index(element[0])
+
+        end_counter = modified_file_contents.index(element[-1])
+
+        loop_extract = input_file_contents[starting_counter..end_counter]
+
+        loop_condition,function_parameters= loop_extract[0].split(" do ")
+
+        block = [function_parameters] + loop_extract[1...-1]
+
+        replacement_string = "#{loop_condition.rstrip} blockky \n{#{block.join.strip}\n}_!"
+
+        replaced_blocks << replacement_string
+
+        input_file_contents[starting_counter..end_counter] = replacement_string
+
+        modified_file_contents[starting_counter..end_counter] = replacement_string
+
+      end
+
+    end
+
+    original_blocks = replaced_blocks.clone
+
+    possible_blocks = replaced_blocks.clone
+
+    joined_file_contents = input_file_contents.clone.join
+
+    unless possible_blocks.empty?
+
+      possible_blocks.each_with_index do |loop,index|
+
+        original_loop = original_blocks[index]
 
         string_counter = 1
 
@@ -84,7 +106,7 @@ require_relative 'lexical_scoped_function_variables'
 
         end
 
-        block_extract = loop[loop.index("{")..loop.index("}_!")]
+        block_extract = strToArray(loop)[1..-1].join[0...-2]
 
         compiled_block = ""
 
@@ -156,21 +178,43 @@ require_relative 'lexical_scoped_function_variables'
 
         replacement_array[1...-1] = replacement_array[1...-1].collect {|element| "#iggggnnnore #{element}"}
 
-        modified_file_contents[input_file_contents.index(original_loop)] = replacement_array.join
+        starting_counter = joined_file_contents.index(original_loop)
+
+        end_counter = joined_file_contents.index(original_loop)+original_loop.length
+
+        joined_file_contents[starting_counter..end_counter] = replacement_array.join
+
+        nested_blocks = possible_blocks.clone.reject {|element| !element.include?(original_loop)}
+
+        nested_blocks = nested_blocks.reject {|element| element.eql?(original_loop)}
+
+        nested_blocks.each do |block|
+
+          replacement_block = original_blocks[original_blocks.index(block)]
+
+          starting_counter = replacement_block.index(original_loop)
+
+          end_counter = replacement_block.index(original_loop)+original_loop.length
+
+          replacement_block[starting_counter..end_counter] = replacement_array.join
+
+          original_blocks[original_blocks.index(block)] = replacement_block
+
+        end
 
       end
 
     end
 
-    modified_file_contents = modified_file_contents.collect {|element| element.gsub("appand","append")}
-
     file_id = open(temporary_nila_file, 'w')
 
-    file_id.write(modified_file_contents.join)
+    file_id.write(joined_file_contents)
 
     file_id.close()
 
     line_by_line_contents = read_file_line_by_line(temporary_nila_file)
+
+    line_by_line_contents = line_by_line_contents.collect {|element| element.gsub("appand","append")}
 
     return line_by_line_contents
 

@@ -3,6 +3,8 @@
 
 #Nila and Nilac are being crafted by Adhithya Rajasekaran and Sri Madhavi Rajasekaran
 
+#All the code in this project is licensed under the MIT License
+
 $LOAD_PATH << File.dirname(__FILE__)
 
 module Nilac
@@ -47,6 +49,7 @@ module Nilac
   require 'nilac/parse_arguments'
   require 'nilac/friendly_errors'
   require 'nilac/compile_monkey_patching'
+  require 'nilac/compile_ranges'
 
   class NilaCompiler
 
@@ -68,6 +71,8 @@ module Nilac
 
         file_contents = file_contents.collect {|element| element.gsub("\r\n","\n")}
 
+        file_contents = file_contents.collect {|element| element.gsub(".end",".enttttttttttt")}
+
         file_contents = extract_parsable_file(file_contents)
 
         file_contents = compile_require_statements(file_contents)
@@ -77,6 +82,8 @@ module Nilac
         file_contents, singleline_comments = replace_singleline_comments(file_contents)
 
         file_contents = split_semicolon_seperated_expressions(file_contents)
+
+        file_contents = compile_ranges(file_contents)
 
         file_contents = compile_heredocs(file_contents, temp_file)
 
@@ -139,6 +146,8 @@ module Nilac
         file_contents = pretty_print_javascript(file_contents, temp_file,list_of_variables+func_names)
 
         file_contents = compile_operators(file_contents)
+
+        file_contents = file_contents.collect {|element| element.gsub(".enttttttttttt",".end")}
 
         output_javascript(file_contents, output_js_file, temp_file)
 

@@ -1,4 +1,5 @@
 require_relative 'read_file_line_by_line'
+require_relative 'replace_strings'
 
 def compile_conditional_structures(input_file_contents, temporary_nila_file)
 
@@ -923,7 +924,7 @@ def compile_conditional_structures(input_file_contents, temporary_nila_file)
 
     input_file_contents = input_file_contents.collect {|element| element.gsub("forEach","fuuuuurEEEEEach")}
 
-    possible_for_statements = input_file_contents.reject { |element| !element.include?("for") }
+    possible_for_statements = input_file_contents.reject { |element| !replace_strings(element).include?("for") }
 
     possible_for_statements = possible_for_statements.reject {|element| element.include?("for (")}
 

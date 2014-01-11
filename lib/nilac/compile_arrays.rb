@@ -1,7 +1,5 @@
 require_relative 'find_all_matching_indices'
-
 require_relative 'read_file_line_by_line'
-
 require_relative 'compile_interpolated_strings'
 
   def compile_arrays(input_file_contents, named_functions, temporary_nila_file)
@@ -40,9 +38,19 @@ require_relative 'compile_interpolated_strings'
 
       input_file_contents.each_with_index do |line, index|
 
-        if line.include?("%w{")
+        if line.include?("%w")
 
-          string_arrays = extract(line, "%w{", "}")
+          start_delimiter = close_delimiter = line[line.index("%w")+2]
+
+          close_delimiter = "}" if start_delimiter.eql?("{")
+
+          close_delimiter = ")" if start_delimiter.eql?("(")
+
+          close_delimiter = ">" if start_delimiter.eql?("<")
+
+          close_delimiter = "]" if start_delimiter.eql?("[")
+
+          string_arrays = extract(line, "%w#{start_delimiter}", "#{close_delimiter}")
 
           string_arrays.each do |array|
 

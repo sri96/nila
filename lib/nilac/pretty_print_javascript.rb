@@ -198,7 +198,7 @@ require_relative 'replace_strings'
 
               array_extract.each_with_index do |line|
 
-                break if line.index(controlregexp) != nil
+                break if replace_strings(line).index(controlregexp) != nil
 
                 index_counter += 1
 
@@ -280,7 +280,7 @@ require_relative 'replace_strings'
 
     end
 
-    javascript_regexp = /(if |for |while |case |default:|switch\(|\(function\(|= function\(|((=|:)\s+\{))/
+    javascript_regexp = /(if |for |while |case |default:|switch\(|\(function\(|= function\(|,\s*function\(|((=|:)\s+\{))/
 
     if declarable_variables.length > 0
 
@@ -302,7 +302,7 @@ require_relative 'replace_strings'
 
     javascript_file_contents.each_with_index do |line, index|
 
-      if line.index(javascript_regexp) != nil
+      if replace_strings(line).index(javascript_regexp) != nil and !line.lstrip.include?("//")
 
         starting_locations << index
 

@@ -9,3 +9,5 @@ puts "Hello #{"world"}"
 puts 'Hello #{world}'
 
 puts 'Hello'
+
+puts "We're ##{number}!"

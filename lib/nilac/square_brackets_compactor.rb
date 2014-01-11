@@ -1,6 +1,4 @@
-require_relative 'square_brackets_compactor'
-
-def compact_paranthesis(input_string)
+def compact_square_brackets(input_string)
 
   string_extract = input_string.reverse
 
@@ -12,13 +10,13 @@ def compact_paranthesis(input_string)
 
   offset_value = nil
 
-  while string_extract.include?("(")
+  while string_extract.include?("[")
 
-    open_paran_index = string_extract.index("(")
+    open_paran_index = string_extract.index("[")
 
     test_extract = string_extract[0..open_paran_index].reverse
 
-    two_paranthesis = test_extract[0..test_extract.index(")")]
+    two_paranthesis = test_extract[0..test_extract.index("]")]
 
     previous_value = paranthesis_extract[-1]
 
@@ -34,6 +32,6 @@ def compact_paranthesis(input_string)
 
   end
 
-  return compact_square_brackets(string_extract.reverse)
+  return string_extract.reverse
 
 end
