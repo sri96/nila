@@ -44,6 +44,8 @@ require_relative 'read_file_line_by_line'
 
       end
 
+      replacement_string = replacement_string.gsub("\\#","#")
+
       joined_file_contents = joined_file_contents.sub(heredoc + heredoc_extract + delimiter, replacement_string)
 
     end

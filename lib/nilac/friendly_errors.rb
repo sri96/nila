@@ -212,4 +212,12 @@ module FriendlyErrors
 
   end
 
+  def check_heredoc_syntax(input_file_contents)
+
+    proceed = true
+
+
+
+  end
+
 end
