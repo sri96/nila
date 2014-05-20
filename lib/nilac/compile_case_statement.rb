@@ -51,6 +51,10 @@ require_relative 'read_file_line_by_line'
 
     possible_case_statements = input_file_contents.reject {|element| !element.include?("case ")}
 
+    possible_case_statements = possible_case_statements.reject {|element| replace_strings(element).include?(".downcase")}
+
+    possible_case_statements = possible_case_statements.reject {|element| replace_strings(element).include?(".upcase")}
+
     case_statements = []
 
     possible_case_statements.each do |statement|

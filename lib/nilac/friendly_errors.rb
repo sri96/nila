@@ -92,4 +92,124 @@ module FriendlyErrors
 
   end
 
+  def check_comments(file_contents)
+
+    def word_counter(input_string,word)
+
+      string_split = input_string.split(word)
+
+      return string_split.length-1
+
+    end
+
+    proceed = true
+
+    joined_file_contents = file_contents.join
+
+    joined_file_contents = replace_strings(joined_file_contents).gsub("_","")
+
+    unless joined_file_contents.scan(/=\s+begin/).empty?
+
+      puts "SyntaxWarning: Improper Whitespace\n\n"
+
+      puts "I detected that you have used one or more spaces between '=' and 'begin' in your file. This is not allowed.\n\n"
+
+      puts "But this is a very small mistake. So I am assuming you meant `=begin` and I will continue to compile.\n\n"
+
+      puts "Please correct it before next time or else you will see this warning again!\n\n"
+
+      puts "If you have any questions, please refer to the documentation at \n\nhttps://adhithyan15.github.io/nila/documentation.html#comments\n"
+
+      joined_file_contents = joined_file_contents.gsub(/=\s+begin/,"=begin")
+
+    end
+
+    unless joined_file_contents.scan(/=\s+end/).empty?
+
+      puts "SyntaxWarning: Improper Whitespace\n\n"
+
+      puts "I detected that you have used one or more spaces between '=' and 'end' in your file. This is not allowed.\n\n"
+
+      puts "But this is a very small mistake. So I am assuming you meant `=end` and I will continue to compile.\n\n"
+
+      puts "Please correct it before next time or else you will see this warning again!\n\n"
+
+      puts "If you have any questions, please refer to the documentation at \n\nhttps://adhithyan15.github.io/nila/documentation.html#comments\n"
+
+      joined_file_contents = joined_file_contents.gsub(/=\s+end/,"=end")
+
+    end
+
+    block_comments = []
+
+    while joined_file_contents.include?("=begin") or joined_file_contents.include?("=end")
+
+      begin
+
+        comment_start = joined_file_contents.index("=begin")
+
+        comment_end = joined_file_contents.index("=end")
+
+        block_comments << joined_file_contents[comment_start..comment_end]
+
+        joined_file_contents[comment_start..comment_end] = ""
+
+      rescue ArgumentError
+
+        if comment_start == nil
+
+          extracted_contents = joined_file_contents[0..comment_end].reverse
+
+          line_number_match = extracted_contents.match(/>>>\d*<<</)
+
+          line_number_match = line_number_match.to_a
+
+          line_number_extract = line_number_match[0].split(">>>")[1].split("<<<")[0]
+
+          puts "SyntaxError: Unexpected =end\n\n"
+
+          puts "It seems like there is a problem with your multiline comment. I am checking where that happened! Give me a few seconds..... \n\n"
+
+          puts "In line number #{line_number_extract}, I detected an `=end` statement. But no matching `=begin` statement was found! Please fix it immediately!\n\n"
+
+          puts "I cannot proceed with out it!\n\n"
+
+          puts "If you have any questions, please refer to the documentation at \n\nhttps://adhithyan15.github.io/nila/documentation.html#comments\n"
+
+          exit
+
+        end
+
+        if comment_end == nil
+
+          extracted_contents = joined_file_contents[0..comment_start].reverse
+
+          line_number_match = extracted_contents.match(/>>>\d*<<</)
+
+          line_number_match = line_number_match.to_a
+
+          line_number_extract = line_number_match[0].split(">>>")[1].split("<<<")[0]
+
+          puts "SyntaxError: Unexpected =begin\n\n"
+
+          puts "It seems like there is a problem with your multiline comment. I am checking where that happened! Give me a few seconds..... \n\n"
+
+          puts "In line number #{line_number_extract}, I detected a `=begin` statement. But no matching `=end` statement was found! Please fix it immediately!\n\n"
+
+          puts "I cannot proceed with out it!\n\n"
+
+          puts "If you have any questions, please refer to the documentation at \n\nhttps://adhithyan15.github.io/nila/documentation.html#comments\n"
+
+          exit
+
+        end
+
+      end
+
+    end
+
+    return proceed
+
+  end
+
 end

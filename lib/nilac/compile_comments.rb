@@ -1,4 +1,5 @@
 require_relative 'read_file_line_by_line'
+require_relative 'strToArray'
   
   def compile_comments(input_file_contents, comments, temporary_nila_file)
 
@@ -49,6 +50,14 @@ require_relative 'read_file_line_by_line'
       replacement_multiline_string = multiline_comments[y].sub("=begin", "/*\n")
 
       replacement_multiline_string = replacement_multiline_string.sub("=end", "\n*/")
+
+      replacement_array = strToArray(replacement_multiline_string)
+
+      replacement_array[2...-2] = replacement_array[2...-2].collect {|element| "  " + element}
+
+      replacement_array = [replacement_array[0]] + replacement_array[1...-1].reject {|element| element.strip.eql?("")} + [replacement_array[-1]]
+
+      replacement_multiline_string = replacement_array.join
 
       ignorable_keywords.each_with_index do |keyword, index|
 

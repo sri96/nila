@@ -12,11 +12,11 @@ def compile_require_statements(input_file_contents)
  #
  # var fs = require('fs')
 
- modified_file_contents = input_file_contents.clone.collect {|element| replace_strings(element)}
+ modified_file_contents = input_file_contents.clone
 
  modified_file_contents = modified_file_contents.collect {|element| element.rstrip + " "*Random.new.rand(1..20) + "\n\n"}
 
- possible_require_calls = modified_file_contents.reject {|element| !element.include?("require")}
+ possible_require_calls = modified_file_contents.reject {|element| !replace_strings(element).include?("require")}
 
  possible_require_calls.each do |statement|
 

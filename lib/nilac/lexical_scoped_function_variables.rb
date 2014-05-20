@@ -51,8 +51,6 @@ def lexical_scoped_variables(input_function_block)
 
   end
 
-  input_function_block = input_function_block.collect {|element| replace_strings(element)}
-
   controlregexp = /(if |Euuf |for |while |def |function |function\()/
 
   variables = []
@@ -65,7 +63,7 @@ def lexical_scoped_variables(input_function_block)
 
   input_function_block.each do |line|
 
-    if line.include? "=" and line.index(controlregexp).nil?
+    if replace_strings(line).include? "=" and replace_strings(line).index(controlregexp).nil?
 
       current_line_split = line.strip.split("=")
 

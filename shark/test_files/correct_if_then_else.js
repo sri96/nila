@@ -4,4 +4,8 @@
 
   date = friday ? sue : jill;
 
+  if (!(x === 1)) {
+    console.log("x is not 1");
+  }
+
 }).call(this);

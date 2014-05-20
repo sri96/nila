@@ -29,11 +29,11 @@ def replace_strings(input_string)
 
     while input_string.include?("\"")
 
-    string_extract = input_string[input_string.index("\"")..input_string.index("\"",input_string.index("\"")+1)]
+      string_extract = input_string[input_string.index("\"")..input_string.index("\"",input_string.index("\"")+1)]
 
-    input_string = input_string.sub(string_extract,"--repstring#{string_counter}")
+      input_string = input_string.sub(string_extract,"--repstring#{string_counter}")
 
-    string_counter += 1
+      string_counter += 1
 
     end
 

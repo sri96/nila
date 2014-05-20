@@ -14,6 +14,8 @@ require_relative 'read_file_line_by_line'
 
       possible_hashes = input_file_contents.reject { |element| !element.include?("{") }
 
+      possible_hashes = possible_hashes.reject {|element| element.include?("loop")}
+
       possible_multiline_hashes = possible_hashes.reject { |element| element.include?("}") }
 
       possible_multiline_hashes = possible_multiline_hashes.reject {|element| element.index(javascript_regexp) != nil}
@@ -68,7 +70,7 @@ require_relative 'read_file_line_by_line'
 
     def compile_inline_hashes(input_file_contents)
 
-      javascript_regexp = /(if |while |for |function |function\(|%[qQw]*\{|lambda\s*\{|\s*->\s*\{)/
+      javascript_regexp = /(if |while |for |function |function\(|%[qQw]*\{|lambda\s*\{|\s*->\s*\{|loop\s*)/
 
       modified_file_contents = input_file_contents.clone.collect {|element| replace_strings(element)}
 

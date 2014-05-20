@@ -1,6 +1,7 @@
 require_relative 'find_all_matching_indices'
 require_relative 'read_file_line_by_line'
 require_relative 'replace_strings'
+require_relative 'strToArray'
   
   def pretty_print_javascript(javascript_file_contents, temporary_nila_file,declarable_variables)
 
@@ -48,7 +49,7 @@ require_relative 'replace_strings'
 
         modified_block = input_block.reject {|element| element.strip.eql?("")}
 
-        modified_block = modified_block.collect {|element| element.rstrip + "\n"}
+        modified_block = modified_block.collect {|element| (element.rstrip + "\n") unless element[0..1].eql?("//")}
 
         return modified_block
 
@@ -104,7 +105,21 @@ require_relative 'replace_strings'
 
         remaining_contents = remaining_contents.reject {|element| element.strip.eql?("")}
 
-        remaining_contents = [remaining_contents[0]] + remaining_contents[1...-1].collect {|element| element + "\n"} + [remaining_contents[-1]]
+        remaining_contents[1...-1] = remaining_contents[1...-1].collect do |element|
+
+          if !replace_strings(element).split("//")[0].eql?("")
+
+            (element + "\n")
+
+          else
+
+            element
+
+          end
+
+        end
+
+        remaining_contents = [remaining_contents[0]] + remaining_contents[1...-1] + [remaining_contents[-1]]
 
         main_block_numbers.each do |number|
 
@@ -122,7 +137,21 @@ require_relative 'replace_strings'
 
         remaining_contents = block_compactor(file_contents)
 
-        remaining_contents = [remaining_contents[0]] + remaining_contents[1...-1].collect {|element| element + "\n"} + [remaining_contents[-1]]
+        remaining_contents[1...-1] = remaining_contents[1...-1].collect do |element|
+
+          if !replace_strings(element).split("//")[0].eql?("")
+
+            (element + "\n")
+
+          else
+
+            element
+
+          end
+
+        end
+
+        remaining_contents = [remaining_contents[0]] + remaining_contents[1...-1] + [remaining_contents[-1]]
 
       end
 
@@ -252,11 +281,15 @@ require_relative 'replace_strings'
 
       fixableregexp = /(else |elsuf )/
 
-      need_fixes = input_file_contents.reject { |line| line.index(fixableregexp).nil? }
+      if input_file_contents.join.index(fixableregexp)
 
-      need_fixes.each do |fix|
+        need_fixes = input_file_contents.reject { |line| line.index(fixableregexp).nil? }
 
-        input_file_contents[input_file_contents.index(fix)] = input_file_contents[input_file_contents.index(fix)].sub("  ", "")
+        need_fixes.each do |fix|
+
+          input_file_contents[input_file_contents.index(fix)] = input_file_contents[input_file_contents.index(fix)].sub("  ", "")
+
+        end
 
       end
 
@@ -277,6 +310,80 @@ require_relative 'replace_strings'
       end
 
       return input_string
+
+    end
+
+    def comment_fix(input_file_contents)
+
+      def compress_block_comments(input_file_contents)
+
+        joined_file_contents = input_file_contents.join
+
+        block_comments = []
+
+        while joined_file_contents.include?("/*")
+
+          start_index = joined_file_contents.index("  /*")
+
+          end_index = joined_file_contents.index("  */\n\n")
+
+          if end_index > start_index
+
+            block_comments << joined_file_contents[start_index..end_index + 5]
+
+            joined_file_contents[start_index..end_index + 5] = ""
+
+          end
+
+        end
+
+        block_comments.each do |comment|
+
+          converted_array = strToArray(comment)
+
+          converted_array = converted_array.reject {|element| element.strip.eql?("")}.collect {|element| element + "\n"}
+
+          replacement_array = converted_array.collect {|element| element.rstrip + "\n"}
+
+          replacement_array[-1] = replacement_array[-1] + "\n"
+
+          replacement_array[1...-1] = replacement_array[1...-1].collect {|element| "  " + element}
+
+          input_file_contents[input_file_contents.index(converted_array[0])..input_file_contents.index(converted_array[-1])] = replacement_array
+
+        end
+
+        return input_file_contents
+
+      end
+
+      input_file_contents = input_file_contents.collect do |element|
+
+        line_counter = input_file_contents.index(element)
+
+        if element[0..3].eql?("  //")
+
+          if input_file_contents[line_counter+1].include?("//")
+
+            element.rstrip + "\n"
+
+          else
+
+            element
+
+          end
+
+        else
+
+          element
+
+        end
+
+      end
+
+      input_file_contents = compress_block_comments(input_file_contents)
+
+      return input_file_contents
 
     end
 
@@ -302,7 +409,7 @@ require_relative 'replace_strings'
 
     javascript_file_contents.each_with_index do |line, index|
 
-      if replace_strings(line).index(javascript_regexp) != nil and !line.lstrip.include?("//")
+      if replace_strings(line).index(javascript_regexp) != nil and !line.lstrip.split("//")[0].eql?("")
 
         starting_locations << index
 
@@ -396,7 +503,7 @@ require_relative 'replace_strings'
 
       end
 
-      remaining_file_contents = ["(function() {\n", remaining_file_contents, "\n}).call(this);"].flatten
+      remaining_file_contents = ["(function () {\n", remaining_file_contents, "\n}).call(this);"].flatten
 
       main_blocks.each_with_index do |block_id, index|
 
@@ -430,21 +537,28 @@ require_relative 'replace_strings'
 
     line_by_line_contents = fix_newlines(line_by_line_contents,main_block_numbers)
 
-    removable_indices = line_by_line_contents.each_index.select {|index| line_by_line_contents[index].strip == "%$%$;" }
-
-    while line_by_line_contents.join.include?("%$%$;")
-
-      line_by_line_contents.delete_at(removable_indices[0])
-
-      line_by_line_contents.delete_at(removable_indices[0])
+    if line_by_line_contents.join.include?("%$%$")
 
       removable_indices = line_by_line_contents.each_index.select {|index| line_by_line_contents[index].strip == "%$%$;" }
 
+      while line_by_line_contents.join.include?("%$%$;")
+
+        line_by_line_contents.delete_at(removable_indices[0])
+
+        line_by_line_contents.delete_at(removable_indices[0])
+
+        removable_indices = line_by_line_contents.each_index.select {|index| line_by_line_contents[index].strip == "%$%$;" }
+
+      end
+
     end
 
-    line_by_line_contents = fix_syntax_indentation(line_by_line_contents)
+
+    line_by_line_contents = fix_syntax_indentation(line_by_line_contents).compact
 
     line_by_line_contents = line_by_line_contents.collect { |element| replace_ignored_words(element) }
+
+    line_by_line_contents =  comment_fix(line_by_line_contents)
 
     return line_by_line_contents
 

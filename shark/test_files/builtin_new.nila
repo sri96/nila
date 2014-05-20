@@ -1,0 +1,3 @@
+a = String.new("Hello World")
+
+a.upcase

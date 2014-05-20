@@ -59,7 +59,7 @@ require_relative 'replace_strings'
 
         list_of_functions.each do |function|
 
-          if test_contents.include?(function)
+          if test_contents.include?(function) and test_contents.index(Regexp.new(function + /\s+=/.source)) == nil
 
             matching_strings = extract(joined_file_contents, function+" ", "\n")
 
@@ -67,13 +67,25 @@ require_relative 'replace_strings'
 
               modified_string = string.dup
 
+              modified_string,comment = modified_string.split("--single_line_comment")
+
+              modified_string = modified_string + "\n" if modified_string != (modified_string + "\n")
+
               modified_string = modified_string.rstrip + modified_string.split(modified_string.rstrip)[1].gsub(" ", "")
 
               modified_string = modified_string.sub(function+" ", function+"(")
 
               modified_string = modified_string.split("#{function}(")[0] + "#{function}(" + modified_string.split("#{function}(")[1].lstrip
 
-              modified_string = modified_string.sub("\n", ")\n")
+              if comment.nil? or comment.strip != ""
+
+                modified_string = modified_string.sub("\n", ") --single_line_comment#{comment}\n")
+
+              else
+
+                modified_string = modified_string.sub("\n", ")\n")
+
+              end
 
               joined_file_contents = joined_file_contents.sub(string, modified_string)
 

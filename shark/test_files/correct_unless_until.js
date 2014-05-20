@@ -3,9 +3,7 @@
   var i;
 
   // This file demonstrates unless and until statements.
-
-  // Examples are from http://www.skorks.com/2009/09/a-wealth-of-ruby-loops-and-iterators/ and 
-
+  // Examples are from http://www.skorks.com/2009/09/a-wealth-of-ruby-loops-and-iterators/ and
   // http://37signals.com/svn/posts/2699-making-sense-with-rubys-unless 
 
   if (!(person.present)) {

@@ -85,9 +85,19 @@ def compile_conditional_structures(input_file_contents, temporary_nila_file)
 
       matching_lines.each do |line|
 
+        line,comment = line.split("--single_line_comment")
+
+        comment ||= ""
+
         line_split = line.split(plain_conditionals[index])
 
         condition = line_split[1]
+
+        if replace_strings(condition).include?("not")
+
+          condition = condition.gsub(/not\s*/,"!")
+
+        end
 
         condition = condition.gsub(" and "," && ").gsub(" or "," || ").gsub(" not "," !")
 
@@ -151,7 +161,7 @@ def compile_conditional_structures(input_file_contents, temporary_nila_file)
 
       extracted_blocks = []
 
-      controlregexp = /(if |while |def | do )/
+      controlregexp = /(if |while |def | do |for )/
 
       rejectionregexp = /( if | while )/
 
@@ -348,7 +358,7 @@ def compile_conditional_structures(input_file_contents, temporary_nila_file)
 
       if_statement_indexes = [0] + if_statement_indexes.flatten + [-1]
 
-      controlregexp = /(while |def | do )/
+      controlregexp = /(while |def | do |for)/
 
       modified_input_contents, extracted_statements = extract_if_blocks(if_statement_indexes, input_file_contents.clone)
 
@@ -1198,7 +1208,17 @@ def compile_conditional_structures(input_file_contents, temporary_nila_file)
 
     end
 
+    def compile_inline_loop(input_loop)
+
+
+
+    end
+
     possible_loop_statements = input_file_contents.reject { |element| !element.include?("loop") }
+
+    inline_loops = possible_loop_statements.reject{|element| element.include?("do")}
+
+    possible_loop_statements = possible_loop_statements - inline_loops
 
     if !possible_loop_statements.empty?
 
@@ -1211,6 +1231,8 @@ def compile_conditional_structures(input_file_contents, temporary_nila_file)
       end
 
       loop_statement_indexes = [0] + loop_statement_indexes.flatten + [-1]
+
+      loop_statement_indexes = loop_statement_indexes.uniq
 
       controlregexp = /(if |def )/
 

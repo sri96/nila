@@ -11,15 +11,15 @@ def compile_ranges(input_file_contents)
   # [1 to 5] is equivalent to [1..5]
   # [1 until 5] is equivalent to [1...5]
 
-  triple_ranges = input_file_contents.reject {|element| !element.index(/(\w\s*until\s*\w+|last)/)}
+  triple_ranges = input_file_contents.reject {|element| !element.index(/(\d+\s*until\s*\d+|last)/)}
 
-  triple_ranges = triple_ranges.reject {|element| element.index(/(\w\s*\.\.\.\s*\w+|last)/)}
+  triple_ranges = triple_ranges.reject {|element| element.index(/(\d+\s*\.\.\.\s*\d+|last)/)}
 
   triple_ranges.each do |line|
 
     line_index = input_file_contents.index(line)
 
-    range_extracts = line.scan(/(\w\s*until\s*\w+|last)/).to_a
+    range_extracts = line.scan(/(\d+\s*until\s*\d+|last)/).to_a
 
     range_extracts.each do |range|
 
@@ -33,15 +33,15 @@ def compile_ranges(input_file_contents)
 
   end
 
-  double_ranges = input_file_contents.reject {|element| !element.index(/(\w\s*to\s*\w+|last)/)}
+  double_ranges = input_file_contents.reject {|element| !element.index(/(\d+\s*to\s*\d+|last)/)}
 
-  double_ranges = double_ranges.reject {|element| element.index(/(\w\s*\.\.\s*\w+|last)/)}
+  double_ranges = double_ranges.reject {|element| element.index(/(\d+\s*\.\.\s*\d+|last)/)}
 
   double_ranges.each do |line|
 
     line_index = input_file_contents.index(line)
 
-    range_extracts = line.scan(/(\w\s*to\s*\w+|last)/).to_a
+    range_extracts = line.scan(/(\d+\s*to\s*\d+|last)/).to_a
 
     range_extracts.each do |range|
 

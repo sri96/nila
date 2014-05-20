@@ -12,7 +12,15 @@ def compile_lambdas(input_file_contents,temporary_nila_file)
 
     if parameterless
 
-      block_contents = input_block[3...-1]
+      if input_block[0] = "{" and input_block[-1] = "}"
+
+        block_contents = input_block[1...-1]
+
+      else
+
+        block_contents = input_block[3...-1]
+
+      end
 
       compiled_lambda = "function() {\n\n  #{block_contents.strip} \n\n}"
 
@@ -48,7 +56,9 @@ def compile_lambdas(input_file_contents,temporary_nila_file)
 
   input_file_contents = input_file_contents.collect {|element| (replace_strings(element).include?(" -> ") ? element.gsub(" -> "," lambda ") : element)}
 
-  input_file_contents = input_file_contents.collect {|element| element.gsub("append","appand")}
+  input_file_contents = input_file_contents.collect {|element| element.gsub("document","decccccumennt")}
+
+  input_file_contents = input_file_contents.collect {|element| element.gsub("append","appand").gsub(" do"," do ").gsub("do "," do ")}
 
   possible_lambdas = input_file_contents.reject {|line| !replace_strings(line).include?("lambda")}
 
@@ -74,7 +84,7 @@ def compile_lambdas(input_file_contents,temporary_nila_file)
 
       loop_extract = input_file_contents[starting_counter..index_counter]
 
-      var_name,block = loop_extract.join.split(/\s*do/)
+      var_name,block = loop_extract.join.split(/\s*do\s+/)
 
       var_name = var_name.split(/\s*=\s*lambda/)[0].strip
 
@@ -92,15 +102,17 @@ def compile_lambdas(input_file_contents,temporary_nila_file)
 
   possible_lambdas = possible_lambdas.reject {|element| !element.include?("{") and !element.include?("}")}
 
-  possible_lambdas = possible_lambdas.collect {|element| element.gsub(/lambda\s*\{/,"lambda !_{")}
-
   modified_file_contents = input_file_contents.clone
 
   unless possible_lambdas.empty?
 
-    possible_lambdas.each do |loop|
+    original_loops = possible_lambdas.clone
 
-      original_loop = loop.clone
+    possible_lambdas = possible_lambdas.collect {|element| element.gsub(/lambda\s*\{/,"lambda !_{")}
+
+    possible_lambdas.each_with_index do |loop,index|
+
+      original_loop = original_loops[index]
 
       string_counter = 1
 
@@ -182,13 +194,17 @@ def compile_lambdas(input_file_contents,temporary_nila_file)
 
       replacement_string = replacement_array.join
 
-      modified_file_contents[input_file_contents.index(original_loop)] = replacement_string[-1].eql?(";") ? replacement_string : replacement_string + ";"
+      replacement_string = replacement_string[-1].eql?(";") ? replacement_string : (replacement_string + ";")
+
+      modified_file_contents[input_file_contents.index(original_loop)] = (replacement_string + "\n\n")
 
     end
 
   end
 
   modified_file_contents = modified_file_contents.collect {|element| element.gsub("appand","append")}
+
+  modified_file_contents = modified_file_contents.collect {|element| element.gsub("decccccumennt","document")}
 
   file_id = open(temporary_nila_file, 'w')
 

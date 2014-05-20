@@ -4,13 +4,19 @@ require 'readline'
 
 require 'fs'
 
+require 'sys'
+
+exec = require('child_process').exec
+
 file_name = "#{__dirname}/my_file.nila"
+
+output_file_name = "#{__dirname}/my_file.js"
 
 stream = fs.createWriteStream(file_name)
 
 stream.once 'open', do |fd|
 
- stream.write("# REPL Session #{new Date().to_s}")
+ stream.write("# REPL Session #{new Date().to_s}\n\n")
  
 end
 
@@ -21,14 +27,31 @@ rl.setPrompt('nila> ')
 rl.prompt()
 
 read = rl.on 'line', do |line|
-  stream.write(line)
+  stream.write("puts (#{line})\n\n")
+  exec 'nilac -c my_file.nila', do |error,stdout,stderr|
+    if error != nil
+      sys.print("error: #{error}")
+    end
+    if stdout.strip == "Compilation is successful!"
+      exec output_file_name, do |error,stdout,stderr|
+        if error != nil
+          sys.print(error + "\n")
+        else
+          sys.print(stdout + "\n")
+        end
+      end
+    end
+  end
   rl.prompt()
 end
 
 read.on 'close', do 
   stream.end()
   fs.unlink file_name, do |err|
-    puts "REPL Session Successfully concluded!"
+    puts "Nila file couldn't be deleted!"
+  end
+  fs.unlink output_file_name, do |err|
+    puts "Output js file couldn't be deleted!"
   end
   puts "\n\nThanks for trying out Nila!\n"
   puts "You can learn more about Nila at http://adhithyan15.github.io/nila\n"

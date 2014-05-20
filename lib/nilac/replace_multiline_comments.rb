@@ -32,6 +32,10 @@
 
     multiline_comments = []
 
+    input_file_contents = input_file_contents.collect {|element| element.gsub(/=\s+begin/,"=begin")}
+
+    input_file_contents = input_file_contents.collect {|element| element.gsub(/=\s+end/,"=end")}
+
     file_contents_as_string = input_file_contents.join
 
     modified_file_contents = file_contents_as_string.dup

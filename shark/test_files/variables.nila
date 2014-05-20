@@ -1,0 +1,7 @@
+start_counter = end_counter = 0
+
+six = (one = 1) + (two = 2) + (three = 3)
+
+wind speed = 25
+
+average temperature = 32 # an example of Pogoscript variables

@@ -1,6 +1,7 @@
 require_relative 'find_all_matching_indices'
 require_relative 'read_file_line_by_line'
 require_relative 'compile_interpolated_strings'
+require_relative 'replace_strings'
 
   def compile_arrays(input_file_contents, named_functions, temporary_nila_file)
 
@@ -156,6 +157,8 @@ require_relative 'compile_interpolated_strings'
 
       triple_range_indexes = triple_range_indexes.flatten
 
+      triple_range_indexes = triple_range_indexes.uniq
+
       triple_range_indexing.each_with_index do |line, index|
 
         split1, split2 = line.split("[")
@@ -195,6 +198,8 @@ require_relative 'compile_interpolated_strings'
       end
 
       double_range_indexes = double_range_indexes.flatten
+
+      double_range_indexes = double_range_indexes.uniq
       
       double_range_indexing.each_with_index do |line, index|
 
@@ -222,7 +227,7 @@ require_relative 'compile_interpolated_strings'
 
         else
 
-          replacement_string = split1 + ".slice(#{index_start},#{index_end}+1)\n"
+          replacement_string = split1 + ".slice(#{index_start},#{(index_end.to_i+1).to_s})\n"
 
         end
 
@@ -249,6 +254,24 @@ require_relative 'compile_interpolated_strings'
       duplicating_operation_indexes.each do |index|
 
         input_file_contents[index] = input_file_contents[index].sub(".dup", ".slice(0)")
+
+      end
+
+      return input_file_contents
+
+    end
+
+    def compile_array_slicing(input_file_contents)
+
+      possible_slicing_operation = input_file_contents.reject {|element| !replace_strings(element).include?(".slice")}
+
+      possible_slicing_operation.each do |element|
+
+        if replace_strings(element).include?(",last")
+
+          input_file_contents[input_file_contents.index(element)] = input_file_contents[input_file_contents.index(element)].gsub(",last","")
+
+        end
 
       end
 
@@ -331,6 +354,8 @@ require_relative 'compile_interpolated_strings'
     input_file_contents = compile_capital_w_arrays(input_file_contents)
 
     input_file_contents = compile_array_indexing(input_file_contents)
+
+    input_file_contents = compile_array_slicing(input_file_contents)
 
     input_file_contents = compile_multiline(input_file_contents, temporary_nila_file)
 

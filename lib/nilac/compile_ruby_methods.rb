@@ -43,6 +43,44 @@
 
     end
 
+    def compile_simple_parameter_taking_methods(input_file_contents)
+
+      method_map_replacement = {
+
+          ".index" => ".indexOf"
+
+      }
+
+      method_map = method_map_replacement.keys
+
+      method_map_regex = method_map.collect {|name| name.gsub(".","\\.")}
+
+      method_map_regex = Regexp.new(method_map_regex.join("|"))
+
+      modified_file_contents = input_file_contents.clone
+
+      input_file_contents.each_with_index do |line, index|
+
+        if line.match(method_map_regex)
+
+          method_match = line.match(method_map_regex).to_a[0]
+
+          if line.include?(method_match + "(")
+
+            line = line.gsub(method_match,method_map_replacement[method_match])
+
+          end
+
+        end
+
+        modified_file_contents[index] = line
+
+      end
+
+      return modified_file_contents
+
+    end
+
     method_map_replacement = {
 
         ".split" => ".split(\" \")",
@@ -66,6 +104,11 @@
         ".downcase" => ".toLowerCase()",
 
         ".zero?" => " === 0",
+
+        ".eql" => " === ",
+
+        ".next" => "++"
+
 
     }
 
@@ -96,6 +139,8 @@
     end
 
     modified_file_contents = compile_complex_methods(modified_file_contents)
+
+    modified_file_contents = compile_simple_parameter_taking_methods(modified_file_contents)
 
     return modified_file_contents
 

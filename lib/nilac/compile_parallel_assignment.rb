@@ -14,7 +14,9 @@ require_relative 'paranthesis_compactor'
 
       if input_string.include?("=") and input_string.index(javascript_regexp) == nil and input_string.strip[0..3] != "_ref" and !input_string.split("=")[1].include?("[")
 
-        right_side = input_string.split("=")[1]
+        right_side = input_string.split("=")[1] if input_string.count("=").eql?(1)
+
+        right_side = input_string.split("=",2)[1] if input_string.count("=") > 1
 
         if compact_paranthesis(right_side).include?(",")
 

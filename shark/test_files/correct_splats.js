@@ -3,7 +3,6 @@
   var args_unleashed, default_args, mixed_args, two_or_more;
 
   // These example were taken from The Well Grounded Rubyist by Manning
-
   // Copyright: Manning Publications
 
   two_or_more = function() {

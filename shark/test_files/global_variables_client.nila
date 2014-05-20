@@ -1,0 +1,5 @@
+def $onload 
+ document.getElementById('testButton').onclick = lambda do 
+   document.getElementById('xyz').style.color = 'red'
+ end
+end

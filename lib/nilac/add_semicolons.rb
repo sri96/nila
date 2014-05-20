@@ -2,11 +2,11 @@
 
     def comment(input_string)
 
-      if input_string.include?("--single_line_comment")
+      if input_string.strip.split("--single_line_comment")[0].eql?("")
 
         true
 
-      elsif input_string.include?("--multiline_comment")
+      elsif input_string.strip.split("--multiline_comment")[0].eql?("")
 
         true
 
@@ -38,7 +38,17 @@
 
                 if line.rstrip[-1] != "[" and line.rstrip[-1] != "{" and line.rstrip[-1] != "," and line.rstrip[-1] != ";"
 
-                  modified_file_contents[index] = line.rstrip + ";\n\n"
+                  line,comment = line.split("--single_line_comment")
+
+                  unless comment.nil? or comment.strip == ""
+
+                    modified_file_contents[index] = line.rstrip + "; --single_line_comment#{comment}\n\n"
+
+                  else
+
+                    modified_file_contents[index] = line.rstrip + ";\n\n"
+
+                  end
 
                 end
 

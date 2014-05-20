@@ -12,6 +12,7 @@ module Nilac
   require 'nilac/version'
   require 'fileutils'
   require 'nilac/read_file_line_by_line'
+  require 'nilac/add_line_numbers'
   require 'nilac/find_file_name'
   require 'nilac/find_file_path'
   require 'nilac/extract_parsable_file'
@@ -50,6 +51,8 @@ module Nilac
   require 'nilac/friendly_errors'
   require 'nilac/compile_monkey_patching'
   require 'nilac/compile_ranges'
+  require 'nilac/compile_chained_comparison'
+  require 'nilac/compile_new_keyword'
 
   class NilaCompiler
 
@@ -69,6 +72,8 @@ module Nilac
 
         file_contents = read_file_line_by_line(input_file_path)
 
+        line_numbered_file_contents = add_line_numbers(file_contents)
+
         file_contents = file_contents.collect {|element| element.gsub("\r\n","\n")}
 
         file_contents = file_contents.collect {|element| element.gsub(".end",".enttttttttttt")}
@@ -77,81 +82,91 @@ module Nilac
 
         file_contents = compile_require_statements(file_contents)
 
-        file_contents, multiline_comments, temp_file, output_js_file = replace_multiline_comments(file_contents, input_file_path, *output_file_name)
+        proceed = check_comments(line_numbered_file_contents)
 
-        file_contents, singleline_comments = replace_singleline_comments(file_contents)
+        if proceed
 
-        file_contents = split_semicolon_seperated_expressions(file_contents)
+          file_contents, multiline_comments, temp_file, output_js_file = replace_multiline_comments(file_contents, input_file_path, *output_file_name)
 
-        file_contents = compile_ranges(file_contents)
+          file_contents, singleline_comments = replace_singleline_comments(file_contents)
 
-        file_contents = compile_heredocs(file_contents, temp_file)
+          file_contents = split_semicolon_seperated_expressions(file_contents)
 
-        file_contents,lambda_names = compile_lambdas(file_contents,temp_file)
+          file_contents = compile_ranges(file_contents)
 
-        file_contents,loop_vars = compile_loops(file_contents,temp_file)
+          file_contents = compile_heredocs(file_contents, temp_file)
 
-        file_contents = compile_interpolated_strings(file_contents)
+          file_contents,lambda_names = compile_lambdas(file_contents,temp_file)
 
-        file_contents = compile_hashes(file_contents,temp_file)
+          file_contents,loop_vars = compile_loops(file_contents,temp_file)
 
-        file_contents = compile_case_statement(file_contents,temp_file)
+          file_contents, interpolation_vars  = compile_interpolated_strings(file_contents)
 
-        file_contents = compile_conditional_structures(file_contents, temp_file)
+          file_contents = compile_hashes(file_contents,temp_file)
 
-        file_contents = compile_blocks(file_contents,temp_file)
+          file_contents = compile_case_statement(file_contents,temp_file)
 
-        file_contents = compile_integers(file_contents)
+          file_contents = compile_conditional_structures(file_contents, temp_file)
 
-        file_contents = compile_default_values(file_contents, temp_file)
+          file_contents = compile_blocks(file_contents,temp_file)
 
-        file_contents, named_functions, nested_functions = replace_named_functions(file_contents, temp_file)
+          file_contents = compile_integers(file_contents)
 
-        comments = [singleline_comments, multiline_comments]
+          file_contents = compile_default_values(file_contents, temp_file)
 
-        file_contents = compile_parallel_assignment(file_contents, temp_file)
+          file_contents, named_functions, nested_functions = replace_named_functions(file_contents, temp_file)
 
-        file_contents,named_functions = compile_arrays(file_contents, named_functions, temp_file)
+          comments = [singleline_comments, multiline_comments]
 
-        file_contents = compile_strings(file_contents)
+          file_contents = compile_parallel_assignment(file_contents, temp_file)
 
-        list_of_variables, file_contents = get_variables(file_contents, temp_file,loop_vars)
+          file_contents,named_functions = compile_arrays(file_contents, named_functions, temp_file)
 
-        file_contents, function_names = compile_named_functions(file_contents, named_functions, nested_functions, temp_file)
+          file_contents = compile_strings(file_contents)
 
-        file_contents = compile_monkey_patching(file_contents,temp_file)
+          list_of_variables, file_contents = get_variables(file_contents, temp_file,loop_vars)
 
-        func_names = function_names.dup
+          file_contents, function_names = compile_named_functions(file_contents, named_functions, nested_functions, temp_file)
 
-        file_contents, ruby_functions = compile_custom_function_map(file_contents)
+          file_contents = compile_monkey_patching(file_contents,temp_file)
 
-        file_contents = compile_ruby_methods(file_contents)
+          func_names = function_names.dup
 
-        file_contents = compile_special_keywords(file_contents)
+          file_contents, ruby_functions = compile_custom_function_map(file_contents)
 
-        function_names << ruby_functions
+          file_contents = compile_ruby_methods(file_contents)
 
-        function_names << lambda_names
+          file_contents = compile_special_keywords(file_contents)
 
-        list_of_variables += loop_vars
+          function_names << ruby_functions
 
-        file_contents = compile_whitespace_delimited_functions(file_contents, function_names, temp_file)
+          function_names << lambda_names
 
-        file_contents = remove_question_marks(file_contents, list_of_variables, temp_file)
+          list_of_variables += loop_vars
 
-        file_contents = add_semicolons(file_contents)
+          list_of_variables += interpolation_vars
 
-        file_contents = compile_comments(file_contents, comments, temp_file)
+          file_contents = compile_whitespace_delimited_functions(file_contents, function_names, temp_file)
 
-        file_contents = pretty_print_javascript(file_contents, temp_file,list_of_variables+func_names)
+          file_contents = remove_question_marks(file_contents, list_of_variables, temp_file)
 
-        file_contents = compile_operators(file_contents)
+          file_contents = add_semicolons(file_contents)
 
-        file_contents = file_contents.collect {|element| element.gsub(".enttttttttttt",".end")}
+          file_contents = compile_new_keyword(file_contents)
 
-        output_javascript(file_contents, output_js_file, temp_file)
+          file_contents = compile_comments(file_contents, comments, temp_file)
 
-        puts "Compilation is successful!"
+          file_contents = pretty_print_javascript(file_contents, temp_file,list_of_variables+func_names)
+
+          file_contents = compile_operators(file_contents)
+
+          file_contents = file_contents.collect {|element| element.gsub(".enttttttttttt",".end")}
+
+          output_javascript(file_contents, output_js_file, temp_file)
+
+          puts "Compilation is successful!"
+
+        end
 
       else
 
@@ -165,7 +180,6 @@ module Nilac
     def start_compile
 
       opts = parse_arguments(@input_arguments)
-
       nilac_version = Nilac::VERSION
 
       if opts.values.compact.empty?
@@ -184,23 +198,18 @@ module Nilac
       elsif opts[:compile] != nil
 
         client_optimized = false
-
         server_optimized = false
 
         if opts[:compile].include?("--browser") or opts[:compile].include?("--client")
 
           client_optimized = true
-
           opts[:compile] = opts[:compile].delete("--browser")
-
           opts[:compile] = opts[:compile].delete("--client")
 
         elsif opts[:compile].include?("--server") or opts[:compile].include?("--node")
 
           server_optimized = true
-
           opts[:compile] = opts[:compile].delete("--server")
-
           opts[:compile] = opts[:compile].delete("--node")
 
         end

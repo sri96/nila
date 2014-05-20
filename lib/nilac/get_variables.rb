@@ -1,6 +1,7 @@
 require_relative 'replace_strings'
 require_relative 'read_file_line_by_line'
 require_relative 'paranthesis_compactor'
+require_relative 'extract_paranthesis_contents'
   
   def get_variables(input_file_contents, temporary_nila_file, *loop_variables)
 
@@ -52,34 +53,67 @@ require_relative 'paranthesis_compactor'
 
           current_row = current_row.rstrip + "\n"
 
-          current_row_split = current_row.split("=")
+          if current_row.count("=") > 1
 
-          for y in 0...current_row_split.length
+            if compact_paranthesis(current_row).count("=") > 1
 
-            current_row_split[y] = current_row_split[y].strip
+              current_row_split = current_row.split("=")
 
+              current_row_split[0...-1].each do |split|
 
-          end
+                variables << split.strip
 
-          if current_row_split[0].include?("[") or current_row_split[0].include?("(")
+              end
 
-            current_row_split[0] = current_row_split[0][0...current_row_split[0].index("[")]
+            else
 
-          end
+              paranthesis_contents = extract_paranthesis_contents(current_row)
 
-          current_row_split[0] = current_row_split[0].split(".",2)[0].strip if current_row_split[0].include?(".")
+              paranthesis_contents = paranthesis_contents.reject {|element| !replace_strings(element).include?("=")}
 
-          if current_row_split[0].include?(" ")
+              paranthesis_contents.each do |element|
 
-            variable_name = current_row_split[0].split
+                string_extract = element.strip[1...-1]
 
-            variable_name = variable_name.join("_")
+                variables << string_extract.split("=").collect {|element| element.strip}[0]
 
-            modified_file_contents[modified_file_contents.index(original_row)] = modified_file_contents[modified_file_contents.index(original_row)].gsub(current_row_split[0],variable_name)
+              end
+
+              if compact_paranthesis(current_row).include?("=")
+
+                variables << current_row.split("=",2).collect {|element| element.strip}[0]
+
+              end
+
+            end
 
           else
 
-            variable_name = current_row_split[0]
+            current_row_split = current_row.split("=")
+
+            current_row_split = current_row_split.collect {|element| element.strip}
+
+            if current_row_split[0].include?("[") or current_row_split[0].include?("(")
+
+              current_row_split[0] = current_row_split[0][0...current_row_split[0].index("[")]
+
+            end
+
+            current_row_split[0] = current_row_split[0].split(".",2)[0].strip if current_row_split[0].include?(".")
+
+            if current_row_split[0].include?(" ")
+
+              variable_name = current_row_split[0].split
+
+              variable_name = variable_name.join("_")
+
+              modified_file_contents[modified_file_contents.index(original_row)] = modified_file_contents[modified_file_contents.index(original_row)].gsub(current_row_split[0],variable_name)
+
+            else
+
+              variable_name = current_row_split[0]
+
+            end
 
           end
 
@@ -145,6 +179,6 @@ require_relative 'paranthesis_compactor'
 
     line_by_line_contents = line_by_line_contents.collect { |element| element.gsub("lessyequal", "<=") }
 
-    return variables.uniq, line_by_line_contents
+    return variables.uniq.compact, line_by_line_contents
 
   end

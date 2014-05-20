@@ -176,11 +176,29 @@ require_relative 'replace_strings'
 
         end
 
-        replacement_array[1...-1] = replacement_array[1...-1].collect {|element| "#iggggnnnore #{element}"}
+        replacement_array[1...-1] = replacement_array[1...-1].collect do |element|
+
+          if element.include?("#iggggnnnore")
+
+            element
+
+          else
+
+            "#iggggnnnore #{element}"
+
+          end
+
+        end
 
         starting_counter = joined_file_contents.index(original_loop)
 
-        end_counter = joined_file_contents.index(original_loop)+original_loop.length
+        if starting_counter.nil?
+
+          starting_counter = joined_file_contents.index(original_loop.lstrip)
+
+        end
+
+        end_counter = starting_counter+original_loop.length
 
         joined_file_contents[starting_counter..end_counter] = replacement_array.join
 
