@@ -1,0 +1,15 @@
+# Javascript approach
+string1 = "Trust Jim: "
+
+bool1 = true
+
+string2 = string1 + bool1
+
+puts string2
+
+# Ruby approach
+bool1 = true
+
+string2 = "Trust Jim: #{bool1}"
+
+puts string2

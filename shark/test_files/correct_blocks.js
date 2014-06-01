@@ -30,7 +30,7 @@
       }
       console.log("REPL Session Successfully concluded!");
     });
-    console.log("\n\nThanks for trying out Nila!\n") --single_line_comment
+    console.log("\n\nThanks for trying out Nila!\n")
     console.log("You can learn more about Nila at http://adhithyan15.github.io/nila\n");
     process.exit(0);
   });

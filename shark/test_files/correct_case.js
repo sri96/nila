@@ -1,6 +1,6 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
-(function() {
-  var _i, _j, grade, grades, num;
+(function () {
+  var _i, _j, grade, grades, input_name, num;
 
   grades = ["A", "B", "A", "C", "D", "F"];
 
@@ -30,6 +30,14 @@
       break;
     default:
       console.log("Your input was greater than 2");
+  }
+
+  input_name = prompt("What is your name?");
+
+  if (input_name.toLowerCase() === "Jim".toLowerCase()) {
+    alert("Hey Jim!");
+  } else {
+    alert("Hey " + (input_name));
   }
 
 }).call(this);

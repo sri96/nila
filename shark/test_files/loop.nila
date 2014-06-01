@@ -1,5 +1,3 @@
-loop { puts "Looping forever!" }
-
 i=0
 loop do
   i+=1

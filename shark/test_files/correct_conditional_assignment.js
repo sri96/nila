@@ -1,5 +1,5 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
-(function() {
+(function () {
   var a, b;
 
   // This file demonstrates the conditional assignment operator in Nila

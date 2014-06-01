@@ -1,5 +1,5 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
-(function() {
+(function () {
   var parse_name, parsed_name, test_method;
 
   // This method demonstrates multiple return values

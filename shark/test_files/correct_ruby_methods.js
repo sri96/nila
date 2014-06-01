@@ -1,5 +1,5 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
-(function() {
+(function () {
   var jsonp, jsonprint, name, parsejson;
 
   name = "Adhithya Rajasekaran      ".replace(/\s+$/g,"");

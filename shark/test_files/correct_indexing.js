@@ -1,5 +1,5 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
-(function() {
+(function () {
   var copy, first_name, last, middle, name, name_copy, numbers, second_name, start;
 
   numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];

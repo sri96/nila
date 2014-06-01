@@ -387,6 +387,12 @@ require_relative 'strToArray'
 
     end
 
+    def fix_spacing_issues(input_file_contents)
+
+      # This method fixes all the spacing issues that causes jsHint errors.
+
+    end
+
     javascript_regexp = /(if |for |while |case |default:|switch\(|\(function\(|= function\(|,\s*function\(|((=|:)\s+\{))/
 
     if declarable_variables.length > 0
@@ -533,7 +539,7 @@ require_relative 'strToArray'
 
       remaining_file_contents = remaining_file_contents.collect { |element| "  " + element }
 
-      remaining_file_contents = ["(function() {\n", remaining_file_contents, "\n}).call(this);"].flatten
+      remaining_file_contents = ["(function () {\n", remaining_file_contents, "\n}).call(this);"].flatten
 
       joined_file_contents = remaining_file_contents.join
 

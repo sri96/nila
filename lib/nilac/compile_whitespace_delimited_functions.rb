@@ -59,9 +59,11 @@ require_relative 'replace_strings'
 
         list_of_functions.each do |function|
 
-          if test_contents.include?(function) and test_contents.index(Regexp.new(function + /\s+=/.source)) == nil
+          if test_contents.include?(function)
 
             matching_strings = extract(joined_file_contents, function+" ", "\n")
+
+            matching_strings = matching_strings.reject {|element| !element.index(Regexp.new(function + /\s+=/.source)).nil?}
 
             matching_strings.each do |string|
 

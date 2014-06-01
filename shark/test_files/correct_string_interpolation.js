@@ -1,5 +1,5 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
-(function() {
+(function () {
   var msg, number, x;
 
   //This file tests the limits of the string interpolation feature present in Nila

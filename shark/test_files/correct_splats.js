@@ -1,5 +1,5 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
-(function() {
+(function () {
   var args_unleashed, default_args, mixed_args, two_or_more;
 
   // These example were taken from The Well Grounded Rubyist by Manning

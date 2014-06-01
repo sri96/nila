@@ -1,0 +1,5 @@
+main_string = "This is a test string"
+
+find_string = "test"
+
+puts "Substring found!" if main_string.include?(find_string) #=> Substring found!

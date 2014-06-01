@@ -1,5 +1,5 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
-(function() {
+(function () {
   var _ref1, count, current_val, first_name, last_name, next_val, parse_name;
 
   // This file demonstrates multiple variable initialization

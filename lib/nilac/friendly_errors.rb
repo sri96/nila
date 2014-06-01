@@ -108,7 +108,7 @@ module FriendlyErrors
 
     joined_file_contents = replace_strings(joined_file_contents).gsub("_","")
 
-    unless joined_file_contents.scan(/=\s+begin/).empty?
+    unless joined_file_contents.scan(/=\s+begin\n/).empty?
 
       puts "SyntaxWarning: Improper Whitespace\n\n"
 
@@ -124,7 +124,7 @@ module FriendlyErrors
 
     end
 
-    unless joined_file_contents.scan(/=\s+end/).empty?
+    unless joined_file_contents.scan(/=\s+end\n/).empty?
 
       puts "SyntaxWarning: Improper Whitespace\n\n"
 
@@ -142,13 +142,13 @@ module FriendlyErrors
 
     block_comments = []
 
-    while joined_file_contents.include?("=begin") or joined_file_contents.include?("=end")
+    while joined_file_contents.include?("=begin\n") or joined_file_contents.include?("=end\n")
 
       begin
 
-        comment_start = joined_file_contents.index("=begin")
+        comment_start = joined_file_contents.index("=begin\n")
 
-        comment_end = joined_file_contents.index("=end")
+        comment_end = joined_file_contents.index("=end\n")
 
         block_comments << joined_file_contents[comment_start..comment_end]
 
