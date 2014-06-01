@@ -9,15 +9,11 @@ def parse_arguments(input_argv)
     %w{h help} => "help",
       
     %w{v version} => "version",
-      
-    %w{b build} => "build",
-      
+
     %w{u update} => "update",
       
-    %w{re release} => "release",
-      
   }
-    
+
   output_hash = {}
 
   argument_map.each do |key,val|
@@ -33,7 +29,25 @@ def parse_arguments(input_argv)
        output_hash[val.to_sym] = nil
         
     end
-      
+
+  end
+
+  if output_hash.values.compact.empty? and !input_argv.empty?
+
+    if input_argv[0].include?(".nila")
+
+      output_hash[:run] = [input_argv[0]]
+
+    elsif File.directory?(input_argv[0])
+
+      puts "\nSorry! Nilac cannot compile and run folders full of source files at this time.\n\n"
+
+      puts "Check out the documentation at https://adhithyan15.github.io/nila#cli-options\nif you have any questions\n\n"
+
+      exit
+
+    end
+
   end
 
   return output_hash

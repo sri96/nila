@@ -3,7 +3,7 @@ require_relative 'read_file_line_by_line'
 require_relative 'replace_strings'
 require_relative 'strToArray'
   
-  def pretty_print_javascript(javascript_file_contents, temporary_nila_file,declarable_variables)
+  def pretty_print_javascript(javascript_file_contents, temporary_nila_file,declarable_variables,options)
 
     def reset_tabs(input_file_contents)
 
@@ -503,7 +503,21 @@ require_relative 'strToArray'
 
       end
 
-      remaining_file_contents = ["(function () {\n", remaining_file_contents, "\n}).call(this);"].flatten
+      if options[:strict_mode]
+
+        remaining_file_contents = ["  \"use strict\";\n",remaining_file_contents].flatten
+
+      end
+
+      if options[:bare]
+
+        remaining_file_contents = remaining_file_contents
+
+      else
+
+        remaining_file_contents = ["(function () {\n", remaining_file_contents, "\n}).call(this);"].flatten
+
+      end
 
       main_blocks.each_with_index do |block_id, index|
 

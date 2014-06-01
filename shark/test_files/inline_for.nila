@@ -1,0 +1,5 @@
+eat(food) for food in ['toast', 'cheese', 'wine']
+
+   for food in ['toast', 'cheese', 'wine']
+   eat(food)
+end

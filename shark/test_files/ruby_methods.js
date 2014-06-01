@@ -38,8 +38,8 @@
     return inputtext.split("{");
   };
 
-  parsejson(jsonprint("{message:Hello World!}"));
+  parsejson jsonprint "{message:Hello World!}";
 
-  jsonprint("{message:Hello World!}");
+  jsonprint "{message:Hello World!}";
 
 }).call(this);

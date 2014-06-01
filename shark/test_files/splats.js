@@ -20,7 +20,7 @@
     return console.log(c);
   };
 
-  two_or_more(1,2,3,4,5);
+  two_or_more 1,2,3,4,5;
 
   default_args = function(a,b,c) {
     if (c == null) {
@@ -32,9 +32,9 @@
     return console.log(c);
   };
 
-  default_args(3,2);
+  default_args 3,2;
 
-  default_args(4,5,6);
+  default_args 4,5,6;
 
   mixed_args = function() {
     var a, b, c, d, e, f;

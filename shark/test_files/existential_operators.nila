@@ -1,0 +1,7 @@
+if console.exist?
+  console.log "I am here!"
+end
+
+if console.?
+  console.log "I am here!"
+end

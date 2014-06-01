@@ -21,7 +21,7 @@
   } else if (variable === 20) {
     process.stdout.write("Variable is 20");
   } else {
-    process.stdout.write("Variable is something else") --single_line_comment
+    process.stdout.write("Variable is something else")
   }
 
   student_ages = {

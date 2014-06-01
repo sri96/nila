@@ -14,7 +14,9 @@ def compile_custom_function_map(input_file_contents)
 
         "alert" => "alert",
 
-        "prompt" => "prompt"
+        "prompt" => "prompt",
+
+        "parseInt" => "parseInt"
 
     }
 

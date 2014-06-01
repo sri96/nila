@@ -53,6 +53,10 @@ module Nilac
   require 'nilac/compile_ranges'
   require 'nilac/compile_chained_comparison'
   require 'nilac/compile_new_keyword'
+  require 'nilac/compile_inline_for'
+  require 'nilac/fix_javascript_traps'
+  require 'nilac/compile_ruby_math'
+  require 'nilac/compile_nilac_options'
 
   class NilaCompiler
 
@@ -64,7 +68,7 @@ module Nilac
 
     end
 
-    def compile(input_file_path, options = [], *output_file_name)
+    def compile(input_file_path, options = {}, *output_file_name)
 
       message,proceed = file_exist?(input_file_path)
 
@@ -105,6 +109,8 @@ module Nilac
           file_contents = compile_hashes(file_contents,temp_file)
 
           file_contents = compile_case_statement(file_contents,temp_file)
+
+          compile_inline_for(file_contents)
 
           file_contents = compile_conditional_structures(file_contents, temp_file)
 
@@ -148,6 +154,8 @@ module Nilac
 
           file_contents = compile_whitespace_delimited_functions(file_contents, function_names, temp_file)
 
+          file_contents = fix_javascript_traps(file_contents)
+
           file_contents = remove_question_marks(file_contents, list_of_variables, temp_file)
 
           file_contents = add_semicolons(file_contents)
@@ -156,15 +164,25 @@ module Nilac
 
           file_contents = compile_comments(file_contents, comments, temp_file)
 
-          file_contents = pretty_print_javascript(file_contents, temp_file,list_of_variables+func_names)
+          file_contents = pretty_print_javascript(file_contents, temp_file,list_of_variables+func_names,options)
 
           file_contents = compile_operators(file_contents)
 
+          file_contents = compile_ruby_math(file_contents)
+
           file_contents = file_contents.collect {|element| element.gsub(".enttttttttttt",".end")}
 
-          output_javascript(file_contents, output_js_file, temp_file)
+          if options[:print]
 
-          puts "Compilation is successful!"
+            puts file_contents.join
+
+          else
+
+            output_javascript(file_contents, output_js_file, temp_file)
+
+            puts "Compilation is successful!"
+
+          end
 
         end
 
@@ -180,6 +198,9 @@ module Nilac
     def start_compile
 
       opts = parse_arguments(@input_arguments)
+
+      options = compose_nilac_options(opts)
+
       nilac_version = Nilac::VERSION
 
       if opts.values.compact.empty?
@@ -188,31 +209,7 @@ module Nilac
 
       end
 
-      if opts[:build] != nil
-
-        file_path = Dir.pwd + "/src/nilac.rb"
-        create_mac_executable(file_path)
-        FileUtils.mv("#{file_path[0...-3]}", "#{Dir.pwd}/bin/nilac")
-        puts "Build Successful!"
-
-      elsif opts[:compile] != nil
-
-        client_optimized = false
-        server_optimized = false
-
-        if opts[:compile].include?("--browser") or opts[:compile].include?("--client")
-
-          client_optimized = true
-          opts[:compile] = opts[:compile].delete("--browser")
-          opts[:compile] = opts[:compile].delete("--client")
-
-        elsif opts[:compile].include?("--server") or opts[:compile].include?("--node")
-
-          server_optimized = true
-          opts[:compile] = opts[:compile].delete("--server")
-          opts[:compile] = opts[:compile].delete("--node")
-
-        end
+      if opts[:compile] != nil
 
         if opts[:compile].length == 1
 
@@ -222,14 +219,14 @@ module Nilac
             current_directory = Dir.pwd
             input_file = input
             file_path = current_directory + "/" + input_file
-            compile(file_path,[client_optimized,server_optimized])
+            compile(file_path,options)
           elsif File.directory?(input)
             folder_path = input
             files = Dir.glob(File.join(folder_path, "*"))
             files = files.reject { |path| !path.include? ".nila" }
             files.each do |file|
               file_path = Dir.pwd + "/" + file
-              compile(file_path,[client_optimized,server_optimized])
+              compile(file_path,options)
             end
           end
 
@@ -244,7 +241,7 @@ module Nilac
             output_file = output
             input_file_path = input_file
             output_file_path = output_file
-            compile(input_file_path, [client_optimized,server_optimized],output_file_path)
+            compile(input_file_path,options,output_file_path)
 
           elsif File.directory?(input)
 
@@ -261,7 +258,7 @@ module Nilac
             files.each do |file|
               input_file_path = file
               output_file_path = output_folder_path + "/" + find_file_name(file, ".nila") + ".js"
-              compile(input_file_path,[client_optimized,server_optimized],output_file_path)
+              compile(input_file_path,options,output_file_path)
             end
 
           end

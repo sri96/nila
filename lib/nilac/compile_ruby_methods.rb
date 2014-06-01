@@ -99,6 +99,8 @@
 
         ".empty" => ".length == 0",
 
+        ".notempty" => ".length != 0",
+
         ".upcase" => ".toUpperCase()",
 
         ".downcase" => ".toLowerCase()",
@@ -107,7 +109,9 @@
 
         ".eql" => " === ",
 
-        ".next" => "++"
+        ".next" => "++",
+
+        ".each" => ".forEach"
 
 
     }

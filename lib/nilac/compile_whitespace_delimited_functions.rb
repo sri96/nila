@@ -77,7 +77,7 @@ require_relative 'replace_strings'
 
               modified_string = modified_string.split("#{function}(")[0] + "#{function}(" + modified_string.split("#{function}(")[1].lstrip
 
-              if comment.nil? or comment.strip != ""
+              if !comment.nil? and comment.strip != ""
 
                 modified_string = modified_string.sub("\n", ") --single_line_comment#{comment}\n")
 
