@@ -1,0 +1,15 @@
+=    begin
+This code was written by Adhithya Rajasekaran
+This is licensed under the MIT License
+=end
+
+# square method takes a number and
+# returns the square of the number
+
+def square(num)
+
+  num*num
+
+end
+
+square(5)

@@ -7,5 +7,5 @@ Feature: This feature bring Ruby style string interpolation to Nila
 
 Configurations:
 
-~compiler => src/nilac.rb
-:v $cliusage => ruby :v --compile $file
+~compiler => lib/nilac.rb
+:v $cliusage => ruby :v --test --compile $file

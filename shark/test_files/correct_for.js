@@ -1,5 +1,5 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
-(function() {
+(function () {
   var _i, _j, _ref1, fruit, fruits, x;
 
   _ref1 = [1,2,3,4];

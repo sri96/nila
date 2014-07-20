@@ -1,0 +1,7 @@
+input_name = prompt "What is your name?"
+
+if input_name == "Jim"
+  alert "Hey Jim!"
+else
+  alert "Hey #{input_name}"
+end

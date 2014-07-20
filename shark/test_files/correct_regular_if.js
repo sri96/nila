@@ -1,5 +1,5 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
-(function() {
+(function () {
   if (visitor_present) {
     if (active || happy) {
       console.log("Hello Wonderful Visitor!");

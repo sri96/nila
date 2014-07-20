@@ -1,0 +1,11 @@
+require 'fs'
+
+http = require 'http'
+
+fs.readFile '/etc/hosts','utf8', do |err,data|
+  
+  puts err if err
+  
+  puts data
+  
+end

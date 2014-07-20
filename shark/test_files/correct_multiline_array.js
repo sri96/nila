@@ -1,5 +1,5 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
-(function() {
+(function () {
   var myarray, name, numbers;
 
   numbers = [1,2,3,4,5,6,7,8,9,10];

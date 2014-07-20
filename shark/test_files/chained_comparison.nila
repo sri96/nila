@@ -1,0 +1,19 @@
+x = 8
+
+if x < 5
+
+  puts "X is less than 5"
+
+end
+
+if 5 < x < 10
+ 
+ puts "X is between 5 and 10"
+
+end
+
+if x > 10
+
+  puts "X is greater than 10"
+
+end

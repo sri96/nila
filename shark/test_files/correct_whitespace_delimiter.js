@@ -1,5 +1,5 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
-(function() {
+(function () {
   var return_number, square;
 
   square = function(input_number) {

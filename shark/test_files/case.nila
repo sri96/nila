@@ -21,3 +21,11 @@ when 2
 else
 puts "Your input was greater than 2"
 end
+
+input_name = prompt "What is your name?"
+
+if input_name.downcase == "Jim".downcase
+  alert "Hey Jim!"
+else
+  alert "Hey #{input_name}"
+end

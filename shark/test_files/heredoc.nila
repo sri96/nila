@@ -12,3 +12,13 @@ Hello
 numbers = [1,2,3,4,5,6,7]
 
 numbers << 7
+
+name = "Mr. Lorum"
+email = <<-END
+Dear #{name},
+Unfortunately we cannot process your insurance claim at this
+time. This is because we are a bakery, not an insurance company.
+Signed,
+ Nil, Null, and None
+ Bakers to Her Majesty the Singleton
+END

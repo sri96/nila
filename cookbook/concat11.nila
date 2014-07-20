@@ -1,0 +1,4 @@
+string1 = "This is a"
+string2 = "test"
+string3 = string1 + string2
+puts string3 #=> This is a test

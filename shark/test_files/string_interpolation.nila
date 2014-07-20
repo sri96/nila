@@ -1,5 +1,7 @@
 #This file tests the limits of the string interpolation feature present in Nila
 
+number = 5
+
 msg = "Hello #{"world. A lovely place."}" + "Another #{"Lovely quote"}"
 
 puts msg
@@ -9,3 +11,7 @@ puts "Hello #{"world"}"
 puts 'Hello #{world}'
 
 puts 'Hello'
+
+puts "We're ##{number}!"
+
+puts "I've set x to #{x = 5; x += 1}." 

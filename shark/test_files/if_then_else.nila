@@ -1,1 +1,3 @@
 date = if friday then sue else jill end
+
+puts "x is not 1" if not (x == 1)

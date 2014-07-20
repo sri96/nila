@@ -1,10 +1,14 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
-(function() {
+(function () {
   var copy, first_name, last, middle, name, name_copy, numbers, second_name, start;
 
   numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
-  start = numbers.slice(0,2+1);
+  start = numbers.slice(0,3);
+
+  start = numbers.slice(0,3);
+
+  middle = numbers.slice(3,6);
 
   middle = numbers.slice(3,6);
 
@@ -16,7 +20,7 @@
 
   name = "Adhithya Rajasekaran";
 
-  first_name = name.slice(0,7+1);
+  first_name = name.slice(0,8);
 
   second_name = name.slice(9);
 

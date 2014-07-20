@@ -1,9 +1,8 @@
 //Written using Nila. Visit http://adhithyan15.github.io/nila
-(function() {
+(function () {
   var args_unleashed, default_args, mixed_args, two_or_more;
 
   // These example were taken from The Well Grounded Rubyist by Manning
-
   // Copyright: Manning Publications
 
   two_or_more = function() {
@@ -12,7 +11,7 @@
     b = arguments[1];
     c = [];
     for (var i=2;i<arguments.length;i++) {
-      c.push(arguments[i]); 
+      c.push(arguments[i]);
     }
     console.log("I require two or more arguments!");
     console.log("And sure enough, I got: ");
@@ -46,7 +45,7 @@
     f = arguments[arguments.length-1];
     d = [];
     for (var i=3;i < arguments.length-2;i++) {
-      d.push(arguments[i]); 
+      d.push(arguments[i]);
     }
     console.log("Arguments:");
     console.log(a);
@@ -67,7 +66,7 @@
     e = arguments[arguments.length-1];
     c = [];
     for (var i=2;i < arguments.length-2;i++) {
-      c.push(arguments[i]); 
+      c.push(arguments[i]);
     }
     if (b == null) {
       b=1;

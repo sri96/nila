@@ -1,0 +1,3 @@
+eight = parseInt "08"
+
+parseInt("08",10)

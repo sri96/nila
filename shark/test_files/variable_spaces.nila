@@ -1,0 +1,6 @@
+# An experiment to allow spaces in variable names. Inspired by Pogoscript (http://pogoscript.org)
+# The Nilac implementation is not complete. Again, this is just an experiment
+
+wind speed = 25
+
+average temperature = 32

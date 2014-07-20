@@ -1,0 +1,16 @@
+square = -> {|num| num*num }
+
+cube = -> {|num| num*square(num)}
+
+l = lambda do |a, b|
+      tmp = a * 7
+      tmp * b / 50
+    end
+
+hello = -> {puts "Hello World"}
+
+hello_world = -> {|| puts "Hello World!"}
+
+fill = -> {|container, liquid = "coffee"| "Filling the #{container} with #{liquid}" }
+    
+puts cube square 5

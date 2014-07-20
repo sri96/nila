@@ -1,0 +1,18 @@
+class Array
+  def sum
+    val = 0
+    for i in 0...self.length-1
+      val += self[i]
+    end
+    return val
+  end
+  def avg
+    self.sum()/self.length
+  end
+end
+
+nums = [1,2,3,4,5]
+
+puts nums.sum()
+
+puts nums.avg()

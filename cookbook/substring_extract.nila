@@ -1,0 +1,8 @@
+fruits_i_like = "List of fruits I like:apples, oranges, pineapple and mango"
+start = fruits_i_like.index(":")
+# Indexing Range Method
+fruits_list = fruits_i_like[start+1..last]
+puts fruits_list
+# Slicing Method
+fruits_list = fruits_i_like.slice(start+1,last)
+puts fruits_list

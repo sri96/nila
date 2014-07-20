@@ -5,9 +5,9 @@ which will make it fail in a JSLint test.
     Given the input file "erratic.nila"
     When the ~compiler is run
     The output file must be "erratic.js"
-    The output file must equal "perfect.js"
+    The output file must equal "correct_spacing.js"
 
 Configurations:
 
-~compiler => src/nilac.rb
-:v $cliusage => ruby :v --compile $file
+~compiler => lib/nilac.rb
+:v $cliusage => ruby :v --test --compile $file
