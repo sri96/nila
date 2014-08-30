@@ -1,3 +1,0 @@
-{ContentTree, ContentPlugin} = require './core/content'
-{Environment} = require './core/environment'
-{TemplatePlugin} = require './core/templates'
