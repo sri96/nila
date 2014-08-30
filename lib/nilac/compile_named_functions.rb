@@ -559,7 +559,7 @@ def compile_named_functions(input_file_contents, named_code_blocks, nested_funct
 
     function_map.each do |func|
 
-      func_calls = input_file_contents.reject {|line| !(line.include?(func+"(") or line.include?(func+" ") and line.index(javascript_regexp) == nil)}
+      func_calls = input_file_contents.reject {|line| !(replace_strings(line).include?(func+"(") or replace_strings(line).include?(func+" ") and replace_strings(line).index(javascript_regexp) == nil)}
 
       unless func_calls.empty?
 

@@ -1,3 +1,5 @@
+require_relative 'strToArray'
+
 def compile_strings(input_file_contents)
 
   def compile_small_q_syntax(input_file_contents)
@@ -134,11 +136,65 @@ def compile_strings(input_file_contents)
 
   end
 
+  def compile_native_html_entities(input_file_contents)
+
+    # Nila allows for the usage of native HTML entities inside strings. This allows users to use these
+    # symbols without knowing their unicode values.
+
+    # For more information visit http://www.w3schools.com/html/html_entities.asp
+
+    symbol_map = {
+
+
+        "&copy" => "\\u00A9",
+
+        "&copy;" => "\\u00A9",
+
+        "&reg" => "\\u00AE",
+
+        "&reg;" => "\\u00AE",
+
+        "&cent" => "\\u00A2",
+
+        "&cent;" => "\\u00A2",
+
+        "&pound" => "\\u00A3",
+
+        "&pound;" => "\\u00A3",
+
+        "&euro" => "\\u20AC",
+
+        "&euro;" => "\\u20AC",
+
+        "&yen" => "\\u00A5",
+
+        "&yen;" => "\\u00A5",
+
+    }
+
+    joined_file_contents = input_file_contents.join
+
+    symbols = symbol_map.keys
+
+    unicode_values = symbol_map.values
+
+    symbols.each_with_index do |symbol,index|
+
+     joined_file_contents = joined_file_contents.gsub(symbol,unicode_values[index])
+
+    end
+
+    return strToArray(joined_file_contents)
+
+  end
+
   file_contents = compile_small_q_syntax(input_file_contents)
 
   file_contents = compile_big_q_syntax(file_contents)
 
   file_contents = compile_percentage_syntax(file_contents)
+
+  file_contents = compile_native_html_entities(file_contents)
 
   return file_contents
 

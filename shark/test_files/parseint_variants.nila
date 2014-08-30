@@ -1,0 +1,12 @@
+parseHex(" 0xF");
+parseHex(" F");
+parseOct("17");
+parseOct(021);
+parseInt("015");
+parseInt(15.99);
+parseHex("FXX123");
+parseBinary("1111");
+parseInt("15*3");
+parseInt("15e2");
+parseInt("15px");
+parseInt("12");

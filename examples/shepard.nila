@@ -1,0 +1,18 @@
+# A port of Shepard.js project by Hubspot into Nila
+
+{extend, removeClass, addClass, hasClass, Evented, getBounds, uniqueId} = Tether.Utils
+
+Shepherd = new Evented
+
+ATTACHMENT = {
+  'top': 'bottom center',
+  'left': 'middle right',
+  'right': 'middle left',
+  'bottom': 'top center'
+}
+
+def createFromHTML(html) 
+  el = document.createElement('div')
+  el.innerHTML = html
+  el.children[0]
+end

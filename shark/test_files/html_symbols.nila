@@ -1,0 +1,11 @@
+puts "Copyright Symbol: &copy"
+
+puts "Registered Trademark Symbol: &reg"
+
+puts "Euro Symbol: &euro"
+
+puts "Pound Symbol: &pound"
+
+puts "Yen Symbol: &yen"
+
+puts "Cent Symbol: &cent"

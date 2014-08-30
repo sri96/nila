@@ -57,6 +57,7 @@ module Nilac
   require 'nilac/fix_javascript_traps'
   require 'nilac/compile_ruby_math'
   require 'nilac/compile_nilac_options'
+  require 'nilac/compile_unpacker'
 
   class NilaCompiler
 
@@ -76,15 +77,27 @@ module Nilac
 
         file_contents = read_file_line_by_line(input_file_path)
 
+        last_line = file_contents[-1]
+
+        unless last_line[-1].eql?("\n")
+
+          file_contents[-1] = file_contents[-1] + "\n"
+
+        end
+
         line_numbered_file_contents = add_line_numbers(file_contents)
 
         file_contents = file_contents.collect {|element| element.gsub("\r\n","\n")}
 
         file_contents = file_contents.collect {|element| element.gsub(".end",".enttttttttttt")}
 
+        file_contents = file_contents.collect {|element| element.gsub("document","ducccccument")}
+
         file_contents = extract_parsable_file(file_contents)
 
         file_contents = compile_require_statements(file_contents)
+
+        file_contents = compile_unpacking_statements(file_contents)
 
         proceed = check_comments(line_numbered_file_contents)
 
@@ -164,13 +177,15 @@ module Nilac
 
           file_contents = compile_comments(file_contents, comments, temp_file)
 
-          file_contents = pretty_print_javascript(file_contents, temp_file,list_of_variables+func_names,options)
+          file_contents = pretty_print_javascript(file_contents, temp_file,list_of_variables+func_names, options)
 
           file_contents = compile_operators(file_contents)
 
           file_contents = compile_ruby_math(file_contents)
 
           file_contents = file_contents.collect {|element| element.gsub(".enttttttttttt",".end")}
+
+          file_contents = file_contents.collect {|element| element.gsub("ducccccument","document")}
 
           if options[:print]
 
@@ -335,6 +350,7 @@ end
 if ARGV.include?("--test")
 
   ARGV.delete("--test")
+
   compiler = Nilac::NilaCompiler.new(ARGV)
   compiler.start_compile()
 

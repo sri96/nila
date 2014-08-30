@@ -16,7 +16,14 @@ def compile_custom_function_map(input_file_contents)
 
         "prompt" => "prompt",
 
-        "parseInt" => "parseInt"
+        "parseInt" => "parseInt",
+
+        "Integer" => "parseInt",
+
+        "parseFloat" => "parseFloat",
+
+        "Float" => "parseFloat",
+
 
     }
 

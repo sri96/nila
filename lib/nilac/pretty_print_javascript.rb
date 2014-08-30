@@ -43,7 +43,7 @@ require_relative 'strToArray'
 
     end
 
-    def fix_newlines(file_contents,main_block_numbers)
+    def fix_newlines(file_contents,main_block_numbers,options)
 
       def block_compactor(input_block)
 
@@ -151,7 +151,11 @@ require_relative 'strToArray'
 
         end
 
-        remaining_contents = [remaining_contents[0]] + remaining_contents[1...-1] + [remaining_contents[-1]]
+        unless options[:bare]
+
+          remaining_contents = [remaining_contents[0]] + remaining_contents[1...-1] + [remaining_contents[-1]]
+
+        end
 
       end
 
@@ -537,9 +541,27 @@ require_relative 'strToArray'
 
     else
 
-      remaining_file_contents = remaining_file_contents.collect { |element| "  " + element }
+      if options[:bare]
 
-      remaining_file_contents = ["(function () {\n", remaining_file_contents, "\n}).call(this);"].flatten
+        remaining_file_contents = remaining_file_contents.flatten
+
+      else
+
+        remaining_file_contents = remaining_file_contents.collect { |element| "  " + element }
+
+        remaining_file_contents = ["(function () {\n", remaining_file_contents, "\n}).call(this);"].flatten
+
+      end
+
+      if options[:strict_mode] and options[:bare]
+
+        remaining_file_contents = ["\"use strict\";\n",remaining_file_contents].flatten
+
+      elsif options[:strict_mode] and options[:bare].eql?(false)
+
+        remaining_file_contents = ["  \"use strict\";\n",remaining_file_contents].flatten
+
+      end
 
       joined_file_contents = remaining_file_contents.join
 
@@ -555,7 +577,7 @@ require_relative 'strToArray'
 
     line_by_line_contents = line_by_line_contents.collect {|element| element.gsub("%$%$ {","")}
 
-    line_by_line_contents = fix_newlines(line_by_line_contents,main_block_numbers)
+    line_by_line_contents = fix_newlines(line_by_line_contents,main_block_numbers,options)
 
     if line_by_line_contents.join.include?("%$%$")
 

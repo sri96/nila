@@ -80,8 +80,17 @@ def fix_javascript_traps(input_file_contents)
 
   end
 
+  def compile_parseint_variants(input_file_contents)
+
+    possible_parseint_variants = input_file_contents.reject {|element| !replace_strings(element).index(/parse(Hex|Oct|Binary)/) }
+
+    puts possible_parseint_variants.to_s
+
+  end
+
   input_file_contents = fix_parseint_default(input_file_contents)
 
+  #compile_parseint_variants(input_file_contents)
 
   return input_file_contents
 

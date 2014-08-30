@@ -1,0 +1,2 @@
+puts "   Hello World    ".lstrip
+puts "   Hello World    ".rstrip

@@ -43,6 +43,21 @@
 
     end
 
+    def autocall_function(input_file_contents)
+
+      # Ruby allows for the function to be called automatically without the use of some_funcion(). So Nila will try
+      # to imitate that if you don't provide any parameters for that function
+
+      special_function_map = {
+
+          ".trim" => ".trim()"
+
+      }
+
+
+
+    end
+
     def compile_simple_parameter_taking_methods(input_file_contents)
 
       method_map_replacement = {
@@ -99,6 +114,8 @@
 
         ".empty" => ".length == 0",
 
+        ".blank" => ".length == 0",
+
         ".notempty" => ".length != 0",
 
         ".upcase" => ".toUpperCase()",
@@ -111,7 +128,7 @@
 
         ".next" => "++",
 
-        ".each" => ".forEach"
+        ".each" => ".forEach",
 
 
     }

@@ -4,3 +4,4 @@ loop do
   print "#{i} "
   break if i==10
 end
+

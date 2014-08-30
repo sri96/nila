@@ -5,7 +5,11 @@ def compile_ruby_math(input_file_contents)
 
   constant_value_map = {
 
-      "Math::E" => "Math.E"
+      "Math::E" => "Math.E",
+
+      "Math::sqrt" => "Math.sqrt",
+
+      "Float::EPSILON" => "Math.EPSILON",
 
   }
 
