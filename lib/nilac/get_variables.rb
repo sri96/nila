@@ -2,7 +2,7 @@ require_relative 'replace_strings'
 require_relative 'read_file_line_by_line'
 require_relative 'paranthesis_compactor'
 require_relative 'extract_paranthesis_contents'
-  
+
   def get_variables(input_file_contents, temporary_nila_file, *loop_variables)
 
     variables = []
@@ -158,6 +158,8 @@ require_relative 'extract_paranthesis_contents'
     variables += for_loop_variables
 
     variables = variables.flatten
+
+    #remove_properties(variables)
 
     line_by_line_contents = line_by_line_contents.collect { |element| element.gsub("plusequal", "+=") }
 

@@ -22,6 +22,8 @@
 
   Shepherd = new Evented;
 
+  Shepherd.view = test;
+
   ATTACHMENT = {
     top: 'bottom center',
     left: 'middle right',
@@ -30,7 +32,7 @@
   };
 
   createFromHTML = function(html) {
-    var el, el.innerHTML;
+    var el;
     el = document.createElement('div');
     el.innerHTML = html;
     return el.children[0];

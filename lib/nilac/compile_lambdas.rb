@@ -6,6 +6,22 @@ require_relative 'add_auto_return_statement'
 
 def compile_lambdas(input_file_contents,temporary_nila_file)
 
+  def compile_empty_lambdas(input_file_contents)
+
+    modified_file_contents = input_file_contents.clone
+
+    input_file_contents.each do |element|
+
+      if replace_strings(element).index(/lambda\s*\{\}/)
+
+        modified_file_contents[modified_file_contents.index(element)] = element.gsub()
+
+      end
+
+    end
+
+  end
+
   def compile_single_line_lambda(input_block,parameterless = false)
 
     # This method compiles a single lambda into a Javascript function expression
@@ -59,6 +75,8 @@ def compile_lambdas(input_file_contents,temporary_nila_file)
   input_file_contents = input_file_contents.collect {|element| element.gsub("document","decccccumennt")}
 
   input_file_contents = input_file_contents.collect {|element| element.gsub("append","appand").gsub(" do"," do ").gsub("do "," do ")}
+
+  compile_empty_lambdas(input_file_contents)
 
   possible_lambdas = input_file_contents.reject {|line| !replace_strings(line).include?("lambda")}
 

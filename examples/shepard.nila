@@ -4,6 +4,8 @@
 
 Shepherd = new Evented
 
+Shepherd.view = test
+
 ATTACHMENT = {
   'top': 'bottom center',
   'left': 'middle right',

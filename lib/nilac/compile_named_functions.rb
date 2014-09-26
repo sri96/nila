@@ -39,6 +39,36 @@ def compile_named_functions(input_file_contents, named_code_blocks, nested_funct
 
   def lexical_scoped_variables(input_function_block)
 
+    def remove_properties(variables)
+
+      variables = variables.sort
+
+      output_variables = variables.clone
+
+      rejects = []
+
+      variables.each do |element|
+
+        unless rejects.include?(element)
+
+          rejected_variables = output_variables.reject{|val| !val.index(Regexp.new("#{element}."))}
+
+          rejected_variables.each do |val|
+
+            rejects << val
+
+          end
+
+        end
+
+      end
+
+      output_variables = output_variables - rejects
+
+      return output_variables
+
+    end
+
     #This method will pickup and declare all the variables inside a function block. In future, this method will be
     #merged with the get variables method
 
@@ -81,6 +111,8 @@ def compile_named_functions(input_file_contents, named_code_blocks, nested_funct
       end
 
     end
+
+    variables = remove_properties(variables)
 
     if variables.empty?
 

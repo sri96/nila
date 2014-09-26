@@ -12,5 +12,7 @@ hello = -> {puts "Hello World"}
 hello_world = -> {|| puts "Hello World!"}
 
 fill = -> {|container, liquid = "coffee"| "Filling the #{container} with #{liquid}" }
+
+a = lambda{}
     
 puts cube square 5
