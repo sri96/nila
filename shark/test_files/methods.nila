@@ -1,0 +1,5 @@
+def createFromHTML(html) 
+  el = document.createElement('div')
+  el.innerHTML = html
+  el.children[0]
+end
