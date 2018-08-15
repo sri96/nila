@@ -32,7 +32,7 @@ To compile and run your Nila file (requires Node.js):
 
 ## Documentation
 
-A detailed documentation of the language is available at https://github.com/adhithyan15/nila/wiki/Documentation. Currently, we are working to ship RDoc and Ri based documentation along with the Nilac gem.  
+A detailed documentation of the language is available at https://github.com/sri96/nila/wiki/Documentation. Currently, we are working to ship RDoc and Ri based documentation along with the Nilac gem.  
 
 ## Tests
 
